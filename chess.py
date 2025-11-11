@@ -48,6 +48,7 @@ class Piece(ABC):
         pass
 
     def __repr__(self):
+        #TODO: Return proper repr once graphic board representation is implemented
         return self.__str__()
 
 
