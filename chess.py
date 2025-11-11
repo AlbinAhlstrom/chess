@@ -43,6 +43,11 @@ class Piece(ABC):
     def position(self, position: Coordinate):
         self._position = position
 
+    @property
+    @abstractmethod
+    def legal_moves(self, board: "Board") -> list["Coordinate"]:
+        pass
+
     @abstractmethod
     def __str__(self):
         pass
