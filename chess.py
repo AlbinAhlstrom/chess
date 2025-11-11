@@ -1,5 +1,6 @@
 from enum import Enum
 from abc import ABC, abstractmethod
+from math import inf
 
 
 class Color(Enum):
@@ -48,6 +49,11 @@ class Piece(ABC):
     def legal_moves(self, board: "Board") -> list["Coordinate"]:
         pass
 
+    @property
+    @abstractmethod
+    def value(self) -> int:
+        pass
+
     @abstractmethod
     def __str__(self):
         pass
@@ -64,6 +70,10 @@ class King(Piece):
                 return "♔"
             case Color.BLACK:
                 return "♚"
+
+    @property
+    def value(self):
+        return inf
 
 
 class Queen(Piece):
