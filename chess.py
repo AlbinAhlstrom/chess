@@ -1,3 +1,4 @@
+from __future__ import annotations
 from enum import Enum
 from abc import ABC, abstractmethod
 from math import inf
@@ -19,14 +20,18 @@ class Coordinate:
         self.col = col
 
     def __eq__(self, other):
-        return isinstance(other, Coordinate) and self.row == other.row and self.col == other.col
+        return (
+            isinstance(other, Coordinate)
+            and self.row == other.row
+            and self.col == other.col
+        )
 
     def __repr__(self):
         return f"Coordinate({self.row}, {self.col})"
 
     def __hash__(self):
         return hash((self.row, self.col))
-    
+
     def __str__(self):
         return f"{chr(self.col + ord('a'))}{8 - self.row}"
 
@@ -46,7 +51,7 @@ class Piece(ABC):
 
     @property
     @abstractmethod
-    def legal_moves(self, board: "Board") -> list["Coordinate"]:
+    def legal_moves(self, board: Board) -> list[Coordinate]:
         pass
 
     @property
@@ -59,7 +64,7 @@ class Piece(ABC):
         pass
 
     def __repr__(self):
-        #TODO: Return proper repr once graphic board representation is implemented
+        # TODO: Return proper repr once board representation is implemented
         return self.__str__()
 
 
@@ -84,6 +89,11 @@ class Queen(Piece):
             case Color.BLACK:
                 return "♛"
 
+    @property
+    def value(self):
+        return 9
+
+
 class Rook(Piece):
     def __str__(self):
         match self.color:
@@ -91,6 +101,10 @@ class Rook(Piece):
                 return "♖"
             case Color.BLACK:
                 return "♜"
+
+    @property
+    def value(self):
+        return 5
 
 
 class Bishop(Piece):
@@ -101,6 +115,10 @@ class Bishop(Piece):
             case Color.BLACK:
                 return "♝"
 
+    @property
+    def value(self):
+        return 3
+
 
 class Knight(Piece):
     def __str__(self):
@@ -109,6 +127,10 @@ class Knight(Piece):
                 return "♘"
             case Color.BLACK:
                 return "♞"
+
+    @property
+    def value(self):
+        return 3
 
 
 class Pawn(Piece):
@@ -119,19 +141,31 @@ class Pawn(Piece):
             case Color.BLACK:
                 return "♟"
 
+    @property
+    def value(self):
+        return 1
+
 
 class BoardState:
-    def __init__(self, board, history, player_to_move, castle_allowed, en_passant_square, turns_without_capture_or_pawn_move):
+    def __init__(
+        self,
+        board,
+        history,
+        player_to_move,
+        castle_allowed,
+        en_passant_square,
+        halfmove_clock
+    ):
         self.board = board
         self.history = history
         self.player_to_move = player_to_move
         self.castle_allowed = castle_allowed
         self.en_passant_square = en_passant_square
-        self.turns_without_capture_or_pawn_move = turns_without_capture_or_pawn_move
+        self.halfmove_clock = halfmove_clock
 
     @property
     def repetitions_of_position(self):
-        return sum(1 for past_board in self.history if past_board == self.board)
+        return sum(1 for past in self.history if past == self.board)
 
 
 def main():
@@ -140,11 +174,17 @@ def main():
 
         board = [[None for _ in range(8)] for _ in range(8)]
 
-        board[0] = [piece(Color.BLACK, Coordinate(0, col)) for col, piece in enumerate(piece_order)]
         board[1] = [Pawn(Color.BLACK, Coordinate(1, col)) for col in range(8)]
-
         board[6] = [Pawn(Color.WHITE, Coordinate(6, col)) for col in range(8)]
-        board[7] = [piece(Color.WHITE, Coordinate(7, col)) for col, piece in enumerate(piece_order)]
+
+        board[0] = [
+            piece(Color.BLACK, Coordinate(0, col))
+            for col, piece in enumerate(piece_order)
+        ]
+        board[7] = [
+            piece(Color.WHITE, Coordinate(7, col))
+            for col, piece in enumerate(piece_order)
+        ]
 
         return board
 
@@ -153,13 +193,20 @@ def main():
     player_to_move = Color.WHITE
     castle_allowed = [Color.WHITE, Color.BLACK]
     en_passant_square = None
-    turns_without_capture_or_pawn_move = 0
+    halfmove_clock = 0
 
-    state = BoardState(board, history, player_to_move, castle_allowed, en_passant_square, turns_without_capture_or_pawn_move)
+    state = BoardState(
+        board,
+        history,
+        player_to_move,
+        castle_allowed,
+        en_passant_square,
+        halfmove_clock,
+    )
     for row in state.board:
         row = [char or 0 for char in row]
         print(row)
 
+
 if __name__ == "__main__":
     main()
-
