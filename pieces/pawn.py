@@ -18,12 +18,17 @@ class Pawn(Piece):
 
     def moves(self):
         pos = self.position
+
         if self.color == Color.WHITE:
             move_offsets = (-1,) if self.has_moved else (-1, -2)
         else:
             move_offsets = (1,) if self.has_moved else (1, 2)
 
-        return {Coordinate(pos.row + move, pos.col) for move in move_offsets}
+        return {
+            Coordinate(pos.row + move, pos.col)
+            for move in move_offsets
+            if 0 <= pos.row + move < 8
+        }
 
     @property
     def value(self):
