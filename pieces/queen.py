@@ -16,6 +16,7 @@ class Queen(Piece):
             case Color.BLACK:
                 return "♛"
 
+    @property
     def moves(self):
         return straight_moves(self) | diagonal_moves(self)
 

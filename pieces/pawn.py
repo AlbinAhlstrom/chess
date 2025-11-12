@@ -16,6 +16,7 @@ class Pawn(Piece):
             case Color.BLACK:
                 return "♟"
 
+    @property
     def moves(self):
         pos = self.position
 

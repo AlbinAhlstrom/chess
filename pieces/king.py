@@ -19,6 +19,7 @@ class King(Piece):
             case Color.BLACK:
                 return "♚"
 
+    @property
     def moves(self):
         moves = straight_moves(self) | diagonal_moves(self)
         return limit_distance(self, moves, 1)

@@ -16,6 +16,7 @@ class Bishop(Piece):
             case Color.BLACK:
                 return "♝"
 
+    @property
     def moves(self):
         return diagonal_moves(self)
 

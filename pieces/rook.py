@@ -16,6 +16,7 @@ class Rook(Piece):
             case Color.BLACK:
                 return "♜"
 
+    @property
     def moves(self):
         return straight_moves(self)
 

@@ -15,6 +15,7 @@ class Knight(Piece):
             case Color.BLACK:
                 return "♞"
 
+    @property
     def moves(self):
         pos = self.position
         offsets = (-2, -1, 1, 2)
