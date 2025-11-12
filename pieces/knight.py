@@ -10,6 +10,9 @@ class Knight(Piece):
             case Color.BLACK:
                 return "♞"
 
+    def moves():
+        pass
+
     @property
     def value(self):
         return 3

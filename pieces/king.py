@@ -1,7 +1,7 @@
 from math import inf
 
 from board import Color
-from pieces import Piece
+from . import Piece
 
 
 class King(Piece):
@@ -12,8 +12,9 @@ class King(Piece):
             case Color.BLACK:
                 return "♚"
 
+    def moves():
+        pass
+
     @property
     def value(self):
         return inf
-
-
