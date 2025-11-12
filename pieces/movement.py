@@ -24,6 +24,4 @@ def diagonal_moves(piece: Piece):
         for offset in range(-7, 8)
         if 0 <= pos.row + offset < 8 and 0 <= pos.col - offset < 8
     }
-    moves = (diagonal | inverted_diagonal) - {Coordinate(pos.row, pos.col)}
-
-    return moves
+    return (diagonal | inverted_diagonal) - {Coordinate(pos.row, pos.col)}

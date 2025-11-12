@@ -1,5 +1,6 @@
 from board import Color
 from pieces import Piece
+from pieces.movement import diagonal_moves
 
 
 class Bishop(Piece):
@@ -10,8 +11,8 @@ class Bishop(Piece):
             case Color.BLACK:
                 return "♝"
 
-    def moves():
-        pass
+    def moves(self):
+        return diagonal_moves(self)
 
     @property
     def value(self):
