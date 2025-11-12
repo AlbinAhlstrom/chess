@@ -1,3 +1,5 @@
+from typing import Iterable
+
 from chess import Coordinate
 from pieces import Piece
 
@@ -25,3 +27,14 @@ def diagonal_moves(piece: Piece):
         if 0 <= pos.row + offset < 8 and 0 <= pos.col - offset < 8
     }
     return (diagonal | inverted_diagonal) - {Coordinate(pos.row, pos.col)}
+
+
+def limit_distance(
+    piece: Piece, moves: Iterable[Coordinate], limit: int
+) -> set[Coordinate]:
+    return {
+        move
+        for move in moves
+        if abs(piece.position.row - move.row) <= limit
+        and abs(piece.position.col - move.col) <= limit
+    }
