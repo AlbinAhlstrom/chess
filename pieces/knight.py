@@ -1,4 +1,4 @@
-from board import Color, Coordinate
+from chess import Color, Coordinate
 from pieces import Piece
 
 

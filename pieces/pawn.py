@@ -1,4 +1,4 @@
-from board import Color, Coordinate
+from chess import Color, Coordinate
 from pieces import Piece
 
 
@@ -19,10 +19,13 @@ class Pawn(Piece):
     def moves(self):
         pos = self.position
 
-        if self.color == Color.WHITE:
+        print(self.color)
+        if self.color.value == 1:
             move_offsets = (-1,) if self.has_moved else (-1, -2)
-        else:
+        elif self.color.value == 0:
             move_offsets = (1,) if self.has_moved else (1, 2)
+        else:
+            raise AttributeError(f"Invalid piece {color=}")
 
         return {
             Coordinate(pos.row + move, pos.col)

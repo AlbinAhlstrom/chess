@@ -1,6 +1,6 @@
 from math import inf
 
-from board import Color
+from chess import Color
 from pieces import Piece
 from pieces.movement import straight_moves, diagonal_moves, limit_distance
 

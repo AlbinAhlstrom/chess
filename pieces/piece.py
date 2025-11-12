@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from board import Color, Coordinate
+from chess import Color, Coordinate
 
 
 class Piece(ABC):

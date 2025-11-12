@@ -49,14 +49,10 @@ class Coordinate:
         Returns:
             bool: True if row and col attributes match, else False
         """
-        return (
-            isinstance(other, Coordinate)
-            and self.row == other.row
-            and self.col == other.col
-        )
+        return self.row == other.row and self.col == other.col
 
     def __repr__(self):
-        return f"Coordinate({self.row}, {self.col})"
+        return f"Coordinate(row={self.row}, col={self.col})"
 
     def __hash__(self):
         return hash((self.row, self.col))
