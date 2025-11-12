@@ -3,22 +3,27 @@ from pieces import Piece
 
 
 def straight_moves(piece: Piece):
-    p = piece.position
+    pos = piece.position
 
-    horizontal_moves = {Coordinate(p.row, col) for col in range(0, 8)}
-    vertical_moves = {Coordinate(row, p.col) for row in range(0, 8)}
+    horizontal_moves = {Coordinate(pos.row, col) for col in range(0, 8)}
+    vertical_moves = {Coordinate(row, pos.col) for row in range(0, 8)}
 
-    return (horizontal_moves | vertical_moves) - {Coordinate(p.row, p.col)}
+    return (horizontal_moves | vertical_moves) - {Coordinate(pos.row, pos.col)}
 
 
 def diagonal_moves(piece: Piece):
-    p = piece.position
+    pos = piece.position
 
-    cols = [p.col + i for i in range(-7, 8) if 0 <= p.col + i < 8]
-    rows = [p.row + i for i in range(-7, 8) if 0 <= p.row + i < 8]
-    inv_rows = [p.row - i for i in range(-7, 8) if 0 <= p.row - i < 8]
+    diagonal = {
+        Coordinate(pos.row + offset, pos.col + offset)
+        for offset in range(-7, 8)
+        if 0 <= pos.row + offset < 8 and 0 <= pos.col + offset < 8
+    }
+    inverted_diagonal = {
+        Coordinate(pos.row + offset, pos.col - offset)
+        for offset in range(-7, 8)
+        if 0 <= pos.row + offset < 8 and 0 <= pos.col - offset < 8
+    }
+    moves = (diagonal | inverted_diagonal) - {Coordinate(pos.row, pos.col)}
 
-    diag = {Coordinate(row, col) for row, col in zip(rows, cols)}
-    inv_diag = {Coordinate(row, col) for row, col in zip(inv_rows, cols)}
-
-    return (diag | inv_diag) - {Coordinate(p.row, p.col)}
+    return moves
