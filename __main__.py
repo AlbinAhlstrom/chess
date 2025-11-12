@@ -1,9 +1,25 @@
 from pieces import Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook, Pawn
-from chess import Color, Coordinate, BoardState
+from chess import Color, Coordinate, Board
 
 
 def main():
-    def setup_starting_board():
+    """Set up and print the initial chess board.
+
+    This function initializes an 8x8 chess board with all pieces in their
+    standard starting positions. It prints the board layout and example moves
+    for a sample pawn.
+
+    Example:
+        printed output:
+        [[♜, ♞, ♝, ♛, ♚, ♝, ♞, ♜], ...]
+    """
+
+    def setup_starting_board() -> list[list[Piece]]:
+        """Return a list of lists representing the starting chess board.
+
+        Returns:
+            8x8 board with pieces in standard starting positions.
+        """
         piece_order = [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]
 
         board = [[None for _ in range(8)] for _ in range(8)]
@@ -29,7 +45,7 @@ def main():
     en_passant_square = None
     halfmove_clock = 0
 
-    state = BoardState(
+    board = Board(
         board,
         history,
         player_to_move,
@@ -37,7 +53,7 @@ def main():
         en_passant_square,
         halfmove_clock,
     )
-    for row in state.board:
+    for row in board.board:
         row = [char or 0 for char in row]
         print(row)
 

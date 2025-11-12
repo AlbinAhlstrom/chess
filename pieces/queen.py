@@ -4,6 +4,11 @@ from pieces.movement import straight_moves, diagonal_moves
 
 
 class Queen(Piece):
+    """Queen piece representation.
+
+    Moves any number of squares, straight or diagonally.
+    """
+
     def __str__(self):
         match self.color:
             case Color.WHITE:

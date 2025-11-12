@@ -3,6 +3,11 @@ from pieces import Piece
 
 
 class Knight(Piece):
+    """Knight piece representation.
+
+    Moves two squares in one direction and one square perpendicular.
+    """
+
     def __str__(self):
         match self.color:
             case Color.WHITE:

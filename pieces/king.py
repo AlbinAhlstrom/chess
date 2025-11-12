@@ -6,6 +6,12 @@ from pieces.movement import straight_moves, diagonal_moves, limit_distance
 
 
 class King(Piece):
+    """King piece representation.
+
+    Moves one square in any direction.
+    Special rules for castling and check are implemented in Board.legal_move.
+    """
+
     def __str__(self):
         match self.color:
             case Color.WHITE:

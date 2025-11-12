@@ -4,6 +4,11 @@ from pieces.movement import diagonal_moves
 
 
 class Bishop(Piece):
+    """Bishop piece representation.
+
+    Moves any number of squares diagonally.
+    """
+
     def __str__(self):
         match self.color:
             case Color.WHITE:

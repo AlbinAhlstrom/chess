@@ -3,6 +3,12 @@ from pieces import Piece
 
 
 class Pawn(Piece):
+    """Pawn piece representation.
+
+    Moves forward one square, or two squares if it has not yet moved.
+    Diagonal captures and en passant is implemented in Board.legal_moves.
+    """
+
     def __str__(self):
         match self.color:
             case Color.WHITE:

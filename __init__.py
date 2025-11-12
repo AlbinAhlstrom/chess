@@ -1,1 +1,1 @@
-from board import Coordinate, Color, BoardState
+from board import Coordinate, Color, Board

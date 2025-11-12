@@ -4,6 +4,11 @@ from pieces.movement import straight_moves
 
 
 class Rook(Piece):
+    """Rook piece representation.
+
+    Moves any number of squares horizontally or vertically.
+    """
+
     def __str__(self):
         match self.color:
             case Color.WHITE:
