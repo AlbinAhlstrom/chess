@@ -60,9 +60,11 @@ class Square:
 
     def add_piece(piece: Piece):
         self.piece = piece
+        piece.position = self.coord
 
-    def remove_piece(piece: Piece):
+    def remove_piece():
         self.piece = None
+        piece.position = None
 
 
 class Coordinate:
