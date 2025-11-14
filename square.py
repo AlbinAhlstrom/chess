@@ -26,6 +26,36 @@ class Square:
         """Return algebraic notation (e.g., 'e4')."""
         return str(self.coord)
 
+    @classmethod
+    def from_string(cls, coord: str) -> Square:
+        """Create a Coordinate from a string.
+
+        Args:
+            coord: A 2-character algebraic square string (e.g. 'e4').
+
+        Returns:
+            Coordinate: The corresponding board coordinate.
+
+        Raises:
+            ValueError: If the input is invalid.
+        """
+        if len(notation) != 2:
+            raise ValueError(f"Invalid length of {coord=}")
+
+        file_char = notation[0].lower()
+        rank_char = notation[1]
+
+        if file_char < "a" or file_char > "h":
+            raise ValueError(f"Invalid file in {coord=}")
+
+        if rank_char < "1" or rank_char > "8":
+            raise ValueError(f"Invalid rank in {coord=}")
+
+        col = ord(file_char) - ord("a")
+        row = 8 - int(rank_char)
+
+        return cls(row, col)
+
 
 class Coordinate:
     """Represents a coordinate on a chessboard.
