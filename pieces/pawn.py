@@ -1,5 +1,5 @@
-from chess import Color, Coordinate
-from pieces import Piece
+from chess.square import Square
+from chess.pieces import Color, Piece
 
 
 class Pawn(Piece):
@@ -29,7 +29,7 @@ class Pawn(Piece):
             raise AttributeError(f"Invalid piece {color=}")
 
         return {
-            Coordinate(pos.row + move, pos.col)
+            Square(pos.row + move, pos.col)
             for move in move_offsets
             if 0 <= pos.row + move < 8
         }

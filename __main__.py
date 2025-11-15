@@ -1,4 +1,4 @@
-from pieces import Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook, Pawn
+from chess.pieces import Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook, Pawn
 from chess.board import Board
 
 

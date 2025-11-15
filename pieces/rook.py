@@ -1,6 +1,5 @@
-from chess import Color
-from pieces import Piece
-from pieces.movement import straight_moves
+from chess.pieces import Color, Piece
+from chess.pieces.movement import straight_moves
 
 
 class Rook(Piece):

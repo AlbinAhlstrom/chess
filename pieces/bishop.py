@@ -1,6 +1,5 @@
-from board import Color
-from pieces import Piece
-from pieces.movement import diagonal_moves
+from chess.pieces import Color, Piece
+from chess.pieces.movement import diagonal_moves
 
 
 class Bishop(Piece):

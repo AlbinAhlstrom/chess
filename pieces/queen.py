@@ -1,6 +1,5 @@
-from chess import Color
-from pieces import Piece
-from pieces.movement import straight_moves, diagonal_moves
+from chess.pieces import Color, Piece
+from chess.pieces.movement import straight_moves, diagonal_moves
 
 
 class Queen(Piece):

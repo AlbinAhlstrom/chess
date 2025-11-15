@@ -1,5 +1,5 @@
-from chess import Color, Coordinate
-from pieces import Piece
+from chess.square import Square
+from chess.pieces import Color, Piece
 
 
 class Knight(Piece):
@@ -20,7 +20,7 @@ class Knight(Piece):
         pos = self.position
         offsets = (-2, -1, 1, 2)
         return {
-            Coordinate(pos.row + row_offset, pos.col + column_offset)
+            Square(pos.row + row_offset, pos.col + column_offset)
             for row_offset in offsets
             for column_offset in offsets
             if abs(row_offset) != abs(column_offset)

@@ -1,8 +1,7 @@
 from math import inf
 
-from chess import Color
-from pieces import Piece
-from pieces.movement import straight_moves, diagonal_moves, limit_distance
+from chess.pieces import Piece, Color
+from chess.pieces.movement import straight_moves, diagonal_moves, limit_distance
 
 
 class King(Piece):
