@@ -1,3 +1,10 @@
+from string import ascii_lowercase
+
+from chess.pieces import Rook, Knight, Bishop, Queen, King, Pawn, Color
+from chess.square import Square
+from chess.move import Move
+
+
 class Board:
     """Represents the current state of a chessboard.
 
@@ -11,7 +18,7 @@ class Board:
         history: list[Board],
         player_to_move: Color,
         castling_allowed: list[Color],
-        en_passant_square: Coordinate | None,
+        en_passant_square: Square | None,
         halfmove_clock: int,
     ):
         """
@@ -29,6 +36,9 @@ class Board:
         self.castling_allowed = castling_allowed
         self.en_passant_square = en_passant_square
         self.halfmove_clock = halfmove_clock
+        self.pieces = [
+            piece for row in self.board for piece in row if piece is not None
+        ]
 
     @classmethod
     def starting_setup(cls) -> Board:
@@ -37,21 +47,16 @@ class Board:
         Returns:
             8x8 board with pieces in standard starting positions.
         """
-        piece_order = [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]
+        pieces = [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]
+        board = [[Square((row, col)) for row in rows] for col in cols]
 
-        board = [[None for _ in range(8)] for _ in range(8)]
+        for b_square, w_square, piece in zip(board[0], board[6], pieces):
+            b_square.add_piece(piece(Color.BLACK))
+            w_square.add_piece(piece(Color.WHITE))
 
-        board[1] = [Pawn(Color.BLACK, Coordinate(1, col)) for col in range(8)]
-        board[6] = [Pawn(Color.WHITE, Coordinate(6, col)) for col in range(8)]
-
-        board[0] = [
-            piece(Color.BLACK, Coordinate(0, col))
-            for col, piece in enumerate(piece_order)
-        ]
-        board[7] = [
-            piece(Color.WHITE, Coordinate(7, col))
-            for col, piece in enumerate(piece_order)
-        ]
+        for b_square, w_square, piece in zip(board[1], board[7]):
+            b_square.add_piece(Pawn(Color.BLACK))
+            w_square.add_piece(Pawn(Color.WHITE))
 
         return cls(
             board=board,
@@ -61,6 +66,9 @@ class Board:
             en_passant_square=None,
             halfmove_clock=0,
         )
+
+    def move_piece(self, move):
+        pass
 
     @property
     def repetitions_of_position(self) -> int:
