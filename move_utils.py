@@ -33,7 +33,7 @@ def get_line_from(square: Square, direction: Direction):
     line = []
 
     while 0 <= row < 8 and 0 <= col < 8:
-        line.append(Coordinate(row, col))
+        line.append(Square((row, col)))
         row += row_increment
         col += col_increment
 
