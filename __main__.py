@@ -31,7 +31,7 @@ def main():
     game = Game()
     while True:
         game.render()
-        game.debug_move()
+        game.take_turn()
 
 
 if __name__ == "__main__":
