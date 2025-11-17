@@ -4,6 +4,7 @@ from chess.board import Board
 from chess.move import Move
 from chess.piece.color import Color
 from chess.piece.sliding_piece import SlidingPiece
+from chess.piece.pawn import Pawn
 
 
 class Game:
@@ -62,6 +63,10 @@ class Game:
 
         if target and target.color == self.current_player:
             print("Can't capture own piece")
+            return False
+
+        if isinstance(piece, Pawn) and end.col != start.col and target is None:
+            print("Can only move pawn diagonal to capture")
             return False
 
         return self.board.path_is_clear(move.start, move.end)
