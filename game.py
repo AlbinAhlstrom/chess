@@ -34,17 +34,21 @@ class Game:
 
     def move_is_legal(self, move):
         """Determine if a move is legal.
-        - Checking if piece belongs to current player
-        - Valid movement patterns
-        TODO: Checks for check
-        TODO: Castling/en passant rules
+        - Has to move a piece of the current players color
+        - Movement has to correspond to the pieces capabilities
+        - Capturing own pieces is not allowed
+        - Path has to be clear (Doesn't apply for knights)
+        TODO: - Pawn can only move diagonal if capturing or en passant
+        TODO: - Can't move into check
+        TODO: - Must unckeck oneself if in check
+        TODO: - Castling is allowed
         """
         start = move.start
         end = move.end
         piece = move.start.piece
         target = move.end.piece
 
-        if not start.is_occupied:
+        if not piece is None:
             print("No piece")
             return False
 
