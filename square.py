@@ -14,7 +14,17 @@ class Square:
         self, coordinate: str | tuple | "Coordinate", piece: Optional["Piece"] = None
     ):
         self.coordinate = Coordinate.from_any(coordinate)
-        self.piece = piece
+        self._piece = piece
+
+    @property
+    def piece(self):
+        return self._piece
+
+    @piece.setter
+    def piece(self, piece):
+        if piece is not None:
+            piece.square = self
+        self._piece = piece
 
     @property
     def row(self) -> int:

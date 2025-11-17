@@ -68,8 +68,11 @@ class Board:
 
     def make_move(self, move: Move):
         piece = move.start.piece
+        if move.end.piece:
+            move.end.piece.square = None
         move.start.piece = None
         move.end.piece = piece
+        piece.has_moved = True
 
     def path_is_clear(self, start_square: Square, end_square: Square) -> bool:
         piece = start_square.piece
