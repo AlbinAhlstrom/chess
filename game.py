@@ -79,8 +79,12 @@ class Game:
 
     def take_turn(self):
         move_str = input("Enter a move: ")
-        start_square = self.board.get_square(move_str[:2])
-        end_square = self.board.get_square(move_str[2:])
+        try:
+            start_square = self.board.get_square(move_str[:2])
+            end_square = self.board.get_square(move_str[2:])
+        except ValueError:
+            self.debug_square(self.board.get_square(move_str[:2]))
+            return
         move = Move(start_square, end_square)
         if self.move_is_legal(move):
             self.board.make_move(move)
@@ -88,9 +92,7 @@ class Game:
         else:
             print("Not a legal move")
 
-    def debug_move(self):
-        start_square = self.board.get_square(input("Enter a square: "))
-
-        for square in start_square.piece.moves:
-            print(str(square))
-        self.switch_turn()
+    def debug_square(self, square):
+        print(f"{square=}")
+        if square.piece is not None:
+            print(f"{[str(square) for square in square.piece.moves]}")
