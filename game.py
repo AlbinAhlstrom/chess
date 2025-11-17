@@ -48,7 +48,7 @@ class Game:
         piece = move.start.piece
         target = move.end.piece
 
-        if not piece is None:
+        if piece is None:
             print("No piece")
             return False
 
