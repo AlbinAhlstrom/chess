@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 from dataclasses import dataclass
 from enum import Enum
 
@@ -23,8 +23,7 @@ class Piece(ABC):
     square: Square = None
     has_moved: bool = False
 
-    @property
-    @abstractmethod
+    @abstractproperty
     def moves(self, board: Board) -> list[Square]:
         """Return all theoretically possible moves for the piece.
 
@@ -46,17 +45,15 @@ class Piece(ABC):
         Returns:
             List of coordinates the piece can move to.
         """
-        pass
+        ...
 
-    @property
-    @abstractmethod
+    @abstractproperty
     def value(self) -> int:
         """Return the conventional point value of the piece."""
-        pass
+        ...
 
     @abstractmethod
-    def __str__(self):
-        pass
+    def __str__(self): ...
 
     def __repr__(self):
         # TODO: Return proper repr once board representation is implemented
