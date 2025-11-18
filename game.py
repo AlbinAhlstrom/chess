@@ -24,6 +24,7 @@ class Game:
 
         self.is_over = False
         self.winner = None
+        self.move_history = []
 
     def switch_turn(self):
         """Switch current player to the opponent."""
