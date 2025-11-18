@@ -86,14 +86,6 @@ class Game:
 
     def take_turn(self):
         self.board.history.append(self.board.copy())
-        move_str = input("Enter a move (e.g. e2e4) or square to debug: ")
-        try:
-            start_square = self.board.get_square(move_str[:2])
-            end_square = self.board.get_square(move_str[2:])
-        except ValueError:
-            self.debug_square(self.board.get_square(move_str[:2]))
-            return
-        move = Move(start_square, end_square)
         if self.move_is_legal(move):
             self.board.make_move(move)
             print(f"{move.is_double_pawn_push=}")
@@ -102,10 +94,3 @@ class Game:
             self.switch_turn()
         else:
             print("Not a legal move")
-
-    def debug_square(self, square):
-        print(f"{square=}")
-        if square.piece is not None:
-            print(f"{[str(square) for square in square.piece.moves]}")
-            if isinstance(square.piece, Pawn):
-                print(f"{square.piece.en_passant_square}")
