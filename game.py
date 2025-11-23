@@ -88,6 +88,9 @@ class Game:
             pieces = [self.board.get_square((row, col)).piece or 0 for col in range(8)]
             print(pieces)
 
+    def undo_move():
+        self.board = self.history.pop(-1)
+
     def take_turn(self):
         move = get_move_from_input(self.board)
         if self.move_is_legal(move):
