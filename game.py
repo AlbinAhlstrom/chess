@@ -133,11 +133,17 @@ class Game:
             print(pieces)
 
     def king_left_in_check(self, move: Move) -> bool:
-        self.add_to_history()
-        self.execute_piece_movement(move)
+        start_piece = move.start.piece
+        end_piece = move.end.piece
+
+        move.start.piece = None
+        move.end.piece = move.piece
+
         check = self.board.current_player_in_check
-        self.undo_last_move()
-        self.switch_current_player()
+
+        move.start.piece = start_piece
+        move.end.piece = end_piece
+
         return check
 
     def make_move(self, move: Move):
