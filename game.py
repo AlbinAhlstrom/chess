@@ -27,6 +27,9 @@ class Game:
         """Switch current player to the opponent."""
         self.current_player = self.current_player.opposite
 
+    def add_to_history(self):
+        self.history.append(self.board)
+
     def move_is_legal(self, move):
         """Determine if a move is legal.
         - Has to move a piece of the current players color

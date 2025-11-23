@@ -30,7 +30,9 @@ def main():
 
     game = Game()
     while True:
+        game.add_to_history()
         game.render()
+        print(f"Current players king in check={game.board.current_player_in_check}")
         game.take_turn()
 
 
