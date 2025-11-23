@@ -18,7 +18,6 @@ class Board:
         halfmove_clock: int,
     ):
         self.board = board
-        self.history = history
         self.player_to_move = player_to_move
         self.castling_allowed = castling_allowed
         self.en_passant_square = en_passant_square
@@ -52,7 +51,6 @@ class Board:
 
         return cls(
             board=board,
-            history=[board.copy()],
             player_to_move=Color.WHITE,
             castling_allowed=[Color.WHITE, Color.BLACK],
             en_passant_square=None,
@@ -149,7 +147,3 @@ class Board:
         )
 
         return False
-
-    @property
-    def repetitions_of_position(self) -> int:
-        return sum(1 for past in self.history if past.board == self.board)
