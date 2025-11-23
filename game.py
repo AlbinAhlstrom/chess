@@ -24,6 +24,7 @@ class Game:
 
     def switch_turn(self):
         """Switch current player to the opponent."""
+        self.history.append(self.board)
         self.current_player = self.current_player.opposite
         self.board.player_to_move = self.current_player
 
