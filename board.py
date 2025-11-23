@@ -75,6 +75,14 @@ class Board:
     def pieces(self):
         return [square.piece for square in self.squares if square.piece]
 
+    @property
+    def white_pieces(self):
+        return [piece for piece in self.pieces if piece.color == Color.WHITE]
+
+    @property
+    def black_pieces(self):
+        return [piece for piece in self.pieces if piece.color == Color.BLACK]
+
     def make_move(self, move: Move):
         piece = move.piece
         if move.target_piece or move.is_en_passant:
