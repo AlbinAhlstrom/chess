@@ -65,6 +65,12 @@ def main():
 
     game = Game()
     while True:
+        if game.is_checkmate:
+            print("Checkmate!")
+            break
+        if game.is_draw:
+            print("Draw!")
+            break
         game.render()
         action = input("Enter a move: ")
         execute_action(action, game)
