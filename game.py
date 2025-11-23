@@ -3,6 +3,7 @@ from typing import Optional
 from chess.board import Board
 from chess.move import Move
 from chess.piece.color import Color
+from chess.square import Coordinate
 from chess.piece.sliding_piece import SlidingPiece
 from chess.piece.pawn import Pawn
 
