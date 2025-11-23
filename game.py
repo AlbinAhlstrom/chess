@@ -21,12 +21,11 @@ class Game:
         self.is_over = False
         self.winner = None
         self.history = []
+        self.last_move: Move = None
 
-    def switch_turn(self):
+    def switch_current_player(self):
         """Switch current player to the opponent."""
-        self.history.append(self.board)
         self.current_player = self.current_player.opposite
-        self.board.player_to_move = self.current_player
 
     def move_is_legal(self, move):
         """Determine if a move is legal.
