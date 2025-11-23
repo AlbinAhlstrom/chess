@@ -82,17 +82,34 @@ class Game:
             pieces = [self.board.get_square((row, col)).piece or 0 for col in range(8)]
             print(pieces)
 
-    def undo_move(self):
-        self.board = self.history.pop(-1)
-
     def take_turn(self):
         move = self.get_move_from_input()
         if self.move_is_legal(move):
-            self.board.make_move(move)
-            self.switch_turn()
-            self.history.append(self.board.copy())
+            self.make_move(move)
+            self.last_move = move
+            self.switch_current_player()
         else:
             print("Not a legal move")
+
+    def make_move(self, move: Move):
+        if move.target_piece or move.is_en_passant:
+            move.target_piece.square.piece = None
+        move.start.piece = None
+        move.end.piece = move.piece
+        move.piece.has_moved = True
+
+    def undo_move(self, move: Move):
+        if move.is_en_passant:
+            move.end.piece = None
+            original_location = Coordinate(move.start.row, move.end.col)
+            capture_square = self.board.get_square(original_location)
+            capture_square.piece = move.target_piece
+        else:
+            move.end.piece = move.target_piece
+        move.start.piece = move.piece
+
+        self.board = self.history.pop(-1)
+        self.switch_current_player()
 
     @property
     def repetitions_of_position(self) -> int:
