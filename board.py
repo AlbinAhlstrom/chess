@@ -68,9 +68,9 @@ class Board:
         return self.get_square(coordinate).piece
 
     def make_move(self, move: Move):
-        piece = move.start.piece
-        if move.end.piece:
-            move.end.piece.square = None
+        piece = move.piece
+        if move.target_piece or move.is_en_passant:
+            move.target_piece.square.piece = None
         move.start.piece = None
         move.end.piece = piece
         piece.has_moved = True

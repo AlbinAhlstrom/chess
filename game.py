@@ -67,8 +67,6 @@ class Game:
             print("Can't capture own piece")
             return False
 
-        print(f"{end=}")
-        print(f"{self.board.en_passant_square=}")
         if (
             isinstance(piece, Pawn)
             and end.col != start.col
@@ -91,9 +89,6 @@ class Game:
         move = get_move_from_input(self.board)
         if self.move_is_legal(move):
             self.board.make_move(move)
-            print(f"{move.is_double_pawn_push=}")
-            if move.is_double_pawn_push:
-                self.board.en_passant_square = move.end.piece.en_passant_square
             self.switch_turn()
         else:
             print("Not a legal move")
