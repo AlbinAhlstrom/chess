@@ -83,24 +83,22 @@ class Game:
             pieces = [self.board.get_square((row, col)).piece or 0 for col in range(8)]
             print(pieces)
 
-    def take_turn(self):
-        move = self.get_move_from_input()
-        if self.move_is_legal(move):
-            self.make_move(move)
-            self.last_move = move
-            self.switch_current_player()
-        else:
-            print("Not a legal move")
-
     def make_move(self, move: Move):
-        if move.is_double_pawn_push:
-            square = Coordinate(move.start.row + move.piece.direction, move.start.col)
-            self.board.en_passant_square = self.board.get_square(square)
+        self.execute_piece_movement(move)
+        self.last_move = move
+        self.switch_current_player()
+
+    def execute_piece_movement(self, move: Move):
         if move.target_piece or move.is_en_passant:
             move.target_piece.square.piece = None
+
         move.start.piece = None
         move.end.piece = move.piece
         move.piece.has_moved = True
+
+        if move.is_double_pawn_push:
+            en_passant_sq = self.board.get_square(move.piece.en_passant_square)
+            self.board.en_passant_square = en_passant_sq
 
     def undo_move(self, move: Move):
         if move.is_en_passant:
@@ -115,28 +113,11 @@ class Game:
         self.board = self.history.pop(-1)
         self.switch_current_player()
 
+    def undo_last_move(self) -> None:
+        if self.last_move is None:
+            raise AttributeError("Can't undo last move since it's not recorded.")
+        return self.undo_move(self.last_move)
+
     @property
     def repetitions_of_position(self) -> int:
         return sum(1 for past in self.history if past.board == self.board)
-
-    def get_move_from_string(self, move: str) -> Move:
-        try:
-            start_square = self.board.get_square(move[:2])
-            end_square = self.board.get_square(move[2:])
-        except ValueError:
-            print("Move must consist of two valid squares without separation")
-
-        piece = start_square.piece
-        target_piece = end_square.piece
-        move = Move(start_square, end_square, piece, target_piece)
-
-        if move.is_en_passant:
-            capture_square = Coordinate(start_square.row, end_square.col)
-            target_piece = self.board.get_square(capture_square).piece
-            move = Move(start_square, end_square, piece, target_piece)
-        return move
-
-    def get_move_from_input(self):
-        while True:
-            move_str = input("Enter a move (e.g. e2e4) or square to debug: ")
-            return self.get_move_from_string(move_str)

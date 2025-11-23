@@ -134,3 +134,16 @@ class Board:
         return any(
             [king.square.coordinate in piece.moves for piece in self.opponent_pieces]
         )
+
+    def get_move(self, start, end):
+        from chess.piece.pawn import Pawn
+
+        piece = start.piece
+        target_piece = end.piece
+
+        if end == self.en_passant_square and isinstance(piece, Pawn):
+            capture_square = Coordinate(start.row, end.col)
+            target_square = self.get_square(capture_square)
+            target_piece = target_square.piece
+
+        return Move(start, end, piece, target_piece)
