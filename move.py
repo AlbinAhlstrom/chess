@@ -9,7 +9,8 @@ class Move:
     start: Square
     end: Square
     piece: Piece
-    target_piece: Optional[Piece]
+    target_piece: Optional[Piece] = None
+    was_first_move: bool = False
     promotion_piece: Piece = None
     is_castling: bool = False
 
@@ -19,7 +20,7 @@ class Move:
 
     @property
     def is_capture(self) -> bool:
-        return self.piece_captured is not None or self.is_en_passant
+        return self.piece_captured is not None
 
     @property
     def is_double_pawn_push(self) -> bool:
