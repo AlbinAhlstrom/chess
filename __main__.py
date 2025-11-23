@@ -23,13 +23,15 @@ def execute_action(action: str, game):
         case "u":
             game.undo_last_move()
         case "0-0":
-            game.add_to_history()
-            game.board.short_castle()
-            game.switch_current_player()
+            if game.board.short_castle_allowed:
+                game.add_to_history()
+                game.board.short_castle()
+                game.switch_current_player()
         case "0-0-0":
-            game.add_to_history()
-            game.board.long_castle()
-            game.switch_current_player()
+            if game.board.long_castle_allowed:
+                game.add_to_history()
+                game.board.long_castle()
+                game.switch_current_player()
         case _:
             if len(action) != 4:
                 print("Move must consist of two valid squares without separation.")
