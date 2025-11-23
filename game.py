@@ -103,3 +103,28 @@ class Game:
     @property
     def repetitions_of_position(self) -> int:
         return sum(1 for past in self.history if past.board == self.board)
+
+    def get_move_from_input(self):
+        while True:
+            move_str = input("Enter a move (e.g. e2e4) or square to debug: ")
+            try:
+                start_square = self.board.get_square(move_str[:2])
+                end_square = self.board.get_square(move_str[2:])
+                piece = start_square.piece
+                target_piece = end_square.piece
+                break
+            except ValueError:
+                print("Invalid move")
+        move = Move(start_square, end_square, piece, target_piece)
+
+        if move.is_double_pawn_push:
+            en_passant_square = Coordinate(
+                start_square.row + piece.direction, start_square.col
+            )
+            self.board.en_passant_square = self.board.get_square(en_passant_square)
+
+        if move.is_en_passant:
+            capture_square = Coordinate(start_square.row, end_square.col)
+            target_piece = self.board.get_square(capture_square).piece
+            move = Move(start_square, end_square, piece, target_piece)
+        return move
