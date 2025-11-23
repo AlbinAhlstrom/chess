@@ -94,6 +94,9 @@ class Board:
 
         return True
 
+    def in_check() -> bool:
+        return False
+
     @property
     def repetitions_of_position(self) -> int:
         return sum(1 for past in self.history if past.board == self.board)
