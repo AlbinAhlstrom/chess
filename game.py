@@ -42,7 +42,7 @@ class Game:
         - Capturing own pieces is not allowed
         - Path has to be clear (Doesn't apply for knights)
         - Pawn can only move diagonal if capturing or en passant
-        TODO: - Can't move into check
+        TODO: *Current* - Can't move into check
         TODO: - Must unckeck oneself if in check
         TODO: - Castling is allowed
         """
