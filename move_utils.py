@@ -2,7 +2,6 @@ from enum import Enum
 from typing import Iterable
 
 from chess.square import Square, Coordinate
-from chess.board import Board
 
 
 class Direction(Enum):
