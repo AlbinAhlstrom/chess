@@ -87,8 +87,8 @@ class Game:
             print(pieces)
 
     def take_turn(self):
-        self.board.history.append(self.board.copy())
-        move = get_move_from_input(board)
+        self.board.history.append(self.board.board.copy())
+        move = get_move_from_input(self.board)
         if self.move_is_legal(move):
             self.board.make_move(move)
             print(f"{move.is_double_pawn_push=}")
