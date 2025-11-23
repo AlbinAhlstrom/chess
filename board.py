@@ -131,11 +131,6 @@ class Board:
         assert len(kings) == 1, "Multiple kings of same color found"
         king = kings[0]
 
-        print(
-            f"King in check = {any([king.square.coordinate in piece.moves for piece in self.opponent_pieces])}"
-        )
         return any(
             [king.square.coordinate in piece.moves for piece in self.opponent_pieces]
         )
-
-        return False
