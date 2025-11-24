@@ -20,7 +20,7 @@ class Pawn(Piece):
 
     @property
     def direction(self) -> int:
-        return -1 if self.color.value == 1 else 1
+        return -1 if self.color == Color.WHITE else 1
 
     @property
     def moves(self):

@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class Color(Enum):
+class Color(StrEnum):
     """Representation of piece/player color.
 
     Attributes:
@@ -9,8 +9,8 @@ class Color(Enum):
         WHITE: Represents white pieces/player.
     """
 
-    BLACK = 0
-    WHITE = 1
+    BLACK = "black"
+    WHITE = "white"
 
     @property
     def opposite(self):
