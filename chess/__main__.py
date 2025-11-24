@@ -73,7 +73,7 @@ def main():
             break
         game.render()
         print(game.board.fen)
-        player = "White" if game.current_player.value == 1 else "Black"
+        player = game.board.player_to_move
         print(f"Player to move: {player}")
         action = input("Enter a move: ")
         execute_action(action, game)

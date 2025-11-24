@@ -2,6 +2,7 @@ from chess.piece.color import Color
 from chess.piece.piece import Piece
 from chess.square import Square, Coordinate
 from chess.move import Move
+from typing import ClassVar
 
 
 class Board:
@@ -14,16 +15,17 @@ class Board:
         castling_allowed: list[Color],
         en_passant_square: Square | None,
         halfmove_clock: int,
+        fullmove_count: int,
     ):
         self.board = board
         self.player_to_move = player_to_move
         self.castling_allowed = castling_allowed
         self.en_passant_square = en_passant_square
         self.halfmove_clock = halfmove_clock
+        self.fullmove_count = fullmove_count
 
     @classmethod
     def starting_setup(cls) -> "Board":
-        """Create the initial chessboard setup."""
         from chess.piece.rook import Rook
         from chess.piece.knight import Knight
         from chess.piece.bishop import Bishop
@@ -53,10 +55,127 @@ class Board:
             castling_allowed=[Color.WHITE, Color.BLACK],
             en_passant_square=None,
             halfmove_clock=0,
+            fullmove_count=1,
+        )
+
+    @classmethod
+    def from_fen(cls, fen: str) -> "Board":
+        from chess.piece.rook import Rook
+        from chess.piece.knight import Knight
+        from chess.piece.bishop import Bishop
+        from chess.piece.queen import Queen
+        from chess.piece.king import King
+        from chess.piece.pawn import Pawn
+
+        piece_map = {
+            "R": Rook,
+            "N": Knight,
+            "B": Bishop,
+            "Q": Queen,
+            "K": King,
+            "P": Pawn,
+        }
+
+        fen_parts = fen.split()
+        if len(fen_parts) != 6:
+            raise ValueError("Invalid FEN string format: Must contain 6 fields.")
+
+        (
+            fen_placement,
+            fen_active_color,
+            fen_castling,
+            fen_en_passant,
+            fen_halfmove_clock,
+            fen_fullmove_number,
+        ) = fen_parts
+
+        board = {}
+        for r in range(8):
+            for c in range(8):
+                board[(r, c)] = Square((r, c))
+
+        current_row = 0
+        current_col = 0
+
+        for char in fen_placement:
+            if char == "/":
+                current_row += 1
+                current_col = 0
+            elif char.isdigit():
+                current_col += int(char)
+            else:
+                is_white = char.isupper()
+                piece_color = Color.WHITE if is_white else Color.BLACK
+
+                piece_type = piece_map.get(char.upper())
+                if piece_type is None:
+                    raise ValueError(f"Invalid piece character in FEN: {char}")
+
+                piece = piece_type(piece_color)
+                square = board[(current_row, current_col)]
+                square.add_piece(piece)
+                current_col += 1
+
+        player_to_move = Color.WHITE if fen_active_color == "w" else Color.BLACK
+
+        castling_allowed = [Color.WHITE, Color.BLACK]
+
+        if "K" not in fen_castling:
+            king_w = board.get((7, 4)).piece
+            rook_h1 = board.get((7, 7)).piece
+            if isinstance(king_w, King):
+                king_w.has_moved = True
+            if isinstance(rook_h1, Rook):
+                rook_h1.has_moved = True
+
+        if "Q" not in fen_castling:
+            king_w = board.get((7, 4)).piece
+            rook_a1 = board.get((7, 0)).piece
+            if isinstance(king_w, King):
+                king_w.has_moved = True
+            if isinstance(rook_a1, Rook):
+                rook_a1.has_moved = True
+
+        if "k" not in fen_castling:
+            king_b = board.get((0, 4)).piece
+            rook_h8 = board.get((0, 7)).piece
+            if isinstance(king_b, King):
+                king_b.has_moved = True
+            if isinstance(rook_h8, Rook):
+                rook_h8.has_moved = True
+
+        if "q" not in fen_castling:
+            king_b = board.get((0, 4)).piece
+            rook_a8 = board.get((0, 0)).piece
+            if isinstance(king_b, King):
+                king_b.has_moved = True
+            if isinstance(rook_a8, Rook):
+                rook_a8.has_moved = True
+
+        en_passant_square = None
+        if fen_en_passant != "-":
+            try:
+                coord = Coordinate.from_any(fen_en_passant)
+                en_passant_square = board[(coord.row, coord.col)]
+            except Exception:
+                en_passant_square = None
+
+        try:
+            halfmove_clock = int(fen_halfmove_clock)
+            fullmove_count = int(fen_fullmove_number)
+        except ValueError:
+            raise ValueError("FEN halfmove clock and fullmove number must be integers.")
+
+        return cls(
+            board=board,
+            player_to_move=player_to_move,
+            castling_allowed=castling_allowed,
+            en_passant_square=en_passant_square,
+            halfmove_clock=halfmove_clock,
+            fullmove_count=fullmove_count,
         )
 
     def get_square(self, coordinate):
-        """Retrieve a square by tuple or algebraic notation (e.g. 'e4')."""
         coord = Coordinate.from_any(coordinate)
         return self.board[(coord.row, coord.col)]
 
@@ -89,10 +208,10 @@ class Board:
         return [piece for piece in self.pieces if piece.color == Color.BLACK]
 
     @property
-    def current_players_pieces(self):
+    def current_players_pieces(self) -> list[Piece]:
         if self.player_to_move == Color.WHITE:
             return self.white_pieces
-        elif self.player_to_move == Color.BLACK:
+        else:
             return self.black_pieces
 
     @property
@@ -304,23 +423,74 @@ class Board:
         self.get_square(rook_square).piece = rook
 
     @property
-    def fen(self):
+    def fen(self) -> str:
         strings = []
         for row in range(8):
             empty_squares = 0
             chars = ""
             for col in range(8):
                 square = self.get_square((row, col))
+
                 if not square.is_occupied:
                     empty_squares += 1
                     continue
 
                 if empty_squares > 0:
                     chars += str(empty_squares)
+                    empty_squares = 0
+
                 chars += square.piece.char
+
             if empty_squares > 0:
                 chars += str(empty_squares)
+
             strings.append(chars)
 
-        fen_string = "/".join(strings)
-        return fen_string
+        fen_piece_placement = "/".join(strings)
+
+        fen_active_color = "w" if self.player_to_move == Color.WHITE else "b"
+
+        fen_castling = self._get_castling_fen_string()
+
+        fen_en_passant = str(self.en_passant_square) if self.en_passant_square else "-"
+
+        fen_halfmove_clock = str(self.halfmove_clock)
+
+        fen_fullmove_number = str(self.fullmove_count)
+
+        return " ".join(
+            [
+                fen_piece_placement,
+                fen_active_color,
+                fen_castling,
+                fen_en_passant,
+                fen_halfmove_clock,
+                fen_fullmove_number,
+            ]
+        )
+
+    def _get_castling_fen_string(self) -> str:
+        from chess.piece.king import King
+        from chess.piece.rook import Rook
+
+        rights = ""
+
+        king_w = self.get_piece("e1")
+        if isinstance(king_w, King) and not king_w.has_moved:
+            rook_h1 = self.get_piece("h1")
+            if isinstance(rook_h1, Rook) and not rook_h1.has_moved:
+                rights += "K"
+            rook_a1 = self.get_piece("a1")
+            if isinstance(rook_a1, Rook) and not rook_a1.has_moved:
+                rights += "Q"
+
+        king_b = self.get_piece("e8")
+        if isinstance(king_b, King) and not king_b.has_moved:
+            rook_h8 = self.get_piece("h8")
+            if isinstance(rook_h8, Rook) and not rook_h8.has_moved:
+                rights += "k"
+            rook_a8 = self.get_piece("a8")
+            if isinstance(rook_a8, Rook) and not rook_a8.has_moved:
+                rights += "q"
+
+        return rights if rights else "-"

@@ -3,10 +3,8 @@ from typing import Optional
 
 from chess.board import Board
 from chess.move import Move
-from chess.piece.color import Color
-from chess.square import Coordinate
-from chess.piece.sliding_piece import SlidingPiece
 from chess.piece.pawn import Pawn
+from chess.piece.color import Color
 
 
 class Game:
@@ -18,16 +16,13 @@ class Game:
 
     def __init__(self, board: Optional[Board] = None):
         self.board = board or Board.starting_setup()
-        self.current_player = Color.WHITE
-
         self.is_over = False
         self.winner = None
         self.history = []
 
     def switch_current_player(self):
         """Switch current player to the opponent."""
-        self.current_player = self.current_player.opposite
-        self.board.player_to_move = self.current_player
+        self.board.player_to_move = self.board.player_to_move.opposite
 
     def add_to_history(self):
         self.history.append(deepcopy(self.board))
@@ -54,7 +49,7 @@ class Game:
                 print("No piece")
             return False
 
-        if piece.color != self.current_player:
+        if piece.color != self.board.player_to_move:
             if verbose:
                 print("Wrong piece color")
             return False
@@ -64,7 +59,7 @@ class Game:
                 print("Move not in piece moveset")
             return False
 
-        if target and target.color == self.current_player:
+        if target and target.color == self.board.player_to_move:
             if verbose:
                 print("Can't capture own piece")
             return False
@@ -161,6 +156,17 @@ class Game:
         self.add_to_history()
         self.execute_piece_movement(move)
         self.switch_current_player()
+        self.increment_turn_counters(move)
+
+    def increment_turn_counters(self, move: Move):
+        is_pawn_move = isinstance(move.piece, Pawn)
+        if is_pawn_move or move.is_capture:
+            self.board.halfmove_clock = 0
+        else:
+            self.board.halfmove_clock += 1
+
+        if self.board.player_to_move == Color.WHITE:
+            self.board.fullmove_count += 1
 
     def execute_piece_movement(self, move: Move):
         if move.target_piece:

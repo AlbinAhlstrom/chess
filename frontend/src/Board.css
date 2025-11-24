@@ -1,0 +1,20 @@
+/* frontend/src/Board.css */
+
+.chessboard-container {
+    /* Center the board */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+.chessboard {
+    /* Set size and use CSS Grid for 8x8 layout */
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    width: 600px; /* Adjust size as needed */
+    height: 600px; 
+    border: 4px solid #333; /* Board frame */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
