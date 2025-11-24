@@ -1,52 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import Square from './Square';
+import { fenToBoardArray } from './fenUtils';
 import './Board.css';
 
 function Board() {
-  const [fen, setFen] = useState('Loading...');
-  const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
-  const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-  const squares = [];
+    const [boardArray, setBoardArray] = useState(Array(8).fill(Array(8).fill(null)));
+    const [fen, setFen] = useState('Loading...'); 
 
-  useEffect(() => {
-    fetch('/api/board')
-      .then(response => response.json())
-      .then(data => {
-        setFen(data.fen);
-      })
-      .catch(error => {
-        console.error('Error fetching board state:', error);
-        setFen('Error loading board.');
-      });
-  }, []);
+    useEffect(() => {
+        fetch('/api/board') 
+            .then(res => res.json())
+            .then(data => {
+                const fenString = data.fen; 
+                setFen(fenString);
 
-  for (let i = 0; i < 8; i++) {
-    for (let j = 0; j < 8; j++) {
+                const newBoardArray = fenToBoardArray(fenString);
 
-      const rank = ranks[i];
-      const file = files[j];
+                setBoardArray(newBoardArray); 
+            })
+            .catch(error => console.error('Error fetching FEN:', error));
+    }, []);
 
-      const color = (i + j) % 2 === 0 ? 'light' : 'dark';
+    const isLight = (row, col) => (row + col) % 2 === 0;
 
-      squares.push(
-        <Square 
-          key={`${file}${rank}`}
-          color={color}
-          rank={rank}
-          file={file}
-        />
-      );
-    }
-  }
-
-  return (
-    <div className="chessboard-container">
-      <h2>Current FEN: {fen}</h2> 
-      <div className="chessboard">
-        {squares}
-      </div>
-    </div>
-  );
+    return (
+        <div className="chessboard-container">
+            <div className="chessboard">
+                {boardArray.map((row, rowIndex) => (
+                    row.map((pieceChar, colIndex) => (
+                        <Square 
+                            key={`${rowIndex}-${colIndex}`}
+                            isLight={isLight(rowIndex, colIndex)}
+                            pieceChar={pieceChar}
+                        />
+                    ))
+                ))}
+            </div>
+        </div>
+    );
 }
 
 export default Board;

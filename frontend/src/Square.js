@@ -1,16 +1,22 @@
 import React from 'react';
 import './Square.css';
+import { getPieceImagePath } from './fenUtils';
 
-function Square({ color, rank, file }) {
-  const squareClass = `square ${color}`;
+function Square({ isLight, pieceChar }) { 
+    const imagePath = getPieceImagePath(pieceChar);
+    const squareClass = isLight ? 'square light' : 'square dark';
 
-  const notation = `${file}${rank}`;
-
-  return (
-    <div className={squareClass}>
-      <span className="notation">{notation}</span>
-    </div>
-  );
+    return (
+        <div className={squareClass}>
+            {imagePath && ( 
+                <img 
+                    src={imagePath} 
+                    alt={pieceChar} 
+                    className="piece-image"
+                />
+            )}
+        </div>
+    );
 }
 
 export default Square;
