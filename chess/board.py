@@ -1,5 +1,3 @@
-from string import ascii_lowercase
-
 from chess.piece.color import Color
 from chess.piece.piece import Piece
 from chess.square import Square, Coordinate
@@ -304,3 +302,25 @@ class Board:
         rook_square = (0, 3) if self.player_to_move == Color.BLACK else (7, 3)
         self.get_square(king_square).piece = king
         self.get_square(rook_square).piece = rook
+
+    @property
+    def fen(self):
+        strings = []
+        for row in range(8):
+            empty_squares = 0
+            chars = ""
+            for col in range(8):
+                square = self.get_square((row, col))
+                if not square.is_occupied:
+                    empty_squares += 1
+                    continue
+
+                if empty_squares > 0:
+                    chars += str(empty_squares)
+                chars += square.piece.char
+            if empty_squares > 0:
+                chars += str(empty_squares)
+            strings.append(chars)
+
+        fen_string = "/".join(strings)
+        return fen_string
