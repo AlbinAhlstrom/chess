@@ -5,4 +5,18 @@ from .bishop import Bishop
 from .queen import Queen
 from .king import King
 from .pawn import Pawn
-from .color import Color
+
+piece_from_char = {
+    "R": Rook,
+    "r": Rook,
+    "N": Knight,
+    "n": Knight,
+    "B": Bishop,
+    "b": Bishop,
+    "Q": Queen,
+    "q": Queen,
+    "K": King,
+    "k": King,
+    "P": Pawn,
+    "p": Pawn,
+}
