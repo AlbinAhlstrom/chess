@@ -1,7 +1,10 @@
 from typing import TypeVar
 
+from chess.move import Move
 from chess.piece import piece_from_char
-from chess.enums import Color, CastlingRight
+from chess.enums import Color, CastlingRight, Direction
+from chess.piece.pawn import Pawn
+from chess.piece.king import King
 from chess.piece.piece import Piece
 from chess.coordinate import Coordinate
 
@@ -33,8 +36,18 @@ class Board:
         start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         return cls.from_fen(start_fen)
 
-    def get_piece(self, coordinate: str | tuple | "Coordinate"):
+    def get_piece(self, coordinate: str | tuple | Coordinate) -> Piece | None:
         return self.board.get(Coordinate.from_any(coordinate))
+
+    def set_piece(self, piece: Piece | None, coordinate: str | tuple | Coordinate):
+        self.board[Coordinate.from_any(coordinate)] = piece
+
+    def remove_piece(self, coordinate: str | tuple | Coordinate) -> None:
+        self.set_piece(None, coordinate)
+
+    def _execute_castling_rook_move(self, target_square: Coordinate):
+        # TODO: Implement rook move on castling.
+        ...
 
     def get_pieces(
         self, piece_type: type[T] = Piece, color: Color | None = None
@@ -47,6 +60,70 @@ class Board:
     @property
     def pieces(self, color=None) -> list[Piece]:
         return [piece for piece in self.board.values() if piece]
+
+    def make_move(self, move: Move) -> None:
+        """Update piece positions and FEN state variables.
+
+        Assumes that the move is pseudo-legal and legal.
+        """
+        piece = self.get_piece(move.start)
+
+        if piece is None:
+            raise ValueError(f"No piece found at start coord: {move.start}.")
+        if piece.square is None:
+            raise ValueError(f"Piece {piece} has no square.")
+
+        is_pawn_move = isinstance(piece, Pawn)
+        is_capture = self.get_piece(move.end) is not None or move.is_en_passant
+
+        self.halfmove_clock += 1
+        if is_pawn_move or is_capture:
+            self.halfmove_clock = 0
+
+        if self.player_to_move == Color.BLACK:
+            self.fullmove_count += 1
+
+        self._move_piece(piece, move.start, move.end)
+
+        if move.is_en_passant:
+            direction = Direction.DOWN if piece.color == Color.WHITE else Direction.UP
+            captured_coordinate = piece.square.get_adjacent(direction)
+            self.remove_piece(captured_coordinate)
+
+        if move.is_castling:
+            self._execute_castling_rook_move(move.end)
+
+        if move.is_promotion and move.promotion_piece is not None:
+            self.board[move.end] = move.promotion_piece
+            move.promotion_piece.square = move.end
+
+        self.en_passant_square = self._update_en_passant_square(move, is_pawn_move)
+        self._update_castling_rights(piece, move.start)
+
+    def _update_en_passant_square(self, move: Move, is_pawn_move: bool):
+        piece = self.get_piece(move.end)
+        if piece is None or piece.square is None:
+            raise ValueError("Invalid piece at move end.")
+        direction = Direction.DOWN if piece.color == Color.WHITE else Direction.UP
+        if is_pawn_move and abs(move.start.row - move.end.row) > 1:
+            en_passant_square = piece.square.get_adjacent(direction)
+            return en_passant_square
+        return None
+
+    def _update_castling_rights(self, moved_piece: Piece, start: Coordinate):
+        if isinstance(moved_piece, King):
+            self.castling_rights.remove(CastlingRight.short(moved_piece.color))
+            self.castling_rights.remove(CastlingRight.long(moved_piece.color))
+        elif start.col == 7:
+            self.castling_rights.remove(CastlingRight.short(moved_piece.color))
+        elif start.col == 0:
+            self.castling_rights.remove(CastlingRight.long(moved_piece.color))
+
+    def _move_piece(self, piece: Piece, start: Coordinate, end: Coordinate):
+        self.set_piece(piece, end)
+        self.remove_piece(start)
+        piece.square = end
+        piece.has_moved = True
 
     @property
     def current_players_pieces(self) -> list[Piece]:

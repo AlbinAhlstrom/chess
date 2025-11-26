@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from chess.enums import Direction
+
 
 @dataclass(frozen=True)
 class Coordinate:
@@ -46,6 +48,11 @@ class Coordinate:
             return cls(*coordinate)
         else:
             raise TypeError(f"Invalid coordinate type: {type(coordinate)}")
+
+    def get_adjacent(self, direction: Direction) -> Coordinate:
+        """Return a new coordinate one step in a direction"""
+        d_col, d_row = direction.value
+        return self.from_any((self.row + d_row, self.col + d_col))
 
     def __str__(self):
         """Return algebraic notation."""

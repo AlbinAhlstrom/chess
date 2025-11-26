@@ -26,6 +26,20 @@ class CastlingRight(StrEnum):
     BLACK_LONG = "q"
 
     @classmethod
+    def short(cls, color: Color) -> CastlingRight:
+        """Return short castling right by color"""
+        if color == Color.WHITE:
+            return cls.WHITE_SHORT
+        return cls.BLACK_SHORT
+
+    @classmethod
+    def long(cls, color: Color) -> CastlingRight:
+        """Return long castling right by color"""
+        if color == Color.WHITE:
+            return cls.WHITE_LONG
+        return cls.BLACK_LONG
+
+    @classmethod
     def from_fen(cls, fen_castling_string: str) -> list[CastlingRight]:
         if not fen_castling_string or fen_castling_string == "-":
             return []
