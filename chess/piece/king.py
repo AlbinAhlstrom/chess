@@ -1,15 +1,18 @@
 from math import inf
 
-from .piece import Piece, Color
-from chess.square import Coordinate
+from chess.piece.piece import SlidingPiece
+from chess.enums import Color, Moveset
 
 
-class King(Piece):
+class King(SlidingPiece):
     """King piece representation.
 
     Moves one square in any direction.
     Special rules for castling and check are implemented in Board.legal_move.
     """
+
+    MOVESET = Moveset.STRAIGHT_AND_DIAGONAL
+    MAX_SQUARES = 1
 
     def __str__(self):
         match self.color:
@@ -19,20 +22,9 @@ class King(Piece):
                 return "♚"
 
     @property
-    def moves(self):
-        row, col = self.square.row, self.square.col
-
-        return {
-            Coordinate(r, c)
-            for r in range(row - 1, row + 2)
-            for c in range(col - 1, col + 2)
-            if 0 <= r < 8 and 0 <= c < 8 and (r, c) != (row, col)
-        }
-
-    @property
     def value(self):
         return inf
 
     @property
-    def char(self):
+    def fen(self):
         return "K" if self.color == Color.WHITE else "k"

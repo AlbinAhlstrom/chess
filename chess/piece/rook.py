@@ -1,17 +1,16 @@
-from chess.piece.sliding_piece import SlidingPiece
-from chess.piece.color import Color
-from chess.move_utils import Moveset
+from chess.piece.piece import Piece
+from chess.enums import Color, Moveset
 
 
-class Rook(SlidingPiece):
+class Rook(Piece):
     """Rook piece representation.
 
     Moves any number of squares horizontally or vertically.
     """
 
-    moveset = Moveset.STRAIGHT
+    MOVESET = Moveset.STRAIGHT
 
-    def __str__(self):
+    def __str__(self) -> str:
         match self.color:
             case Color.WHITE:
                 return "♖"
@@ -23,5 +22,5 @@ class Rook(SlidingPiece):
         return 5
 
     @property
-    def char(self):
+    def fen(self):
         return "R" if self.color == Color.WHITE else "r"

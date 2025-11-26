@@ -1,7 +1,7 @@
-from chess.square import Coordinate
+from itertools import chain
+from chess.coordinate import Coordinate
+from chess.enums import Color, Direction, Moveset
 from chess.piece.piece import Piece
-from chess.piece.color import Color
-from chess.square import Coordinate
 
 
 class Pawn(Piece):
@@ -11,6 +11,43 @@ class Pawn(Piece):
     Diagonal captures and en passant is implemented in Board.legal_moves.
     """
 
+    MOVESET = Moveset.CUSTOM
+    MAX_SQUARES = 1
+
+    @property
+    def direction(self) -> Direction:
+        if self.color == Color.WHITE:
+            return Direction.UP
+        else:
+            return Direction.DOWN
+
+    @property
+    def capture_moveset(self) -> Moveset:
+        if self.color == Color.WHITE:
+            return Moveset.PAWN_WHITE_CAPTURE
+        else:
+            return Moveset.PAWN_BLACK_CAPTURE
+
+    @property
+    def max_squares_forward(self) -> int:
+        return 1 if self.has_moved else 2
+
+    @property
+    def all_directions_array(self):
+        """Array of coordinates reachable when moving in all directions"""
+        captures = self.capture_moveset.value
+        max = self.MAX_SQUARES
+        max_forward = 1 if self.has_moved else 2
+
+        forward = self._get_moves_in_direction(self.direction, max_forward)
+        captures = [self._get_moves_in_direction(dir, max) for dir in captures]
+        return [forward, *captures]
+
+    @property
+    def pseudo_legal_moves(self) -> list[Coordinate]:
+        """All moves legal on an empty board"""
+        return list(chain.from_iterable(self.all_directions_array))
+
     def __str__(self):
         match self.color:
             case Color.WHITE:
@@ -19,37 +56,9 @@ class Pawn(Piece):
                 return "♟"
 
     @property
-    def direction(self) -> int:
-        return -1 if self.color == Color.WHITE else 1
-
-    @property
-    def moves(self):
-        steps = [self.direction]
-        if not self.has_moved:
-            steps += [2 * self.direction]
-
-        forward = {
-            Coordinate(self.square.row + step, self.square.col)
-            for step in steps
-            if 0 <= self.square.row + step < 8 and 0 <= self.square.col < 8
-        }
-
-        capture_cols = (self.square.col - 1, self.square.col + 1)
-        captures = {
-            Coordinate(self.square.row + self.direction, col)
-            for col in capture_cols
-            if 0 <= self.square.row + self.direction < 8 and 0 <= col < 8
-        }
-        return captures | forward
-
-    @property
     def value(self):
         return 1
 
     @property
-    def en_passant_square(self) -> Coordinate:
-        return Coordinate(self.square.row - self.direction, self.square.col)
-
-    @property
-    def char(self):
+    def fen(self):
         return "P" if self.color == Color.WHITE else "p"
