@@ -262,3 +262,6 @@ class Board:
         grid = [[self.get_piece((r, c)) or 0 for c in range(8)] for r in range(8)]
         for row in grid:
             print([f"{piece}" for piece in row])
+
+    def __str__(self):
+        return self.fen
