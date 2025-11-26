@@ -56,7 +56,7 @@ class Piece(ABC):
         return f"{self.color}-{self.__class__.__name__.lower()}"
 
     def _get_moves_in_direction(
-        self, direction: Direction, max_steps: int = 8
+        self, direction: Direction, max_steps: int = 7
     ) -> list["Coordinate"]:
         """Generates all theoretical moves along a single vector."""
         possible_moves = []
