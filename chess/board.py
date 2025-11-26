@@ -45,9 +45,18 @@ class Board:
     def remove_piece(self, coordinate: str | tuple | Coordinate) -> None:
         self.set_piece(None, coordinate)
 
-    def _execute_castling_rook_move(self, target_square: Coordinate):
-        # TODO: Implement rook move on castling.
-        ...
+    def _execute_castling_rook_move(self, target_coord: Coordinate):
+        rook_col = 0 if target_coord.col == 2 else 7
+        rook_coord = Coordinate.from_any((target_coord.row, rook_col))
+        rook = self.get_piece(rook_coord)
+
+        if rook is None:
+            raise AttributeError(f"Expected rook on {rook_coord} found None.")
+
+        direction = Direction.RIGHT if target_coord.col == 2 else Direction.LEFT
+        end_coord = target_coord.get_adjacent(direction)
+
+        self.move_piece(rook, end_coord)
 
     def get_pieces(
         self, piece_type: type[T] = Piece, color: Color | None = None
@@ -83,7 +92,7 @@ class Board:
         if self.player_to_move == Color.BLACK:
             self.fullmove_count += 1
 
-        self._move_piece(piece, move.start, move.end)
+        self.move_piece(piece, move.end)
 
         if move.is_en_passant:
             direction = Direction.DOWN if piece.color == Color.WHITE else Direction.UP
@@ -119,7 +128,11 @@ class Board:
         elif start.col == 0:
             self.castling_rights.remove(CastlingRight.long(moved_piece.color))
 
-    def _move_piece(self, piece: Piece, start: Coordinate, end: Coordinate):
+    def move_piece(self, piece: Piece, end: Coordinate):
+        if piece.square is None:
+            raise ValueError("Piece has no square.")
+
+        start = piece.square
         self.set_piece(piece, end)
         self.remove_piece(start)
         piece.square = end
