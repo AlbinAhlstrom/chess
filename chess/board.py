@@ -42,8 +42,8 @@ class Board:
     def set_piece(self, piece: Piece | None, coordinate: str | tuple | Coordinate):
         self.board[Coordinate.from_any(coordinate)] = piece
 
-    def remove_piece(self, coordinate: str | tuple | Coordinate) -> None:
-        self.set_piece(None, coordinate)
+    def remove_piece(self, target_coord: str | tuple | Coordinate) -> None:
+        self.set_piece(None, target_coord)
 
     def _execute_castling_rook_move(self, target_coord: Coordinate):
         rook_col = 0 if target_coord.col == 2 else 7
@@ -177,21 +177,32 @@ class Board:
         if len(fen_parts) != 6:
             raise ValueError("Invalid FEN format: Must contain 6 fields.")
 
-        (
-            fen_board,
-            fen_active_color,
-            fen_castling,
-            fen_en_passant,
-            fen_halfmove_clock,
-            fen_fullmove_number,
-        ) = fen_parts
+        board = cls._get_board_from_fen(fen_parts[0])
+        active_color = Color(fen_parts[1])
+        castling_rights = CastlingRight.from_fen(fen_parts[2])
+        en_passant = None if fen_parts[3] == "-" else Coordinate.from_any(fen_parts[3])
 
+        try:
+            halfmove_clock = int(fen_parts[4])
+            fullmove_count = int(fen_parts[5])
+        except ValueError:
+            raise ValueError("FEN halfmove and fullmove must be int.")
+
+        return cls(
+            board,
+            active_color,
+            castling_rights,
+            en_passant,
+            halfmove_clock,
+            fullmove_count,
+        )
+
+    @staticmethod
+    def _get_board_from_fen(fen_board) -> dict[Coordinate, Piece | None]:
         board: dict[Coordinate, Piece | None] = {
             Coordinate(r, c): None for r in range(8) for c in range(8)
         }
-
         fen_rows = fen_board.split("/")
-
         for row, fen_row in enumerate(fen_rows):
             empty_squares = 0
             for col, char in enumerate(fen_row):
@@ -207,28 +218,7 @@ class Board:
                     coord = Coordinate(row, col + empty_squares)
                     board[coord] = piece
                     piece.square = coord
-
-        active_color = Color(fen_active_color)
-        castling_rights = CastlingRight.from_fen(fen_castling)
-
-        en_passant_square = (
-            None if fen_en_passant == "-" else Coordinate.from_any(fen_en_passant)
-        )
-
-        try:
-            halfmove_clock = int(fen_halfmove_clock)
-            fullmove_count = int(fen_fullmove_number)
-        except ValueError:
-            raise ValueError("FEN halfmove and fullmove must be int.")
-
-        return cls(
-            board,
-            active_color,
-            castling_rights,
-            en_passant_square,
-            halfmove_clock,
-            fullmove_count,
-        )
+        return board
 
     def _get_fen_row(self, row) -> str:
         empty_squares = 0
