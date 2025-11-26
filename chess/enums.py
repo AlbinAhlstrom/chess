@@ -70,7 +70,7 @@ class Direction(Enum):
 
 
 class Moveset(Enum):
-    NONE = []
+    NONE = [Direction.NONE]
     CUSTOM = []
 
     PAWN_WHITE_CAPTURE = [Direction.UP_LEFT, Direction.UP_RIGHT]
