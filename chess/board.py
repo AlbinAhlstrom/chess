@@ -108,6 +108,7 @@ class Board:
 
         self.en_passant_square = self._update_en_passant_square(move, is_pawn_move)
         self._update_castling_rights(piece, move.start)
+        self.player_to_move = self.player_to_move.opposite
 
     def _update_en_passant_square(self, move: Move, is_pawn_move: bool):
         piece = self.get_piece(move.end)
