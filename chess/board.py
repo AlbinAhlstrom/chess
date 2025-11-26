@@ -244,3 +244,21 @@ class Board:
     def _get_piece_placement_fen(self) -> str:
         fen_rows = (self._get_fen_row(row) for row in range(8))
         return "/".join(fen_rows)
+
+    def print(self):
+        """Print the chess board.
+
+        Draws a unicode based 2d-list representing the board state.
+        printed output example:
+            [♜, ♞, ♝, ♛, ♚, ♝, ♞, ♜]
+            [♟, ♟, ♟, ♟, ♟, ♟, ♟, ♟]
+            [0, 0, 0, 0, 0, 0, 0, 0]
+            [0, 0, 0, 0, 0, 0, 0, 0]
+            [0, 0, 0, 0, 0, 0, 0, 0]
+            [0, 0, 0, 0, 0, 0, 0, 0]
+            [♙, ♙, ♙, ♙, ♙, ♙, ♙, ♙]
+            [♖, ♘, ♗, ♕, ♔, ♗, ♘, ♖]
+        """
+        grid = [[self.get_piece((r, c)) or 0 for c in range(8)] for r in range(8)]
+        for row in grid:
+            print([f"{piece}" for piece in row])
