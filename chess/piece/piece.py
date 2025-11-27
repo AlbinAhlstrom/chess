@@ -65,11 +65,9 @@ class Piece(ABC):
         if self.square is None:
             raise AttributeError("Can't calculate moves for piece with no square.")
 
-        r_curr, c_curr = self.square.row, self.square.col
-
         for dist in range(1, max_steps + 1):
-            new_c = c_curr + (d_col * dist)
-            new_r = r_curr + (d_row * dist)
+            new_c = self.square.col + (d_col * dist)
+            new_r = self.square.row + (d_row * dist)
 
             if 0 <= new_r < 8 and 0 <= new_c < 8:
                 possible_moves.append(self.square.__class__(new_r, new_c))
@@ -79,13 +77,13 @@ class Piece(ABC):
         return possible_moves
 
     @property
-    def all_directions_array(self):
+    def theoretical_move_paths(self) -> list[list[Coordinate]]:
         """Array of coordinates reachable when moving in all directions"""
         directions = self.MOVESET.value
         max = self.MAX_SQUARES
         return [self._get_moves_in_direction(dir, max) for dir in directions]
 
     @property
-    def pseudo_legal_moves(self) -> list[Coordinate]:
+    def theoretical_moves(self) -> list[Coordinate]:
         """All moves legal on an empty board"""
-        return list(chain.from_iterable(self.all_directions_array))
+        return list(chain.from_iterable(self.theoretical_move_paths))

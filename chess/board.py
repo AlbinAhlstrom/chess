@@ -1,4 +1,5 @@
 from typing import TypeVar
+from itertools import chain
 
 from chess.move import Move
 from chess.piece import piece_from_char
@@ -71,6 +72,14 @@ class Board:
     def pieces(self, color=None) -> list[Piece]:
         return [piece for piece in self.board.values() if piece]
 
+    @property
+    def current_players_pieces(self) -> list[Piece]:
+        return self.get_pieces(color=self.player_to_move)
+
+    @property
+    def opponent_pieces(self):
+        return self.get_pieces(color=self.player_to_move.opposite)
+
     def make_move(self, move: Move) -> None:
         """Update piece positions and FEN state variables.
 
@@ -111,6 +120,27 @@ class Board:
         self._update_castling_rights(piece, move.start)
         self.player_to_move = self.player_to_move.opposite
 
+    def unblocked_path(self, piece: Piece, path: list[Coordinate]) -> list[Coordinate]:
+        try:
+            stop_index = next(
+                i for i, coord in enumerate(path) if self.get_piece(coord) is not None
+            )
+        except StopIteration:
+            return path
+
+        target_piece = self.get_piece(path[stop_index])
+
+        if target_piece and target_piece.color != piece.color:
+            return path[: stop_index + 1]
+        else:
+            return path[:stop_index]
+
+    def unblocked_moves(self, piece: Piece) -> list[Coordinate]:
+        unblocked_paths = [
+            self.unblocked_path(piece, path) for path in piece.theoretical_move_paths
+        ]
+        return list(chain.from_iterable(unblocked_paths))
+
     def _update_en_passant_square(self, move: Move, is_pawn_move: bool):
         piece = self.get_piece(move.end)
         if piece is None or piece.square is None:
@@ -139,14 +169,6 @@ class Board:
         self.remove_piece(start)
         piece.square = end
         piece.has_moved = True
-
-    @property
-    def current_players_pieces(self) -> list[Piece]:
-        return self.get_pieces(color=self.player_to_move)
-
-    @property
-    def opponent_pieces(self):
-        return self.get_pieces(color=self.player_to_move.opposite)
 
     @property
     def fen(self) -> str:
