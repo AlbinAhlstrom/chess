@@ -135,7 +135,7 @@ class Board:
         else:
             return path[:stop_index]
 
-    def unblocked_moves(self, piece: Piece) -> list[Coordinate]:
+    def pseudo_legal_end_squares(self, piece: Piece) -> list[Coordinate]:
         unblocked_paths = [
             self.unblocked_path(piece, path) for path in piece.theoretical_move_paths
         ]
