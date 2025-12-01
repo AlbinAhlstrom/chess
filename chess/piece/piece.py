@@ -17,7 +17,6 @@ class Piece(ABC):
     """
 
     MOVESET: Moveset = Moveset.NONE
-    MAX_SQUARES: int = 7
 
     def __init__(
         self, color: Color, square: Square | None = None, has_moved: bool = False
@@ -25,14 +24,6 @@ class Piece(ABC):
         self.color = color
         self.square = square
         self.has_moved = has_moved
-
-    def __init_subclass__(cls, **kwargs):
-        """Require that subclasses define class variable MOVESET."""
-        super().__init_subclass__(**kwargs)
-        if cls.MOVESET == Moveset.NONE:
-            raise NotImplementedError(
-                f"Class {cls.__name__} must define class variable MOVESET."
-            )
 
     @property
     @abstractmethod
@@ -61,10 +52,39 @@ class Piece(ABC):
         if self.square == None:
             raise AttributeError("No square.")
 
-        paths = [direction.get_path(self.square) for direction in self.MOVESET.value]
-        return [path[: self.MAX_SQUARES + 1] for path in paths]
+        return [direction.get_path(self.square) for direction in self.MOVESET.value]
 
     @property
     def theoretical_moves(self) -> list[Square]:
         """All moves legal on an empty board"""
         return list(chain.from_iterable(self.theoretical_move_paths))
+
+
+class SteppingPiece(Piece):
+    def __init_subclass__(cls, **kwargs):
+        """Require that subclasses define class variable MOVESET."""
+        super().__init_subclass__(**kwargs)
+        if cls.MOVESET == Moveset.NONE:
+            raise NotImplementedError(
+                f"Class {cls.__name__} must define class variable MOVESET."
+            )
+
+    @property
+    def theoretical_move_paths(self) -> list[list[Square]]:
+        """Array of coordinates reachable when moving in all directions"""
+        if self.square == None:
+            raise AttributeError("No square.")
+
+        possible_steps = [self.square.get_step(dir) for dir in self.MOVESET.value]
+
+        return [[step] for step in possible_steps if step is not None]
+
+
+class SlidingPiece(Piece):
+    def __init_subclass__(cls, **kwargs):
+        """Require that subclasses define class variable MOVESET."""
+        super().__init_subclass__(**kwargs)
+        if cls.MOVESET == Moveset.NONE:
+            raise NotImplementedError(
+                f"Class {cls.__name__} must define class variable MOVESET."
+            )

@@ -1,8 +1,8 @@
-from chess.piece.piece import Piece
+from chess.piece.piece import SlidingPiece
 from chess.enums import Color, Moveset
 
 
-class Rook(Piece):
+class Rook(SlidingPiece):
     """Rook piece representation.
 
     Moves any number of squares horizontally or vertically.

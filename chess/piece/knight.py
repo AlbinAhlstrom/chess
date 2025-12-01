@@ -1,15 +1,15 @@
 from chess.enums import Color, Moveset
-from chess.piece.piece import Piece
+from chess.piece.piece import SteppingPiece
+from chess.square import Square
 
 
-class Knight(Piece):
+class Knight(SteppingPiece):
     """Knight piece representation.
 
     Moves two squares in one direction and one square perpendicular.
     """
 
     MOVESET = Moveset.KNIGHT
-    MAX_STEPS = 1
 
     def __str__(self):
         match self.color:

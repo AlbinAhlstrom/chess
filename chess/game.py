@@ -1,10 +1,10 @@
 from copy import deepcopy
-from typing import Optional
 
 from chess.board import Board
 from chess.move import Move
 from chess.piece.pawn import Pawn
-from chess.piece.color import Color
+from chess.piece.piece import Piece
+from chess.enums import Color
 
 
 class IllegalMoveException(Exception): ...
@@ -17,168 +17,111 @@ class Game:
     The majority of the game logic is handled in the Board class.
     """
 
-    def __init__(self, board: Optional[Board] = None):
-        self.board = board or Board.starting_setup()
-        self.is_over = False
-        self.winner = None
+    def __init__(self, board: Board):
+        self.board = board
         self.history = []
-
-    def execute_action(self, uci_string: str) -> str:
-        match uci_string:
-            case "u":
-                return self.undo_last_move()
-
-            case "0-0":
-                return self.short_castle()
-
-            case "0-0-0":
-                return self.long_castle()
-
-            case _:
-                move = Move.from_uci_string(uci_string, self.board)
-                if not self.move_is_legal(move):
-                    raise IllegalMoveException("Move is not allowed")
-                self.make_move(move)
-                return self.board.fen
-
-    def short_castle(self) -> str:
-        if not self.board.short_castle_allowed:
-            raise IllegalMoveException("Short castle not allowed")
-
-        self.add_to_history()
-        self.board.short_castle()
-        self.switch_current_player()
-        return self.board.fen
-
-    def long_castle(self) -> str:
-        if not self.board.long_castle_allowed:
-            raise IllegalMoveException("Short castle not allowed")
-
-        self.add_to_history()
-        self.board.long_castle()
-        self.switch_current_player()
-        return self.board.fen
-
-    def switch_current_player(self):
-        """Switch current player to the opponent."""
-        self.board.player_to_move = self.board.player_to_move.opposite
 
     def add_to_history(self):
         self.history.append(deepcopy(self.board))
 
-    def move_is_legal(self, move, verbose=False):
-        """Determine if a move is legal.
-        - Has to move a piece of the current players color
-        - Movement has to correspond to the pieces capabilities
-        - Capturing own pieces is not allowed
-        - Path has to be clear (Doesn't apply for knights)
-        - Pawn can only move diagonal if capturing or en passant
-        - Pawns can only make non-capturing moves forward
-        - Can't move into check
-        - Must unckeck oneself if in check
-        TODO: - Castling is allowed
-        """
-        start = move.start
-        end = move.end
-        piece = move.start.piece
-        target = move.end.piece
+    def is_move_pseudo_legal(self, move) -> tuple[bool, str]:
+        """Determine if a move is pseudolegal."""
+        piece = self.board.get_piece(move.start)
+        target = self.board.get_piece(move.end)
 
         if piece is None:
-            if verbose:
-                print("No piece")
-            return False
+            return False, "No piece moved."
 
         if piece.color != self.board.player_to_move:
-            if verbose:
-                print("Wrong piece color")
-            return False
+            return False, "Wrong piece color."
 
-        if end.coordinate not in piece.moves:
-            if verbose:
-                print("Move not in piece moveset")
-            return False
+        if move.end not in piece.theoretical_moves:
+            return False, "Move not in piece moveset."
 
         if target and target.color == self.board.player_to_move:
-            if verbose:
-                print("Can't capture own piece")
-            return False
+            return False, "Can't capture own piece."
 
-        if (
-            isinstance(piece, Pawn)
-            and end.col != start.col
-            and target is None
-            and end != self.board.en_passant_square
-        ):
-            if verbose:
-                print("Can only move pawn diagonal to capture")
-            return False
+        if isinstance(piece, Pawn):
+            if move.is_vertical and target is not None:
+                return False, "Cant capture forwards with pawn."
 
-        if isinstance(piece, Pawn) and move.is_capture and start.col == end.col:
-            if verbose:
-                print("Pawns can't capture forwards.")
-            return False
+            if (
+                move.is_diagonal
+                and target is None
+                and move.end != self.board.en_passant_square
+            ):
+                return False, "Diagonal pawn move requires a capture."
 
-        if not self.board.path_is_clear(move.start, move.end):
-            if verbose:
-                print("Path is blocked.")
-            return False
+        if not self.board.unblocked_paths(piece):
+            return False, "Path is blocked."
 
-        if self.king_left_in_check(move):
-            if verbose:
-                print("King left in check.")
-            return False
+        return True, "Move is pseudo legal."
 
-        return True
-
-    def get_all_legal_moves(self) -> list[Move]:
+    @property
+    def legal_moves(self) -> list[Move]:
         legal_moves = []
 
         for piece in self.board.current_players_pieces:
             start_square = piece.square
+            if start_square is None:
+                raise AttributeError("Piece has no square")
 
-            for end_coord in piece.moves:
-                end_square = self.board.get_square(end_coord)
-
-                candidate_move = self.board.get_move(start_square, end_square)
-
-                if self.move_is_legal(candidate_move):
-                    legal_moves.append(candidate_move)
-
+            for end_square in self.board.unblocked_paths(piece):
+                move = Move(start_square, end_square)
+                try:
+                    if self.is_move_legal(move):
+                        legal_moves.append(move)
+                except IllegalMoveException:
+                    pass
         return legal_moves
 
     @property
-    def is_checkmate(self) -> bool:
-        if not self.board.current_player_in_check:
-            return False
+    def pseudo_legal_moves(self) -> list[Move]:
+        # TODO: Make no check check
+        legal_moves = []
 
-        return len(self.get_all_legal_moves()) == 0
+        for piece in self.board.current_players_pieces:
+            start_square = piece.square
+            if start_square is None:
+                raise AttributeError("Piece has no square")
 
-    @property
-    def is_draw(self) -> bool:
-        if self.board.current_player_in_check:
-            return False
+            for end_square in self.board.unblocked_paths(piece):
+                move = Move(start_square, end_square)
+                try:
+                    if self.is_move_legal(move):
+                        legal_moves.append(move)
+                except IllegalMoveException:
+                    pass
+        return legal_moves
 
-        return len(self.get_all_legal_moves()) == 0
+    def is_move_legal(self, move: Move) -> bool:
+        try:
+            self.is_move_pseudo_legal(move)
+        except IllegalMoveException as e:
+            raise e
+
+        if self.king_left_in_check(move):
+            raise IllegalMoveException("King left in check")
+
+        return True
 
     def render(self):
         """Print the board."""
         for row in range(8):
-            pieces = [self.board.get_square((row, col)).piece or 0 for col in range(8)]
+            pieces = [self.board.get_piece((row, col)) or 0 for col in range(8)]
             print(pieces)
 
     def king_left_in_check(self, move: Move) -> bool:
-        start_piece = move.start.piece
-        end_piece = move.end.piece
+        """Returns True if king is left in check after a move."""
+        real_board = self.board
+        self.board = Board.from_fen(self.board.fen)
 
-        move.start.piece = None
-        move.end.piece = move.piece
+        try:
+            self.board.make_move(move)
 
-        check = self.board.current_player_in_check
-
-        move.start.piece = start_piece
-        move.end.piece = end_piece
-
-        return check
+            return self.board.current_player_in_check
+        finally:
+            self.board = real_board
 
     def make_move(self, move: Move):
         """Make a move.
@@ -187,18 +130,15 @@ class Game:
         and reverting another board object. Since move references the old
         board object new squares need to be fetched.
         """
-        start_square = self.board.get_square(move.start.coordinate)
-        end_square = self.board.get_square(move.end.coordinate)
-
-        move = self.board.get_move(start_square, end_square)
 
         self.add_to_history()
-        self.execute_piece_movement(move)
-        self.switch_current_player()
+        self.board.make_move(move)
+        self.board.switch_active_player()
         self.increment_turn_counters(move)
 
     def increment_turn_counters(self, move: Move):
-        is_pawn_move = isinstance(move.piece, Pawn)
+        piece = self.board.get_piece(move.end)
+        is_pawn_move = isinstance(piece, Pawn)
         if is_pawn_move or move.is_capture:
             self.board.halfmove_clock = 0
         else:
@@ -207,25 +147,13 @@ class Game:
         if self.board.player_to_move == Color.WHITE:
             self.board.fullmove_count += 1
 
-    def execute_piece_movement(self, move: Move):
-        if move.target_piece:
-            move.target_piece.square.piece = None
-
-        move.start.piece = None
-        move.end.piece = move.piece
-        move.piece.has_moved = True
-
-        if move.is_double_pawn_push:
-            en_passant_sq = self.board.get_square(move.piece.en_passant_square)
-            self.board.en_passant_square = en_passant_sq
-
     def undo_last_move(self) -> str:
         """Revert to the previous board state."""
         if not self.history:
             raise ValueError("No moves to undo.")
 
         self.board = self.history.pop()
-        self.switch_current_player()
+        self.board.switch_active_player()
         return self.board.fen
 
     @property

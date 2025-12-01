@@ -1,8 +1,8 @@
-from chess.piece.piece import Piece
+from chess.piece.piece import SlidingPiece
 from chess.enums import Color, Moveset
 
 
-class Queen(Piece):
+class Queen(SlidingPiece):
     """Queen piece representation.
 
     Moves any number of squares, straight or diagonally.

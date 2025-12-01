@@ -19,6 +19,18 @@ class Move:
         return self.promotion_piece is not None
 
     @property
+    def is_vertical(self) -> bool:
+        return self.start.col == self.end.col
+
+    @property
+    def is_horizontal(self) -> bool:
+        return self.start.row == self.end.row
+
+    @property
+    def is_diagonal(self) -> bool:
+        return abs(self.start.col - self.end.col) == abs(self.start.row - self.end.row)
+
+    @property
     def uci(self) -> str:
         """Returns the move in UCI format (e.g., 'e2e4', 'a7a8q')."""
         move_str = f"{self.start}{self.end}"
@@ -26,10 +38,24 @@ class Move:
             move_str += self.promotion_piece.fen
         return move_str
 
+    @staticmethod
+    def is_uci_valid(uci_str: str):
+        try:
+            if not 3 < len(uci_str) < 6:
+                return False
+            Square.from_any(uci_str[:2])
+            Square.from_any(uci_str[2:])
+            if len(uci_str) == 5:
+                return uci_str[4] in piece_from_char.keys()
+            return True
+        except Exception as e:
+            print(e)
+            return False
+
     @classmethod
     def from_uci(cls, uci_str: str, player_to_move: Color = Color.WHITE) -> "Move":
-        if not 3 > len(uci_str) < 6:
-            print(f"Expected uci-string got {uci_str}")
+        if not cls.is_uci_valid(uci_str):
+            raise ValueError(f"Invalid move: {uci_str}")
         start = Square.from_any(uci_str[:2])
         end = Square.from_any(uci_str[2:])
 

@@ -16,7 +16,8 @@ T = TypeVar("T", bound=Piece)
 class Board:
     """Represents the current state of a chessboard."""
 
-    START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    EMPTY_FEN = "8/8/8/8/8/8/8/8 w - - 0 1"
 
     def __init__(
         self,
@@ -36,16 +37,64 @@ class Board:
 
     @classmethod
     def starting_setup(cls) -> "Board":
-        return cls.from_fen(cls.START_FEN)
+        return cls.from_fen(cls.STARTING_FEN)
+
+    @classmethod
+    def empty(cls) -> "Board":
+        return cls.from_fen(cls.EMPTY_FEN)
 
     def get_piece(self, coordinate: str | tuple | Square) -> Piece | None:
         return self.board.get(Square.from_any(coordinate))
 
-    def set_piece(self, piece: Piece | None, coordinate: str | tuple | Square):
-        self.board[Square.from_any(coordinate)] = piece
+    def set_piece(self, piece: Piece, square: str | tuple | Square):
+        square = Square.from_any(square)
+        self.board[square] = piece
+        piece.square = square
 
-    def remove_piece(self, target_coord: str | tuple | Square) -> None:
-        self.set_piece(None, target_coord)
+    def remove_piece(self, coordinate: str | tuple | Square) -> None:
+        square = Square.from_any(coordinate)
+        piece_on_square = self.get_piece(square)
+        if piece_on_square is None:
+            return
+        self.board[square] = None
+        piece_on_square.square = None
+
+    def switch_active_player(self):
+        self.player_to_move = self.player_to_move.opposite
+
+    @property
+    def is_legal(self):
+        """Return True if board state is legal.
+
+        Rules:
+        - Must have exactly 1 king of each color.
+        - Inactive players king can't be attacked.
+        - White pawns disallowed from rank 1.
+        - Black pawns disallowed from rank 8.
+        - Maximum 8 pawns, 9 queens and 10 rooks, bishops and knights per side.
+        - Each promoted piece has to result in 1 fewer pawn present.
+        - Halfmove clock can not surpass 50.
+        - Castling rights must be reflected in positions of king and rook.
+        - En passant square must be on rank 3 or 6.
+        - En passant square must be behind a pawn of correct color.
+        """
+        white_kings = self.get_pieces(King, Color.WHITE)
+        black_kings = self.get_pieces(King, Color.BLACK)
+
+    def is_under_attack(self, square: Square, by_color: Color) -> bool:
+        """Check if square is attacked by the given color."""
+        attackers = self.get_pieces(color=by_color)
+        return any([square in self.unblocked_paths(piece) for piece in attackers])
+
+    def player_in_check(self, color: Color) -> bool:
+        king = self.get_pieces(King, color)[0]
+        if king.square is None:
+            raise AttributeError("King not found on board.")
+        return self.is_under_attack(king.square, color.opposite)
+
+    @property
+    def current_player_in_check(self) -> bool:
+        return self.player_in_check(self.player_to_move)
 
     def _execute_castling_rook_move(self, target_coord: Square):
         rook_col = 0 if target_coord.col == 2 else 7
@@ -118,7 +167,7 @@ class Board:
 
         self.en_passant_square = self._update_en_passant_square(move, is_pawn_move)
         self._update_castling_rights(piece, move.start)
-        self.player_to_move = self.player_to_move.opposite
+        self.switch_active_player()
 
     def unblocked_path(self, piece: Piece, path: list[Square]) -> list[Square]:
         try:

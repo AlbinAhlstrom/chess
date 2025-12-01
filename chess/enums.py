@@ -1,7 +1,5 @@
 from enum import Enum, StrEnum
 
-from chess.square import Square
-
 
 class Color(StrEnum):
     """Representation of piece/player color.
@@ -17,6 +15,9 @@ class Color(StrEnum):
     @property
     def opposite(self):
         return Color.BLACK if self == Color.WHITE else Color.WHITE
+
+    # def __str__(self):
+    #     return "black" if self.value == "b" else "white"
 
 
 class CastlingRight(StrEnum):
@@ -70,13 +71,15 @@ class Direction(Enum):
     L_DOWN_RIGHT = (1, 2)
     L_DOWN_LEFT = (-1, 2)
 
-    def get_path(self, square: Square, max_steps: int = 7) -> list[Square]:
+    def get_path(self, square: "Square") -> list["Square"]:
         """Get all squares in a direction."""
+        from chess.square import Square
+
         possible_moves = []
 
         d_col, d_row = self.value
 
-        for dist in range(1, max_steps + 1):
+        for dist in range(1, 8):
             new_c = square.col + (d_col * dist)
             new_r = square.row + (d_row * dist)
 
@@ -86,6 +89,12 @@ class Direction(Enum):
                 break
 
         return possible_moves
+
+    def get_step(self, square: "Square", direction: Direction) -> "Square" | None:
+        d_col, d_row = direction.value
+        if not 0 <= square.col + d_col < 8 and 0 <= square.row + d_row < 8:
+            return None
+        return square.adjacent(direction)
 
 
 class Moveset(Enum):

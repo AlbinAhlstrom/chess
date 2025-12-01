@@ -16,13 +16,30 @@ class Square:
     col: int
 
     def __post_init__(self):
-        if not 0 <= self.row < 8:
-            raise ValueError(f"Invalid row {self.row}")
-        if not 0 <= self.col < 8:
-            raise ValueError(f"Invalid col {self.col}")
+        """Initial validation check, should only be called by the constructor."""
+        if not self.is_valid(self.row, self.col):
+            raise ValueError(f"Invalid Square {self}")
+
+    @staticmethod
+    def is_valid(row: int, col: int) -> bool:
+        """Check if row and col are within the 0-7 range."""
+        return 0 <= row < 8 and 0 <= col < 8
+
+    def get_step(self, direction: Direction) -> "Square" | None:
+        """
+        Return the resulting Square if a step in 'direction' is on the board.
+        Returns None otherwise.
+        """
+        d_col, d_row = direction.value
+        new_col, new_row = self.col + d_col, self.row + d_row
+
+        if not Square.is_valid(self.row + d_row, self.col + d_col):
+            return None
+
+        return Square(new_row, new_col)
 
     @classmethod
-    def from_str(cls, notation: str) -> "Square":
+    def from_str(cls, notation: str) -> Square:
         if len(notation) != 2:
             raise ValueError(f"Invalid length of {notation=}")
 
@@ -49,9 +66,17 @@ class Square:
         else:
             raise TypeError(f"Invalid coordinate type: {type(coordinate)}")
 
-    def get_adjacent(self, direction: Direction) -> Square:
-        """Return a new coordinate one step in a direction"""
+    def adjacent(self, direction: Direction) -> Square | None:
+        """Return a new coordinate one step in a direction.
+
+        NOTE: This method assumes the result is a valid square and is typically
+        used when you are certain the move is within bounds, or when you are
+        iterating over all possible directions (where validity is checked
+        by the Square constructor/post_init).
+        """
         d_col, d_row = direction.value
+        if not Square.is_valid(self.row + d_row, self.col + d_col):
+            return None
         return self.from_any((self.row + d_row, self.col + d_col))
 
     def __str__(self):

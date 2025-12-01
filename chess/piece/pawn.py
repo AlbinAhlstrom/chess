@@ -1,4 +1,3 @@
-from itertools import chain
 from chess.square import Square
 from chess.enums import Color, Direction, Moveset
 from chess.piece.piece import Piece
@@ -31,7 +30,17 @@ class Pawn(Piece):
     def capture_squares(self) -> list[Square]:
         if self.square is None:
             raise AttributeError("Can't capture using a piece with no square")
-        return [self.square.adjacent(dir) for dir in self.capture_moveset.value]
+
+        valid_capture_squares = []
+        for direction in self.capture_moveset.value:
+            d_col, d_row = direction.value
+            new_row = self.square.row + d_row
+            new_col = self.square.col + d_col
+
+            if Square.is_valid(new_row, new_col):
+                valid_capture_squares.append(self.square.adjacent(direction))
+
+        return valid_capture_squares
 
     @property
     def forward_squares(self) -> list[Square]:
@@ -39,9 +48,9 @@ class Pawn(Piece):
             raise AttributeError("Can't capture using a piece with no square")
 
         squares = [self.square.adjacent(self.direction)]
-        if not self.has_moved:
+        if not self.has_moved and squares[0] is not None:
             squares += [squares[0].adjacent(self.direction)]
-        return squares
+        return [sq for sq in squares if sq is not None]
 
     @property
     def theoretical_move_paths(self):
