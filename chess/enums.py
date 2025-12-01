@@ -70,13 +70,13 @@ class Direction(Enum):
     L_DOWN_RIGHT = (1, 2)
     L_DOWN_LEFT = (-1, 2)
 
-    def get_path(self, square: Square) -> list[Square]:
+    def get_path(self, square: Square, max_steps: int = 7) -> list[Square]:
         """Get all squares in a direction."""
         possible_moves = []
 
         d_col, d_row = self.value
 
-        for dist in range(1, 8):
+        for dist in range(1, max_steps + 1):
             new_c = square.col + (d_col * dist)
             new_r = square.row + (d_row * dist)
 

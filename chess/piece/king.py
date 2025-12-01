@@ -12,7 +12,13 @@ class King(Piece):
     """
 
     MOVESET = Moveset.STRAIGHT_AND_DIAGONAL
-    MAX_SQUARES = 1
+
+    @property
+    def theoretical_moves(self):
+        if self.square is None:
+            raise AttributeError("Can't get moves for a piece with no square.")
+
+        return [self.square.get_adjacent(direction) for direction in self.MOVESET.value]
 
     def __str__(self):
         match self.color:

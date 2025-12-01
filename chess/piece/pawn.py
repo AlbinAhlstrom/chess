@@ -12,7 +12,6 @@ class Pawn(Piece):
     """
 
     MOVESET = Moveset.CUSTOM
-    MAX_SQUARES = 1
 
     @property
     def direction(self) -> Direction:
@@ -26,27 +25,28 @@ class Pawn(Piece):
         if self.color == Color.WHITE:
             return Moveset.PAWN_WHITE_CAPTURE
         else:
-            return Moveset.PAWN_BLACK_CAPTURE
+            return Moveset.PAWN_WHITE_CAPTURE
 
     @property
-    def max_squares_forward(self) -> int:
-        return 1 if self.has_moved else 2
+    def capture_squares(self) -> list[Square]:
+        if self.square is None:
+            raise AttributeError("Can't capture using a piece with no square")
+        return [self.square.adjacent(dir) for dir in self.capture_moveset.value]
 
     @property
-    def all_directions_array(self):
+    def forward_squares(self) -> list[Square]:
+        if self.square is None:
+            raise AttributeError("Can't capture using a piece with no square")
+
+        squares = [self.square.adjacent(self.direction)]
+        if not self.has_moved:
+            squares += [squares[0].adjacent(self.direction)]
+        return squares
+
+    @property
+    def theoretical_move_paths(self):
         """Array of coordinates reachable when moving in all directions"""
-        captures = self.capture_moveset.value
-        max = self.MAX_SQUARES
-        max_forward = 1 if self.has_moved else 2
-
-        forward = self._get_moves_in_direction(self.direction, max_forward)
-        captures = [self._get_moves_in_direction(dir, max) for dir in captures]
-        return [forward, *captures]
-
-    @property
-    def pseudo_legal_moves(self) -> list[Square]:
-        """All moves legal on an empty board"""
-        return list(chain.from_iterable(self.all_directions_array))
+        return [self.forward_squares, [square for square in self.capture_squares]]
 
     def __str__(self):
         match self.color:

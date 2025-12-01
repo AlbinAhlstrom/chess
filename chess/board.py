@@ -56,7 +56,7 @@ class Board:
             raise AttributeError(f"Expected rook on {rook_coord} found None.")
 
         direction = Direction.RIGHT if target_coord.col == 2 else Direction.LEFT
-        end_coord = target_coord.get_adjacent(direction)
+        end_coord = target_coord.adjacent(direction)
 
         self.move_piece(rook, end_coord)
 
@@ -106,7 +106,7 @@ class Board:
 
         if move.is_en_passant:
             direction = Direction.DOWN if piece.color == Color.WHITE else Direction.UP
-            captured_coordinate = piece.square.get_adjacent(direction)
+            captured_coordinate = piece.square.adjacent(direction)
             self.remove_piece(captured_coordinate)
 
         if move.is_castling:
@@ -148,7 +148,7 @@ class Board:
             raise ValueError("Invalid piece at move end.")
         direction = Direction.DOWN if piece.color == Color.WHITE else Direction.UP
         if is_pawn_move and abs(move.start.row - move.end.row) > 1:
-            en_passant_square = piece.square.get_adjacent(direction)
+            en_passant_square = piece.square.adjacent(direction)
             return en_passant_square
         return None
 
