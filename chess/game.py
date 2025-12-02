@@ -56,54 +56,31 @@ class Game:
             return False, "Path is blocked."
 
         return True, "Move is pseudo legal."
-
     @property
-    def legal_moves(self) -> list[Move]:
-        legal_moves = []
+    def theoretical_moves(self):
+        pieces = self.board.current_players_pieces
+        if any([piece.square is None for piece in pieces]):
+            raise AttributeError(f"Found piece without square")
+        return [Move(piece.square, end) for piece in pieces for end in piece.theoretical_moves]
 
-        for piece in self.board.current_players_pieces:
-            start_square = piece.square
-            if start_square is None:
-                raise AttributeError("Piece has no square")
-
-            for end_square in self.board.unblocked_paths(piece):
-                move = Move(start_square, end_square)
-                try:
-                    if self.is_move_legal(move):
-                        legal_moves.append(move)
-                except IllegalMoveException:
-                    pass
-        return legal_moves
 
     @property
     def pseudo_legal_moves(self) -> list[Move]:
-        # TODO: Make no check check
-        legal_moves = []
+        return [move for move in self.theoretical_moves if self.is_move_pseudo_legal(move)[0]]
 
-        for piece in self.board.current_players_pieces:
-            start_square = piece.square
-            if start_square is None:
-                raise AttributeError("Piece has no square")
+    @property
+    def legal_moves(self) -> list[Move]:
+        return [move for move in self.theoretical_moves if self.is_move_legal(move)[0]]
 
-            for end_square in self.board.unblocked_paths(piece):
-                move = Move(start_square, end_square)
-                try:
-                    if self.is_move_legal(move):
-                        legal_moves.append(move)
-                except IllegalMoveException:
-                    pass
-        return legal_moves
-
-    def is_move_legal(self, move: Move) -> bool:
+    def is_move_legal(self, move: Move) -> tuple[bool, str]:
         is_pseudo_legal, reason = self.is_move_pseudo_legal(move)
         if not is_pseudo_legal:
-            print(reason)
-            return False
+            return False, reason
 
         if self.king_left_in_check(move):
-            raise IllegalMoveException("King left in check")
+            return False, "King left in check"
 
-        return True
+        return True, "Move is legal"
 
     def render(self):
         """Print the board."""
@@ -119,7 +96,8 @@ class Game:
         self.board = Board.from_fen(self.board.fen)
         self.board.make_move(move)
 
-        is_check = self.board.current_player_in_check
+        # Turn has switched after making move
+        is_check = self.board.inactive_player_in_check
 
         self.board = real_board
         assert self.board.fen == initial_fen

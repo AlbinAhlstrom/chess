@@ -103,7 +103,6 @@ class Board:
         return any([square in self.unblocked_paths(piece) for piece in attackers])
 
     def player_in_check(self, color: Color) -> bool:
-        print(f"{color=}")
         king = self.get_pieces(King, color)[0]
         if king.square is None:
             raise AttributeError("King not found on board.")
