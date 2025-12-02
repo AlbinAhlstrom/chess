@@ -95,6 +95,8 @@ class Board:
         if self.halfmove_clock > 50:
             return False, "More than 50 moves since pawn move or capture."
 
+        return True, "Board state is legal."
+
     def is_under_attack(self, square: Square, by_color: Color) -> bool:
         """Check if square is attacked by the given color."""
         attackers = self.get_pieces(color=by_color)
