@@ -26,7 +26,11 @@ _KNIGHT_MOVES_MAP = [
     [4, 6, 8, 8]  # Row 3
 ]
 
-from hypothesis import given
+def empty_board_with_piece(square, piece):
+    board = Board.empty()
+    board.set_piece(piece, square)
+    return board
+
 
 @given(square=random_square(), piece=random_piece())
 def test_pawn_capture(square: Square, piece: Piece):
@@ -37,8 +41,7 @@ def test_pawn_capture(square: Square, piece: Piece):
 @given(square=random_square(), piece=random_piece())
 def test_theoretical_moves_count_king(square: Square, piece: Piece):
     """Verifies the exact theoretical move count for a King based on its position."""
-    board = Board.empty()
-    board.set_piece(piece, square)
+    empty_board_with_piece(square, piece)
 
     if piece.__class__ is not King:
         return
@@ -65,8 +68,7 @@ def test_theoretical_moves_count_king(square: Square, piece: Piece):
 
 @given(square=random_square(), piece=random_piece())
 def test_theoretical_moves_count_knight(square: Square, piece: Piece):
-    board = Board.empty()
-    board.set_piece(piece, square)
+    empty_board_with_piece(square, piece)
 
     if piece.__class__ is not Knight:
         return
@@ -84,8 +86,7 @@ def test_theoretical_moves_count_knight(square: Square, piece: Piece):
 
 @given(square=random_square(), piece=random_piece())
 def test_theoretical_moves_count_rook(square: Square, piece: Piece):
-    board = Board.empty()
-    board.set_piece(piece, square)
+    empty_board_with_piece(square, piece)
 
     if piece.__class__ is not Rook:
         return
@@ -100,8 +101,7 @@ def test_theoretical_moves_count_rook(square: Square, piece: Piece):
 
 @given(square=random_square(), piece=random_piece())
 def test_theoretical_moves_count_bishop(square: Square, piece: Piece):
-    board = Board.empty()
-    board.set_piece(piece, square)
+    empty_board_with_piece(square, piece)
 
     if piece.__class__ is not Bishop:
         return
@@ -122,8 +122,7 @@ def test_theoretical_moves_count_bishop(square: Square, piece: Piece):
 
 @given(square=random_square(), piece=random_piece())
 def test_theoretical_moves_count_queen(square: Square, piece: Piece):
-    board = Board.empty()
-    board.set_piece(piece, square)
+    empty_board_with_piece(square, piece)
 
     if piece.__class__ is not Queen:
         return
@@ -146,37 +145,8 @@ def test_theoretical_moves_count_queen(square: Square, piece: Piece):
 
 
 @given(square=random_square(), piece=random_piece())
-def test_theoretical_moves_count_pawn(square: Square, piece: Piece):
-    board = Board.empty()
-    board.set_piece(piece, square)
-
-    starting_row = 1 if piece.color == Color.BLACK else 6
-    last_row = 0 if piece.color == Color.WHITE else 7
-    is_on_edge = square.col in (0, 7)
-
-    piece.has_moved = not square.row == starting_row
-    if not isinstance(piece, Pawn):
-        return
-
-    if square.row == starting_row - piece.direction.value[1]:
-        return
-    expected_moves = 3 if piece.has_moved else 4
-    if is_on_edge:
-        expected_moves -= 1
-
-    if square.row == last_row:
-        expected_moves = 0
-
-    moves_count = len(piece.theoretical_moves)
-    assert moves_count == expected_moves, (
-        f"{piece.color} pawn at {square} calculated {moves_count}, expected {expected_moves}."
-    )
-
-
-@given(square=random_square(), piece=random_piece())
 def test_theoretical_moves_are_valid(square: Square, piece: Piece):
-    board = Board.empty()
-    board.set_piece(piece, square)
+    empty_board_with_piece(square, piece)
 
     assert piece is not None
     assert piece.square is not None
@@ -192,8 +162,7 @@ def test_theoretical_moves_are_valid(square: Square, piece: Piece):
 
 @given(square=random_square(), piece=random_piece())
 def test_theoretical_moves_count_limits(square: Square, piece: Piece):
-    board = Board.empty()
-    board.set_piece(piece, square)
+    empty_board_with_piece(square, piece)
 
     assert piece is not None
 

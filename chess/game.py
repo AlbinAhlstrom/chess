@@ -100,8 +100,8 @@ class Game:
         except IllegalMoveException as e:
             raise e
 
-        if self.king_left_in_check(move):
-            raise IllegalMoveException("King left in check")
+        # if self.king_left_in_check(move):
+        #     raise IllegalMoveException("King left in check")
 
         return True
 

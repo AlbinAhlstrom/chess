@@ -1,8 +1,8 @@
-from chess.piece.piece import Piece
+from chess.piece.piece import SlidingPiece
 from chess.enums import Color, Moveset
 
 
-class Bishop(Piece):
+class Bishop(SlidingPiece):
     """Bishop piece representation.
 
     Moves any number of squares diagonally.

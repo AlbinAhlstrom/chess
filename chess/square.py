@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from chess.enums import Direction
+from chess.enums import Direction, Moveset
 
 
 @dataclass(frozen=True)
@@ -78,6 +78,10 @@ class Square:
         if not Square.is_valid(self.row + d_row, self.col + d_col):
             return None
         return self.from_any((self.row + d_row, self.col + d_col))
+
+    def is_adjacent_to(self, square: Square, moveset: Moveset = Moveset.STRAIGHT_AND_DIAGONAL):
+        adjacent_squares = [self.adjacent(direction) for direction in moveset.value]
+        return square in adjacent_squares
 
     def __str__(self):
         """Return algebraic notation."""

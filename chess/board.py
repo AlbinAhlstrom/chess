@@ -7,6 +7,7 @@ from chess.enums import Color, CastlingRight, Direction
 from chess.piece.pawn import Pawn
 from chess.piece.king import King
 from chess.piece.piece import Piece
+from chess.piece.rook import Rook
 from chess.square import Square
 
 
@@ -63,7 +64,7 @@ class Board:
         self.player_to_move = self.player_to_move.opposite
 
     @property
-    def is_legal(self):
+    def is_legal(self) -> tuple[bool, str]:
         """Return True if board state is legal.
 
         Rules:
@@ -71,6 +72,7 @@ class Board:
         - Inactive players king can't be attacked.
         - White pawns disallowed from rank 1.
         - Black pawns disallowed from rank 8.
+        - Pawn must not be left unpromoted.
         - Maximum 8 pawns, 9 queens and 10 rooks, bishops and knights per side.
         - Each promoted piece has to result in 1 fewer pawn present.
         - Halfmove clock can not surpass 50.
@@ -81,12 +83,25 @@ class Board:
         white_kings = self.get_pieces(King, Color.WHITE)
         black_kings = self.get_pieces(King, Color.BLACK)
 
+        if not len(white_kings) == 1 and len(black_kings) == 1:
+            return False, "Invalid king amount."
+
+        if self.inactive_player_in_check:
+            return False, f"Inactive player in check. ({self.player_to_move.opposite})"
+
+        if any([pawn.square.row in [0,7] for pawn in self.get_pieces(Pawn, Color.WHITE)]):
+            return False, "Pawn found on disallowed row."
+
+        if self.halfmove_clock > 50:
+            return False, "More than 50 moves since pawn move or capture."
+
     def is_under_attack(self, square: Square, by_color: Color) -> bool:
         """Check if square is attacked by the given color."""
         attackers = self.get_pieces(color=by_color)
         return any([square in self.unblocked_paths(piece) for piece in attackers])
 
     def player_in_check(self, color: Color) -> bool:
+        print(f"{color=}")
         king = self.get_pieces(King, color)[0]
         if king.square is None:
             raise AttributeError("King not found on board.")
@@ -95,6 +110,10 @@ class Board:
     @property
     def current_player_in_check(self) -> bool:
         return self.player_in_check(self.player_to_move)
+
+    @property
+    def inactive_player_in_check(self) -> bool:
+        return self.player_in_check(self.player_to_move.opposite)
 
     def _execute_castling_rook_move(self, target_coord: Square):
         rook_col = 0 if target_coord.col == 2 else 7
@@ -114,7 +133,7 @@ class Board:
     ) -> list[T]:
         pieces = [piece for piece in self.pieces if isinstance(piece, piece_type)]
         if color is not None:
-            pieces = [piece for piece in pieces if piece.color == color]
+            pieces = [piece for piece in pieces if piece.color.value == color.value]
         return pieces
 
     @property
@@ -201,14 +220,43 @@ class Board:
             return en_passant_square
         return None
 
+    def remove_castling_rights(self, rights: set | CastlingRight):
+        if isinstance(rights, CastlingRight):
+            rights = {rights}
+        for castling_right in rights:
+            if castling_right in self.castling_rights:
+                self.castling_rights.remove(castling_right)
+
+
     def _update_castling_rights(self, moved_piece: Piece, start: Square):
-        if isinstance(moved_piece, King):
-            self.castling_rights.remove(CastlingRight.short(moved_piece.color))
-            self.castling_rights.remove(CastlingRight.long(moved_piece.color))
-        elif start.col == 7:
-            self.castling_rights.remove(CastlingRight.short(moved_piece.color))
-        elif start.col == 0:
-            self.castling_rights.remove(CastlingRight.long(moved_piece.color))
+
+        short = CastlingRight.short(moved_piece.color)
+        long = CastlingRight.long(moved_piece.color)
+        is_rook_on_start_rank = isinstance(moved_piece, Rook) and (start.row == 0 or start.row == 7)
+        rook_squares = {str(rook.square) for rook in self.get_pieces(Rook)}
+        king_squares = {str(king.square) for king in self.get_pieces(King)}
+        rights_map = {
+            "e1": {CastlingRight.WHITE_SHORT, CastlingRight.WHITE_LONG},
+            "e8": {CastlingRight.BLACK_SHORT, CastlingRight.BLACK_LONG},
+            "a1": {CastlingRight.WHITE_LONG},
+            "a8": {CastlingRight.BLACK_LONG},
+            "h1": {CastlingRight.WHITE_SHORT},
+            "h8": {CastlingRight.BLACK_SHORT},
+        }
+        for square in rights_map:
+            castling_rights = rights_map[square]
+            if not square in rook_squares | king_squares:
+                for castling_right in castling_rights:
+                    if castling_right in self.castling_rights:
+                        self.castling_rights.remove(castling_right)
+
+        if (is_rook_on_start_rank and start.col == 7) or isinstance(moved_piece, King):
+            if short in self.castling_rights:
+                self.castling_rights.remove(short)
+
+        if (is_rook_on_start_rank and start.col == 0) or isinstance(moved_piece, King):
+            if long in self.castling_rights:
+                self.castling_rights.remove(long_right)
 
     def move_piece(self, piece: Piece, end: Square):
         if piece.square is None:
