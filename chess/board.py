@@ -37,11 +37,11 @@ class Board:
         self.fullmove_count = fullmove_count
 
     @classmethod
-    def starting_setup(cls) -> "Board":
+    def starting_setup(cls) -> Board:
         return cls.from_fen(cls.STARTING_FEN)
 
     @classmethod
-    def empty(cls) -> "Board":
+    def empty(cls) -> Board:
         return cls.from_fen(cls.EMPTY_FEN)
 
     def get_piece(self, coordinate: str | tuple | Square) -> Piece | None:
@@ -70,13 +70,13 @@ class Board:
         Rules:
         - Must have exactly 1 king of each color.
         - Inactive players king can't be attacked.
-        - White pawns disallowed from rank 1.
-        - Black pawns disallowed from rank 8.
-        - Pawn must not be left unpromoted.
+        - Both color pawns are disallowed from ranks 1 and 8. (Below start and on promotion square)
+        - Halfmove clock can not surpass 50.
+
+        # TODO:
+        - Castling rights must be reflected in positions of king and rook.
         - Maximum 8 pawns, 9 queens and 10 rooks, bishops and knights per side.
         - Each promoted piece has to result in 1 fewer pawn present.
-        - Halfmove clock can not surpass 50.
-        - Castling rights must be reflected in positions of king and rook.
         - En passant square must be on rank 3 or 6.
         - En passant square must be behind a pawn of correct color.
         """
