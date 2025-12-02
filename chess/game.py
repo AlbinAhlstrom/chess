@@ -95,13 +95,13 @@ class Game:
         return legal_moves
 
     def is_move_legal(self, move: Move) -> bool:
-        try:
-            self.is_move_pseudo_legal(move)
-        except IllegalMoveException as e:
-            raise e
+        is_pseudo_legal, reason = self.is_move_pseudo_legal(move)
+        if not is_pseudo_legal:
+            print(reason)
+            return False
 
-        # if self.king_left_in_check(move):
-        #     raise IllegalMoveException("King left in check")
+        if self.king_left_in_check(move):
+            raise IllegalMoveException("King left in check")
 
         return True
 
@@ -113,17 +113,19 @@ class Game:
 
     def king_left_in_check(self, move: Move) -> bool:
         """Returns True if king is left in check after a move."""
+        initial_fen = self.board.fen
         real_board = self.board
+
         self.board = Board.from_fen(self.board.fen)
+        self.board.make_move(move)
 
-        try:
-            self.board.make_move(move)
+        is_check = self.board.current_player_in_check
 
-            return self.board.current_player_in_check
-        finally:
-            self.board = real_board
+        self.board = real_board
+        assert self.board.fen == initial_fen
+        return is_check
 
-    def make_move(self, move: Move):
+    def take_turn(self, move: Move):
         """Make a move.
 
         Refetching board squares is necessary due to making a move
