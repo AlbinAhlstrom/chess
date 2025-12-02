@@ -1,17 +1,19 @@
 from chess.board import Board
-from chess.enums import Color
 from chess.game import Game
 from chess.move import Move
-from chess.piece.king import King
 
 
 def main():
-    fen = "4k3/4R3/r4K2/8/8/8/8/8 w KQkq - 0 1"
-    board = Board.from_fen(fen)
+    board = Board.starting_setup()
     game = Game(board)
 
     while True:
         board.print()
+
+        if game.is_over:
+            message = "Checkmate!" if game.is_checkmate else "Draw!"
+            print(message)
+            break
 
         print(f"Player to move: {board.player_to_move}")
         print(f"Legal moves: {[str(move) for move in game.legal_moves]}")
@@ -24,7 +26,7 @@ def main():
             print(e)
             continue
 
-        is_legal, reason = game.is_move_pseudo_legal(move)
+        is_legal, reason = game.is_move_legal(move)
         if not is_legal:
             print(f"Illegal move: {reason}")
             continue

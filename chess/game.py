@@ -21,6 +21,18 @@ class Game:
         self.board = board
         self.history = []
 
+    @property
+    def is_over(self):
+        return not bool(self.legal_moves)
+
+    @property
+    def is_checkmate(self):
+        return self.is_over and self.board.current_player_in_check
+
+    @property
+    def is_draw(self):
+         return self.is_over and not self.board.current_player_in_check
+
     def add_to_history(self):
         self.history.append(deepcopy(self.board))
 
