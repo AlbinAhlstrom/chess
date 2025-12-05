@@ -125,7 +125,6 @@ class Game:
 
         self.add_to_history()
         self.board.make_move(move)
-        self.board.switch_active_player()
         self.increment_turn_counters(move)
 
     def increment_turn_counters(self, move: Move):
