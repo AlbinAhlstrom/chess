@@ -1,5 +1,5 @@
 from chess.square import Square
-from chess.enums import Color, Direction, Moveset
+from chess.enums import Color, Direction
 from chess.piece.piece import Piece
 
 
@@ -10,7 +10,7 @@ class Pawn(Piece):
     Diagonal captures and en passant is implemented in Board.legal_moves.
     """
 
-    MOVESET = Moveset.CUSTOM
+    moveset = Direction.up_straight_or_diagonal
 
     @property
     def direction(self) -> Direction:
@@ -22,9 +22,9 @@ class Pawn(Piece):
     @property
     def capture_moveset(self) -> Moveset:
         if self.color == Color.WHITE:
-            return Moveset.PAWN_WHITE_CAPTURE
+            return {Direction.UP_LEFT, Direction.UP_RIGHT}
         else:
-            return Moveset.PAWN_BLACK_CAPTURE
+            return {Direction.DOWN_LEFT, Direction.DOWN_RIGHT}
 
     @property
     def capture_squares(self) -> list[Square]:
@@ -32,7 +32,7 @@ class Pawn(Piece):
             raise AttributeError("Can't capture using a piece with no square")
 
         valid_capture_squares = []
-        for direction in self.capture_moveset.value:
+        for direction in self.capture_moveset:
             d_col, d_row = direction.value
             new_row = self.square.row + d_row
             new_col = self.square.col + d_col

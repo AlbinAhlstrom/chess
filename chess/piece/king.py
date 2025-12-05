@@ -1,17 +1,32 @@
 from math import inf
 
-from chess.piece.piece import SteppingPiece
-from chess.enums import Color, Moveset
+from chess.piece.piece import Piece
+from chess.enums import Color, Direction
+from chess.square import Square
 
 
-class King(SteppingPiece):
+class King(Piece):
     """King piece representation.
 
     Moves one square in any direction.
     Special rules for castling and check are implemented in Board.legal_move.
     """
 
-    MOVESET = Moveset.STRAIGHT_AND_DIAGONAL
+    moveset = Direction.straight_and_diagonal()
+    MAX_STEPS = 1
+
+    @property
+    def theoretical_move_paths(self) -> list[list[Square]]:
+        """Move paths adjusted to allow for castling."""
+        if self.has_moved:
+            return super().theoretical_move_paths
+
+        castling = {Direction.LEFT, Direction.RIGHT}
+        return [
+            direction.get_path(self.square, self.MAX_STEPS if direction in castling else 2)
+            for direction in self.moveset
+        ]
+
 
     def __str__(self):
         match self.color:

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from chess.enums import Direction, Moveset
+from chess.enums import Color, Direction
 
 
 @dataclass(frozen=True)
@@ -24,6 +24,10 @@ class Square:
     def is_valid(row: int, col: int) -> bool:
         """Check if row and col are within the 0-7 range."""
         return 0 <= row < 8 and 0 <= col < 8
+
+    def is_promotion_row(self, player: Color) -> bool:
+        """Return True if square is the promotion row for given player."""
+        return self.row == 0 if player == Color.WHITE else self.row == 7
 
     def get_step(self, direction: Direction) -> "Square" | None:
         """
@@ -79,8 +83,8 @@ class Square:
             return None
         return self.from_any((self.row + d_row, self.col + d_col))
 
-    def is_adjacent_to(self, square: Square, moveset: Moveset = Moveset.STRAIGHT_AND_DIAGONAL):
-        adjacent_squares = [self.adjacent(direction) for direction in moveset.value]
+    def is_adjacent_to(self, square: Square, moveset: set[Direction] = Direction.straight_and_diagonal()):
+        adjacent_squares = [self.adjacent(direction) for direction in moveset]
         return square in adjacent_squares
 
     def __str__(self):

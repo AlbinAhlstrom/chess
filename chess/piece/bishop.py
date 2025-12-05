@@ -1,14 +1,14 @@
-from chess.piece.piece import SlidingPiece
-from chess.enums import Color, Moveset
+from chess.piece.piece import Piece
+from chess.enums import Color, Direction
 
 
-class Bishop(SlidingPiece):
+class Bishop(Piece):
     """Bishop piece representation.
 
     Moves any number of squares diagonally.
     """
 
-    MOVESET = Moveset.DIAGONAL
+    moveset = Direction.diagonal()
 
     def __str__(self):
         match self.color:

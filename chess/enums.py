@@ -1,4 +1,9 @@
+from typing import TYPE_CHECKING
 from enum import Enum, StrEnum
+
+if TYPE_CHECKING:
+    from chess.square import Square
+
 
 
 class Color(StrEnum):
@@ -16,8 +21,8 @@ class Color(StrEnum):
     def opposite(self):
         return Color.BLACK if self == Color.WHITE else Color.WHITE
 
-    # def __str__(self):
-    #     return "black" if self.value == "b" else "white"
+    def __str__(self):
+        return "black" if self.value == "b" else "white"
 
 
 class CastlingRight(StrEnum):
@@ -50,6 +55,11 @@ class CastlingRight(StrEnum):
 
 
 class Direction(Enum):
+    """Directions a piece can move in.
+
+    Enum values are tuples repersenting row and col from an initial board position.
+    (x, y) = (col_delta, row_delta)
+    """
     NONE = (0, 0)
 
     UP = (0, -1)
@@ -62,64 +72,64 @@ class Direction(Enum):
     DOWN_LEFT = (-1, 1)
     DOWN_RIGHT = (1, 1)
 
-    L_RIGHT_UP = (2, -1)
-    L_RIGHT_DOWN = (2, 1)
+    L_UP_LEFT = (-1, -2)
+    L_UP_RIGHT = (1, -2)
+    L_DOWN_LEFT = (-1, 2)
+    L_DOWN_RIGHT = (1, 2)
     L_LEFT_UP = (-2, -1)
     L_LEFT_DOWN = (-2, 1)
-    L_UP_RIGHT = (1, -2)
-    L_UP_LEFT = (-1, -2)
-    L_DOWN_RIGHT = (1, 2)
-    L_DOWN_LEFT = (-1, 2)
+    L_RIGHT_UP = (2, -1)
+    L_RIGHT_DOWN = (2, 1)
 
-    def get_path(self, square: "Square") -> list["Square"]:
+    TWO_LEFT = (-2, 0)
+    TWO_RIGHT = (2, 0)
+
+    @classmethod
+    def straight(cls) -> set[Direction]:
+        return {cls.UP, cls.DOWN, cls.LEFT, cls.RIGHT}
+
+    @classmethod
+    def diagonal(cls) -> set[Direction]:
+        return {cls.UP_LEFT, cls.DOWN_LEFT, cls.UP_RIGHT, cls.DOWN_RIGHT}
+
+    @classmethod
+    def straight_and_diagonal(cls) -> set[Direction]:
+        return cls.straight() | cls.diagonal()
+
+    @classmethod
+    def two_straight_one_sideways(cls) -> set[Direction]:
+        return {
+            cls.L_UP_LEFT, cls.L_UP_RIGHT, cls.L_DOWN_LEFT, cls.L_DOWN_RIGHT,
+            cls.L_LEFT_UP, cls.L_LEFT_DOWN, cls.L_RIGHT_UP, cls.L_RIGHT_DOWN,
+        }
+
+    @classmethod
+    def up_straight_or_diagonal(cls) -> set[Direction]:
+        return {cls.UP, cls.UP_LEFT, cls.UP_RIGHT}
+
+    @classmethod
+    def two_left_or_right(cls) -> set[Direction]:
+        return {cls.TWO_LEFT, cls.TWO_RIGHT}
+
+    def get_path(self, square: Square, max_squares: int = 7) -> list[Square]:
         """Get all squares in a direction."""
-        from chess.square import Square
+        return list(self.take_step(square, max_squares))
 
-        possible_moves = []
+    def take_step(self, start_square: Square, max_squares: int):
+        """
+        Generator that yields squares in a specified direction from a start square.
+        Stops when the board edge is reached or max_squares is hit.
+        """
+        from chess.square import Square
 
         d_col, d_row = self.value
 
-        for dist in range(1, 8):
-            new_c = square.col + (d_col * dist)
-            new_r = square.row + (d_row * dist)
+        for dist in range(1, max_squares + 1):
+            new_c = start_square.col + (d_col * dist)
+            new_r = start_square.row + (d_row * dist)
 
             if 0 <= new_r < 8 and 0 <= new_c < 8:
-                possible_moves.append(Square(new_r, new_c))
+                yield Square(new_r, new_c)
             else:
                 break
 
-        return possible_moves
-
-    def get_step(self, square: "Square", direction: Direction) -> "Square" | None:
-        d_col, d_row = direction.value
-        if not 0 <= square.col + d_col < 8 and 0 <= square.row + d_row < 8:
-            return None
-        return square.adjacent(direction)
-
-
-class Moveset(Enum):
-    NONE = [Direction.NONE]
-    CUSTOM = []
-
-    PAWN_WHITE_CAPTURE = [Direction.UP_LEFT, Direction.UP_RIGHT]
-    PAWN_BLACK_CAPTURE = [Direction.DOWN_LEFT, Direction.DOWN_RIGHT]
-
-    STRAIGHT = [Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT]
-    DIAGONAL = [
-        Direction.UP_LEFT,
-        Direction.UP_RIGHT,
-        Direction.DOWN_LEFT,
-        Direction.DOWN_RIGHT,
-    ]
-
-    STRAIGHT_AND_DIAGONAL = STRAIGHT + DIAGONAL
-    KNIGHT = [
-        Direction.L_RIGHT_UP,
-        Direction.L_RIGHT_DOWN,
-        Direction.L_LEFT_UP,
-        Direction.L_LEFT_DOWN,
-        Direction.L_UP_RIGHT,
-        Direction.L_UP_LEFT,
-        Direction.L_DOWN_RIGHT,
-        Direction.L_DOWN_LEFT,
-    ]

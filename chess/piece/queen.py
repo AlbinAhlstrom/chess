@@ -1,14 +1,14 @@
-from chess.piece.piece import SlidingPiece
-from chess.enums import Color, Moveset
+from chess.piece.piece import Piece
+from chess.enums import Color, Direction
 
 
-class Queen(SlidingPiece):
+class Queen(Piece):
     """Queen piece representation.
 
     Moves any number of squares, straight or diagonally.
     """
 
-    MOVESET = Moveset.STRAIGHT_AND_DIAGONAL
+    moveset = Direction.straight_and_diagonal()
 
     def __str__(self):
         match self.color:

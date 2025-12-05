@@ -46,13 +46,10 @@ class Move:
             Square.from_any(uci_str[:2])
             Square.from_any(uci_str[2:4])
             if len(uci_str) == 5:
-                print(f"is_uci_valid? {uci_str[4] in piece_from_char.keys()=}")
                 return uci_str[4] in piece_from_char.keys()
-            print("is_uci_valid? True")
             return True
         except Exception as e:
             print(e)
-            print("is_uci_valid? False")
             return False
 
     @classmethod

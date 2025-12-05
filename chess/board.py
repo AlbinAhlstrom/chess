@@ -236,7 +236,7 @@ class Board:
         is_rook_on_start_rank = isinstance(moved_piece, Rook) and (start.row == 0 or start.row == 7)
         rook_squares = {str(rook.square) for rook in self.get_pieces(Rook)}
         king_squares = {str(king.square) for king in self.get_pieces(King)}
-        rights_map = {
+        remove_rights = {
             "e1": {CastlingRight.WHITE_SHORT, CastlingRight.WHITE_LONG},
             "e8": {CastlingRight.BLACK_SHORT, CastlingRight.BLACK_LONG},
             "a1": {CastlingRight.WHITE_LONG},
@@ -244,8 +244,8 @@ class Board:
             "h1": {CastlingRight.WHITE_SHORT},
             "h8": {CastlingRight.BLACK_SHORT},
         }
-        for square in rights_map:
-            castling_rights = rights_map[square]
+        for square in remove_rights:
+            castling_rights = remove_rights[square]
             if not square in rook_squares | king_squares:
                 for castling_right in castling_rights:
                     if castling_right in self.castling_rights:

@@ -2,6 +2,7 @@ from copy import deepcopy
 
 from chess.board import Board
 from chess.move import Move
+from chess.piece.king import King
 from chess.piece.pawn import Pawn
 from chess.piece.piece import Piece
 from chess.enums import Color
@@ -36,7 +37,7 @@ class Game:
     def add_to_history(self):
         self.history.append(deepcopy(self.board))
 
-    def is_move_pseudo_legal(self, move) -> tuple[bool, str]:
+    def is_move_pseudo_legal(self, move: Move) -> tuple[bool, str]:
         """Determine if a move is pseudolegal."""
         piece = self.board.get_piece(move.start)
         target = self.board.get_piece(move.end)
