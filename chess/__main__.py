@@ -29,7 +29,11 @@ def main():
         is_legal, reason = game.is_move_legal(move)
         if not is_legal:
             print(f"Illegal move: {reason}")
-            continue
+            if move.start is not None:
+                piece = board.get_piece(move.start)
+                if piece is not None:
+                    piece.has_moved = False
+                continue
 
         board.make_move(move)
 
