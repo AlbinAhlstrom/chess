@@ -161,6 +161,7 @@ class Board:
         if piece.square is None:
             raise ValueError(f"Piece {piece} has no square.")
 
+        is_castling = isinstance(piece, King) and abs(move.start.col - move.end.col) == 2
         is_pawn_move = isinstance(piece, Pawn)
         is_capture = self.get_piece(move.end) is not None or move.is_en_passant
 
@@ -178,7 +179,7 @@ class Board:
             captured_coordinate = piece.square.adjacent(direction)
             self.remove_piece(captured_coordinate)
 
-        if move.is_castling:
+        if is_castling:
             self._execute_castling_rook_move(move.end)
 
         if move.is_promotion:

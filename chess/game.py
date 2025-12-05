@@ -75,6 +75,7 @@ class Game:
                 return False, "Can't promote to king."
 
         return True, "Move is pseudo legal."
+
     @property
     def theoretical_moves(self):
         pieces = self.board.current_players_pieces
