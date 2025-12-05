@@ -68,6 +68,13 @@ class Game:
         if not self.board.unblocked_paths(piece):
             return False, "Path is blocked."
 
+        if move.is_promotion:
+            if not move.end.is_promotion_row(self.board.player_to_move):
+                return False, "Can only promote on the last row."
+
+            if isinstance(move.promotion_piece, King):
+                return False, "Can't promote to king."
+
         return True, "Move is pseudo legal."
     @property
     def theoretical_moves(self):
