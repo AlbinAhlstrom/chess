@@ -181,7 +181,7 @@ class Board:
         if move.is_castling:
             self._execute_castling_rook_move(move.end)
 
-        if move.is_promotion and move.promotion_piece is not None:
+        if move.is_promotion:
             self.board[move.end] = move.promotion_piece
             move.promotion_piece.square = move.end
 
