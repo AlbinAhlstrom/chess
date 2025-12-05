@@ -3,7 +3,6 @@ from hypothesis import strategies as st
 from chess.square import Square
 from chess.enums import Color
 from chess.piece.piece import Piece
-from chess.board import Board
 from chess.piece import piece_from_char
 from typing import Type
 
