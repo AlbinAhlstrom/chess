@@ -1,7 +1,8 @@
 import './Board.css'
 import { fileIntToString } from '../../helpers.js'
+import Pieces from '../Pieces/Pieces.js'
 
-const Board = () => {
+function Board() {
     const getSquareColor = (i, j) => {
         let c = "square";
         c += (i + j) % 2 === 0 ? " square--light" : " square--dark";
@@ -17,7 +18,9 @@ const Board = () => {
                 <div key={file + rank} className={getSquareColor(i, j)}>{file}{rank}</div>)
         )
         }
+
         </div>
+        <Pieces/>
     </div>
 }
 

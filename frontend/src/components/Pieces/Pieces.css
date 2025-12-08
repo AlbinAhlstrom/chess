@@ -1,0 +1,28 @@
+.pieces {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
+
+.piece {
+    width: var(--square-size);
+    height: var(--square-size); 
+    position: absolute;
+    background-size: 100%;
+}
+
+.piece.p { background-image: url("../../../public/images/pieces/p.png"); }
+.piece.n { background-image: url("../../../public/images/pieces/n.png"); }
+.piece.b { background-image: url("../../../public/images/pieces/b.png"); }
+.piece.r { background-image: url("../../../public/images/pieces/r.png"); }
+.piece.q { background-image: url("../../../public/images/pieces/q.png"); }
+.piece.k { background-image: url("../../../public/images/pieces/k.png"); }
+
+.piece.P { background-image: url("../../../public/images/pieces/P.png"); }
+.piece.N { background-image: url("../../../public/images/pieces/N.png"); }
+.piece.B { background-image: url("../../../public/images/pieces/B.png"); }
+.piece.R { background-image: url("../../../public/images/pieces/R.png"); }
+.piece.Q { background-image: url("../../../public/images/pieces/Q.png"); }
+.piece.K { background-image: url("../../../public/images/pieces/K.png"); }

@@ -1,5 +1,5 @@
 .board {
-
+    position: relative;
 }
 
 .squares {
@@ -14,9 +14,11 @@
 }
 
 .square--light {
-    background: var(--light-square)
+    background: var(--light-square);
+    color: var(--light-square);
 }
 
 .square--dark {
-    background: var(--dark-square)
+    background: var(--dark-square);
+    color: var(--dark-square);
 }
