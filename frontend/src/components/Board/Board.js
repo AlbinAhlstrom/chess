@@ -1,6 +1,6 @@
 import './Board.css'
 import { fileIntToString } from '../../helpers.js'
-import Pieces from '../Pieces/Pieces.js'
+import { Pieces } from '../Pieces/Pieces.js'
 
 function Board() {
     const getSquareColor = (i, j) => {
