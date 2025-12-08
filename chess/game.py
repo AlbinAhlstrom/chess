@@ -130,6 +130,13 @@ class Game:
         and reverting another board object. Since move references the old
         board object new squares need to be fetched.
         """
+        piece = self.board.get_piece(move.start)
+        if isinstance(piece, Pawn) and move.is_diagonal and self.board.get_piece(move.end) is None and move.end == self.board.en_passant_square:
+            move = Move(move.start, move.end, is_en_passant=True)
+
+        is_legal, reason = self.is_move_legal(move)
+        if not is_legal:
+            raise IllegalMoveException(reason)
 
         self.add_to_history()
         self.board.make_move(move)

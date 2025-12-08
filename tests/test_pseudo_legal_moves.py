@@ -73,7 +73,6 @@ def test_pseudo_legal_cant_capture_own_piece(board):
     start = Square(7, 0) # A1
     end = Square(6, 0)   # A2
 
-    # Ensure setup is correct for test
     board.set_piece(Rook(Color.WHITE), start)
     board.set_piece(Pawn(Color.WHITE), end)
 
@@ -149,3 +148,72 @@ def test_leaving_king_in_check_is_pseudo_legal():
 
     game = Game(board)
     assert game.is_move_pseudo_legal(move)[0]
+
+def test_pseudo_legal_en_passant_is_legal():
+    """Test that a valid en passant capture is recognized as pseudo-legal."""
+    # FEN: White pawn on e5, black on d5, en passant on d6
+    fen = "4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 1"
+    board = Board.from_fen(fen)
+    game = Game(board)
+
+    # White's en passant capture: e5xd6
+    move = Move.from_uci("e5d6")
+
+    is_legal, reason = game.is_move_pseudo_legal(move)
+    assert is_legal is True, f"En passant move was incorrectly deemed illegal: {reason}"
+
+def test_fen_after_initial_pawn_move():
+    """Test that the FEN's en passant field is correctly 'a3' after 1. a4."""
+    board = Board.starting_setup()
+    game = Game(board)
+
+    # Make the move 1. a4
+    move = Move.from_uci("a2a4")
+    game.take_turn(move)
+
+    # The FEN should have 'a3' for the en passant square
+    expected_fen = "rnbqkbnr/pppppppp/8/8/P7/8/1PPPPPPP/RNBQKBNR b KQkq a3 0 1"
+    assert game.board.fen == expected_fen
+
+def test_en_passant_capture_removes_pawn():
+    """Test that an en passant capture correctly removes the captured pawn."""
+    # FEN: White pawn on e5, black on d5, en passant on d6
+    fen = "4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 1"
+    board = Board.from_fen(fen)
+    game = Game(board)
+    captured_pawn_square = Square.from_any('d5')
+
+    # Ensure the black pawn is on d5 before the move
+    assert board.get_piece(captured_pawn_square) is not None
+
+    # White's en passant capture: e5xd6
+    move = Move.from_uci("e5d6")
+
+    # The game logic should handle setting is_en_passant and removing the pawn.
+    game.take_turn(move)
+
+    # After the move, the white pawn should be on d6, and the black pawn on d5 should be gone
+    assert board.get_piece(captured_pawn_square) is None
+    assert isinstance(board.get_piece(Square.from_any('d6')), Pawn)
+
+def test_en_passant_capture_from_start():
+    """Test a specific en passant capture sequence from the starting position."""
+    board = Board.starting_setup()
+    game = Game(board)
+
+    moves_uci = ["a2a4", "a7a6", "a4a5", "b7b5", "a5b6"]
+    for uci in moves_uci:
+        move = Move.from_uci(uci)
+        game.take_turn(move)
+
+    captured_pawn_square = Square.from_any('b5')
+    assert game.board.get_piece(captured_pawn_square) is None
+
+    assert game.board.fen != 'rnbqkbnr/2pppppp/pP6/1p6/8/8/1PPPPPPP/RNBQKBNR b KQkq - 0 3'
+    assert isinstance(game.board.get_piece(Square.from_any('b6')), Pawn)
+
+def test_en_passant_valid():
+    fen = 'rnbqkbnr/2pppppp/p7/Pp6/8/8/1PPPPPPP/RNBQKBNR w KQkq - 0 3'
+    board = Board.from_fen(fen)
+    game = Game(board)
+    move = Move.from_uci("a5b5")

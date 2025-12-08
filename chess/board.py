@@ -164,7 +164,7 @@ class Board:
         is_castling = isinstance(piece, King) and abs(move.start.col - move.end.col) == 2
 
         self.halfmove_clock += 1
-        if self.is_pawn_move(move) or self.is_capture(move):
+        if isinstance(piece, Pawn) or self.is_capture(move):
             self.halfmove_clock = 0
 
         if self.player_to_move == Color.BLACK:
@@ -215,7 +215,7 @@ class Board:
         if piece is None or piece.square is None:
             raise ValueError("Invalid piece at move end.")
         direction = Direction.DOWN if piece.color == Color.WHITE else Direction.UP
-        if self.is_pawn_move(move) and abs(move.start.row - move.end.row) > 1:
+        if isinstance(piece, Pawn) and abs(move.start.row - move.end.row) > 1:
             en_passant_square = piece.square.adjacent(direction)
             return en_passant_square
         return None
@@ -256,7 +256,7 @@ class Board:
 
         if (is_rook_on_start_rank and start.col == 0) or isinstance(moved_piece, King):
             if long in self.castling_rights:
-                self.castling_rights.remove(long_right)
+                self.castling_rights.remove(long)
 
     def move_piece(self, piece: Piece, end: Square):
         if piece.square is None:

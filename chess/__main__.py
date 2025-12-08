@@ -1,5 +1,5 @@
 from chess.board import Board
-from chess.game import Game
+from chess.game import Game, IllegalMoveException
 from chess.move import Move
 
 
@@ -15,27 +15,18 @@ def main():
             print(message)
             break
 
-        print(f"Player to move: {board.player_to_move}")
+        print(f"Player to move: {game.board.player_to_move}")
         print(f"Legal moves: {[str(move) for move in game.legal_moves]}")
+        print(f"{game.board.fen=}")
 
         uci_str = input("Enter a move: ")
 
         try:
-            move = Move.from_uci(uci_str, board.player_to_move)
-        except ValueError as e:
+            move = Move.from_uci(uci_str, game.board.player_to_move)
+            game.take_turn(move)
+        except (ValueError, IllegalMoveException) as e:
             print(e)
             continue
-
-        is_legal, reason = game.is_move_legal(move)
-        if not is_legal:
-            print(f"Illegal move: {reason}")
-            if move.start is not None:
-                piece = board.get_piece(move.start)
-                if piece is not None:
-                    piece.has_moved = False
-                continue
-
-        board.make_move(move)
 
 
 if __name__ == "__main__":

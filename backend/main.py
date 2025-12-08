@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import json
 
-from chess.game import Game
+from chess.game import Game, IllegalMoveException
 from chess.board import Board
 from chess.move import Move
 from chess.square import Square
@@ -103,17 +103,11 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
             if message["type"] == "move":
                 move_uci = message["uci"]
                 try:
-                    move = Move.from_uci(move_uci, game.board.player_to_move)
-                except ValueError as e:
+                    move = Move.from_uci(move_uci, player_to_move=game.board.player_to_move)
+                    game.take_turn(move)
+                except (ValueError, IllegalMoveException) as e:
                     await websocket.send_text(json.dumps({"type": "error", "message": str(e)}))
                     continue
-
-                is_legal, reason = game.is_move_legal(move)
-                if not is_legal:
-                    await websocket.send_text(json.dumps({"type": "error", "message": f"Illegal move: {reason}"}))
-                    continue
-
-                game.take_turn(move)
 
                 status = "active"
                 if game.is_checkmate:
