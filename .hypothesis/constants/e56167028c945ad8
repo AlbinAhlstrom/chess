@@ -1,4 +1,0 @@
-# file: /home/albin/projects/chess/chess/board.py
-# hypothesis_version: 6.148.7
-
-['-', '/', 'Board', 'Invalid king amount.', 'Piece has no square.', 'T', 'a1', 'a8', 'e1', 'e8', 'h1', 'h8']

@@ -1,4 +1,0 @@
-# file: /home/albin/projects/chess/chess/game.py
-# hypothesis_version: 6.148.5
-
-['No moves to undo.', 'No piece moved.', 'Path is blocked.', 'Piece has no square', 'Wrong piece color.']
