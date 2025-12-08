@@ -88,7 +88,14 @@ function Pieces() {
         setPromotionDialogOpen(false);
         setPromotionMove(null);
     };
+
+    const handleCancelPromotion = () => {
+        setPromotionDialogOpen(false);
+        setPromotionMove(null);
+    };
     const onDragOver = e => e.preventDefault()
+    const promotionColor = fen && fen.split(' ')[1] === 'w' ? 'w' : 'b';
+
 
     return (
         <div
@@ -97,7 +104,7 @@ function Pieces() {
             onDragOver={onDragOver}
             onDrop={onDrop}>
 
-            {isPromotionDialogOpen && <PromotionDialog onPromote={handlePromotion} />}
+            {isPromotionDialogOpen && <PromotionDialog onPromote={handlePromotion} onCancel={handleCancelPromotion} color={promotionColor} />}
 
             {position.map((rankArray, rankIndex) =>
                 rankArray.map((pieceType, fileIndex) =>
