@@ -38,7 +38,6 @@ class Game:
 
     def is_move_pseudo_legal(self, move: Move) -> tuple[bool, str]:
         """Determine if a move is pseudolegal."""
-        print(f"Game.is_move_pseudo_legal: Checking move {move}")
         piece = self.board.get_piece(move.start)
         target = self.board.get_piece(move.end)
 
@@ -49,7 +48,6 @@ class Game:
             return False, "Wrong piece color."
 
         if isinstance(piece, King) and abs(move.start.col - move.end.col) == 2:
-            print(f"Game.is_move_pseudo_legal: Potential castling move: {move}")
             return self._is_castling_pseudo_legal(move, piece)
 
         if move.end not in piece.theoretical_moves:
@@ -71,8 +69,9 @@ class Game:
             if move.end.row == piece.promotion_row and not move.is_promotion:
                 return False, "Pawns must promote when reaching last row."
 
-        if not self.board.unblocked_paths(piece):
-            return False, "Path is blocked."
+        if not isinstance(piece, Pawn):
+            if move.end not in self.board.unblocked_paths(piece):
+                return False, "Path is blocked."
 
         if move.is_promotion:
             if not move.end.is_promotion_row(self.board.player_to_move):
@@ -85,29 +84,28 @@ class Game:
 
     def _is_castling_pseudo_legal(self, move: Move, piece: King) -> tuple[bool, str]:
         """Determine if a castling move is pseudolegal."""
-        print(f"Game._is_castling_pseudo_legal: Checking castling for move {move}, piece {piece}")
         required_right = None
         squares_to_check = []
         rook_start_square = None # New variable to store rook's starting square
 
         if piece.color == Color.WHITE:
-            if move.end == Square(0, 6):  # White Kingside (g1)
+            if move.end == Square(7, 6):  # White Kingside (g1)
                 required_right = CastlingRight.WHITE_SHORT
-                squares_to_check = [Square(0, 5), Square(0, 6)]  # f1, g1
-                rook_start_square = Square(0, 7) # h1
-            elif move.end == Square(0, 2):  # White Queenside (c1)
+                squares_to_check = [Square(7, 5), Square(7, 6)]  # f1, g1
+                rook_start_square = Square(7, 7) # h1
+            elif move.end == Square(7, 2):  # White Queenside (c1)
                 required_right = CastlingRight.WHITE_LONG
-                squares_to_check = [Square(0, 3), Square(0, 2)]  # d1, c1
-                rook_start_square = Square(0, 0) # a1
+                squares_to_check = [Square(7, 3), Square(7, 2)]  # d1, c1
+                rook_start_square = Square(7, 0) # a1
         else:  # Black King
-            if move.end == Square(7, 6):  # Black Kingside (g8)
+            if move.end == Square(0, 6):  # Black Kingside (g8)
                 required_right = CastlingRight.BLACK_SHORT
-                squares_to_check = [Square(7, 5), Square(7, 6)]  # f8, g8
-                rook_start_square = Square(7, 7) # h8
-            elif move.end == Square(7, 2):  # Black Queenside (c8)
+                squares_to_check = [Square(0, 5), Square(0, 6)]  # f8, g8
+                rook_start_square = Square(0, 7) # h8
+            elif move.end == Square(0, 2):  # Black Queenside (c8)
                 required_right = CastlingRight.BLACK_LONG
-                squares_to_check = [Square(7, 3), Square(7, 2)]  # d8, c8
-                rook_start_square = Square(7, 0) # a8
+                squares_to_check = [Square(0, 3), Square(0, 2)]  # d8, c8
+                rook_start_square = Square(0, 0) # a8
 
         if required_right is None:
             return False, "Invalid castling move."
@@ -131,10 +129,29 @@ class Game:
 
     @property
     def theoretical_moves(self):
+        moves = []
         pieces = self.board.current_players_pieces
         if any([piece.square is None for piece in pieces]):
-            raise AttributeError(f"Found piece without square")
-        return [Move(piece.square, end) for piece in pieces for end in piece.theoretical_moves]
+            raise AttributeError("Found piece without square")
+
+        for piece in pieces:
+            if piece.square is None:
+                continue
+            for end in piece.theoretical_moves:
+                is_en_passant = False
+                if isinstance(piece, Pawn):
+                    # A diagonal pawn move is an en passant if the end square is the
+                    # board's en passant square and there's no piece on it.
+                    if (
+                        abs(piece.square.col - end.col) == 1
+                        and abs(piece.square.row - end.row) == 1
+                        and end == self.board.en_passant_square
+                        and self.board.get_piece(end) is None
+                    ):
+                        is_en_passant = True
+
+                moves.append(Move(piece.square, end, is_en_passant=is_en_passant))
+        return moves
 
 
     @property
@@ -178,26 +195,27 @@ class Game:
         return is_check
 
     def take_turn(self, move: Move):
-        """Make a move.
+        """Make a move by finding the corresponding legal move."""
+        matching_legal_move = None
+        for legal_move in self.legal_moves:
+            # Check for matching start and end squares.
+            if legal_move.start == move.start and legal_move.end == move.end:
+                # If it's a promotion, ensure the promotion piece matches.
+                if move.is_promotion:
+                    if legal_move.promotion_piece == move.promotion_piece:
+                        matching_legal_move = legal_move
+                        break
+                else:
+                    matching_legal_move = legal_move
+                    break
 
-        Refetching board squares is necessary due to making a move
-        and reverting another board object. Since move references the old
-        board object new squares need to be fetched.
-        """
-        print(f"Game.take_turn: Received move from frontend: {move}")
-        piece = self.board.get_piece(move.start)
-        if isinstance(piece, Pawn) and move.is_diagonal and self.board.get_piece(move.end) is None and move.end == self.board.en_passant_square:
-            move = Move(move.start, move.end, is_en_passant=True)
-
-        is_legal, reason = self.is_move_legal(move)
-        print(f"Game.take_turn: is_move_legal for {move}: {is_legal}, Reason: {reason}")
-        if not is_legal:
-            raise IllegalMoveException(reason)
+        if matching_legal_move is None:
+            raise IllegalMoveException(f"No legal move found for {move}")
 
         self.add_to_history()
-        self.board.make_move(move)
+        self.board.make_move(matching_legal_move)
         self.board.update_castling_rights()
-        self.board.increment_turn_counters(move)
+        self.board.increment_turn_counters(matching_legal_move)
 
     def undo_last_move(self) -> str:
         """Revert to the previous board state."""
