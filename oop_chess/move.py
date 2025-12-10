@@ -75,7 +75,7 @@ class Move:
                 move =  cls.from_uci("e8g8")
         else:
             if color == Color.WHITE:
-                move = cls.from_uci("e8c8")
+                move = cls.from_uci("e1c1")
             else:
                 move = cls.from_uci("e8c8")
         return move
