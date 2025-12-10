@@ -12,6 +12,7 @@ export function Pieces({ onFenChange }) { // Accept onFenChange prop
     const ws = useRef(null);
     const [isPromotionDialogOpen, setPromotionDialogOpen] = useState(false);
     const [promotionMove, setPromotionMove] = useState(null);
+    const lastNotifiedFen = useRef(null);
 
     useEffect(() => {
         const newGame = async () => {
@@ -49,8 +50,9 @@ export function Pieces({ onFenChange }) { // Accept onFenChange prop
 
     // Call onFenChange whenever fen state updates
     useEffect(() => {
-        if (fen) {
+        if (fen && fen !== lastNotifiedFen.current) {
             onFenChange(fen);
+            lastNotifiedFen.current = fen;
         }
     }, [fen, onFenChange]);
 
