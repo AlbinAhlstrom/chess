@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 import pytest
 
@@ -5,21 +6,49 @@ from oop_chess.board import Board
 from oop_chess.game import Game
 from oop_chess.move import Move
 
+
 @dataclass
-class UCIGame:
-    moves: list[Move]
+class PGNGame:
+    moves: list[str]
     date: str
     white: str
     black: str
     result: str
 
 
-game_moves = []
+def parse_pgn_game(game_string: str) -> PGNGame:
+    date_match = re.search(r'\[Date \"(\d{4}\.\d{2}\.\d{2})\"\]', game_string)
+    white_match = re.search(r'\[White \"(.*?)\"\]', game_string)
+    black_match = re.search(r'\[Black \"(.*?)\"\]', game_string)
+    result_match = re.search(r'\[Result \"(.*?)\"\]', game_string)
 
-def san_game_to_uci(san_game: str) -> list[str]:
-    """Convert a game in san format to a list of uci moves"""
-    pass
+    date = date_match.group(1) if date_match else "N/A"
+    white = white_match.group(1) if white_match else "N/A"
+    black = black_match.group(1) if black_match else "N/A"
+    result = result_match.group(1) if result_match else "N/A"
 
+    moves_section = game_string.split('\n\n')[-1]
+    moves_section = re.sub(r'\{[^}]*\}', '', moves_section)
+    moves_section = re.sub(r'\d+\.\s*', '', moves_section)
+    moves_section = re.sub(r'(0-1|1-0|1/2-1/2)\s*$', '', moves_section).strip()
+
+    san_moves = [move for move in moves_section.split() if move]
+
+    return PGNGame(moves=san_moves, date=date, white=white, black=black, result=result)
+
+
+all_games: list[PGNGame] = []
+with open("/home/albin/projects/oop_chess/tests/example_games.pgn", "r") as f:
+    pgn_content = f.read()
+
+game_strings = re.split(r'\n\n(?=\[Event)', pgn_content.strip())
+
+
+for game_string in game_strings:
+    if game_string.strip():
+        all_games.append(parse_pgn_game(game_string))
+
+game_moves = [game.moves for game in all_games]
 
 @pytest.mark.parametrize("moves", game_moves)
 def test_pgn_game(moves):
@@ -28,11 +57,9 @@ def test_pgn_game(moves):
     """
     board = Board.starting_setup()
     game = Game(board)
-    history = [Move.from_uci(uci) for uci in moves]
-
-    return
-    for i, san in enumerate(moves):
-        try:
-            game.take_turn(move)
-        except Exception as e:
-            pytest.fail(f"Failed at move {i+1} ('{san}') for game {white_player} vs {black_player}: {e}")
+    history = []
+    for san_move_str in moves:
+        move = Move.from_san(san_move_str, game)
+        game.take_turn(move)
+        history.append(move)
+    pass
