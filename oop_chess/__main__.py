@@ -23,7 +23,11 @@ def main():
 
         try:
             move = Move.from_uci(uci_str, game.board.player_to_move)
-            game.take_turn(move)
+            if game.is_move_legal(move):
+                game.take_turn(move)
+            else:
+                print(game.move_legality_reason(move))
+
         except (ValueError, IllegalMoveException) as e:
             print(e)
             continue
