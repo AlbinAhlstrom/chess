@@ -8,7 +8,7 @@ from oop_chess.piece.pawn import Pawn
 from oop_chess.piece.king import King
 from oop_chess.piece.piece import Piece
 from oop_chess.piece.rook import Rook
-from oop_chess.square import Square
+from oop_chess.square import Coordinate, NoSquare, Square
 
 
 T = TypeVar("T", bound=Piece)
@@ -44,7 +44,7 @@ class Board:
     def empty(cls) -> Board:
         return cls.from_fen(cls.EMPTY_FEN)
 
-    def get_piece(self, coordinate: str | tuple | Square) -> Piece | None:
+    def get_piece(self, coordinate: Coordinate) -> Piece | None:
         return self.board.get(Square.from_coord(coordinate))
 
     def set_piece(self, piece: Piece, square: str | tuple | Square):
@@ -52,13 +52,13 @@ class Board:
         self.board[square] = piece
         piece.square = square
 
-    def remove_piece(self, coordinate: str | tuple | Square) -> None:
+    def remove_piece(self, coordinate: Coordinate) -> None:
         square = Square.from_coord(coordinate)
         piece_on_square = self.get_piece(square)
         if piece_on_square is None:
             return
         self.board[square] = None
-        piece_on_square.square = None
+        piece_on_square.square = NoSquare
 
     def switch_active_player(self):
         self.player_to_move = self.player_to_move.opposite
@@ -161,15 +161,15 @@ class Board:
         return pieces
 
     @property
-    def pieces(self, color=None) -> list[Piece]:
-        return [piece for piece in self.board.values() if piece]
+    def pieces(self) -> list[Piece]:
+        return self.get_pieces()
 
     @property
     def current_players_pieces(self) -> list[Piece]:
         return self.get_pieces(color=self.player_to_move)
 
     @property
-    def opponent_pieces(self):
+    def opponent_pieces(self) -> list[Piece]:
         return self.get_pieces(color=self.player_to_move.opposite)
 
     def make_move(self, move: Move) -> None:
@@ -200,9 +200,9 @@ class Board:
                 print(f"Board.make_move: AttributeError during castling: {e}")
                 print(f"Board.make_move: Current board FEN: {self.fen}")
                 print(f"Board.make_move: Move that triggered error: {move}")
-                raise e # Re-raise the exception after printing context
+                raise e
 
-        if move.is_promotion:
+        if move.promotion_piece is not None:
             self.board[move.end] = move.promotion_piece
             move.promotion_piece.square = move.end
 
@@ -250,7 +250,9 @@ class Board:
 
             rook_valid = rook is not None and isinstance(rook, Rook) and not rook.has_moved
             king_valid = king is not None and isinstance(king, King) and not king.has_moved
-            colors_valid = rook.color == king.color == castling_right.color
+            colors_valid = False
+            if (rook is not None) and (king is not None):
+                colors_valid = rook.color == king.color == castling_right.color
 
             if not all((rook_valid, king_valid, colors_valid)):
                 invalid_rights.append(castling_right)
