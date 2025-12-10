@@ -41,9 +41,6 @@ class Game:
         piece = self.board.get_piece(move.start)
         target = self.board.get_piece(move.end)
 
-        if move is None:
-            return False, "No move made"
-
         if piece is None:
             return False, "No piece moved."
 
@@ -76,7 +73,7 @@ class Game:
             if move.end not in self.board.unblocked_paths(piece):
                 return False, "Path is blocked."
 
-        if move.is_promotion:
+        if move.promotion_piece:
             if not move.end.is_promotion_row(self.board.player_to_move):
                 return False, "Can only promote on the last row."
 
