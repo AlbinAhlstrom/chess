@@ -1,0 +1,20 @@
+.legal-move-dot {
+    border-radius: 50%;
+    /* Position with grid properties from inline style */
+    pointer-events: none; /* Allows clicks to pass through to the square below */
+    z-index: 100; /* Ensure it's above the pieces */
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.legal-move-dot::after {
+    content: '';
+    display: block;
+    width: 30%; /* Smaller inner dot */
+    height: 30%; /* Smaller inner dot */
+    border-radius: 50%;
+    background-color: rgba(0, 128, 0, 0.8); /* Darker green for visibility */
+}

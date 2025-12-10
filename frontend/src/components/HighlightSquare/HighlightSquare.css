@@ -1,0 +1,12 @@
+.highlight-square {
+    position: absolute;
+    width: var(--square-size);
+    height: var(--square-size);
+    pointer-events: none; /* Let clicks pass through */
+    z-index: 5; /* Below pieces (z-index implicit? Pieces are usually higher) but above board */
+    background-color: var(--highlight-light-square); /* Default to light square highlight */
+}
+
+.highlight-square.dark {
+    background-color: var(--highlight-dark-square); /* Override for dark squares */
+}
