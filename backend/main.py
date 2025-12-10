@@ -69,6 +69,7 @@ class GameRequest(BaseModel):
 
 
 class SquareRequest(BaseModel):
+    game_id: str
     square: str
 
 
