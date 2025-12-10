@@ -181,7 +181,7 @@ def test_en_passant_capture_removes_pawn():
     fen = "4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 1"
     board = Board.from_fen(fen)
     game = Game(board)
-    captured_pawn_square = Square.from_any('d5')
+    captured_pawn_square = Square.from_coord('d5')
 
     # Ensure the black pawn is on d5 before the move
     assert board.get_piece(captured_pawn_square) is not None
@@ -194,7 +194,7 @@ def test_en_passant_capture_removes_pawn():
 
     # After the move, the white pawn should be on d6, and the black pawn on d5 should be gone
     assert board.get_piece(captured_pawn_square) is None
-    assert isinstance(board.get_piece(Square.from_any('d6')), Pawn)
+    assert isinstance(board.get_piece(Square.from_coord('d6')), Pawn)
 
 def test_en_passant_capture_from_start():
     """Test a specific en passant capture sequence from the starting position."""
@@ -206,11 +206,11 @@ def test_en_passant_capture_from_start():
         move = Move.from_uci(uci)
         game.take_turn(move)
 
-    captured_pawn_square = Square.from_any('b5')
+    captured_pawn_square = Square.from_coord('b5')
     assert game.board.get_piece(captured_pawn_square) is None
 
     assert game.board.fen != 'rnbqkbnr/2pppppp/pP6/1p6/8/8/1PPPPPPP/RNBQKBNR b KQkq - 0 3'
-    assert isinstance(game.board.get_piece(Square.from_any('b6')), Pawn)
+    assert isinstance(game.board.get_piece(Square.from_coord('b6')), Pawn)
 
 def test_en_passant_valid():
     fen = 'rnbqkbnr/2pppppp/p7/Pp6/8/8/1PPPPPPP/RNBQKBNR w KQkq - 0 3'

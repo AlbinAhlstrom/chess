@@ -135,7 +135,7 @@ def get_legal_moves_for_square(req: SquareRequest):
     game = get_game(req.game_id)
 
     try:
-        sq_obj = Square.from_any(req.square)
+        sq_obj = Square.from_coord(req.square)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid square format.")
 

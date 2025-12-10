@@ -45,15 +45,15 @@ class Board:
         return cls.from_fen(cls.EMPTY_FEN)
 
     def get_piece(self, coordinate: str | tuple | Square) -> Piece | None:
-        return self.board.get(Square.from_any(coordinate))
+        return self.board.get(Square.from_coord(coordinate))
 
     def set_piece(self, piece: Piece, square: str | tuple | Square):
-        square = Square.from_any(square)
+        square = Square.from_coord(square)
         self.board[square] = piece
         piece.square = square
 
     def remove_piece(self, coordinate: str | tuple | Square) -> None:
-        square = Square.from_any(coordinate)
+        square = Square.from_coord(coordinate)
         piece_on_square = self.get_piece(square)
         if piece_on_square is None:
             return
@@ -140,7 +140,7 @@ class Board:
     def _execute_castling_rook_move(self, target_coord: Square):
         self.update_castling_rights()
         rook_col = 0 if target_coord.col == 2 else 7
-        rook_coord = Square.from_any((target_coord.row, rook_col))
+        rook_coord = Square.from_coord((target_coord.row, rook_col))
         rook = self.get_piece(rook_coord)
 
         if rook is None:
@@ -301,7 +301,7 @@ class Board:
         board = cls._get_board_from_fen(fen_parts[0])
         active_color = Color(fen_parts[1])
         castling_rights = CastlingRight.from_fen(fen_parts[2])
-        en_passant = None if fen_parts[3] == "-" else Square.from_any(fen_parts[3])
+        en_passant = None if fen_parts[3] == "-" else Square.from_coord(fen_parts[3])
 
         try:
             halfmove_clock = int(fen_parts[4])

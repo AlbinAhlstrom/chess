@@ -3,7 +3,8 @@ from dataclasses import dataclass
 from oop_chess.enums import Color, Direction
 from typing import TypeAlias
 
-Coordinate: TypeAlias = str | tuple[int, int]
+Coordinate: TypeAlias = str | tuple[int, int] | "Square"
+
 @dataclass(frozen=True)
 class Square:
     """Represents a coordinate on a chessboard.
@@ -17,7 +18,7 @@ class Square:
     col: int
 
     @property
-    def is_none_square(self):
+    def is_none_square(self) -> bool:
         return self.row == -1 and self.col == -1
 
     def __post_init__(self):
@@ -66,7 +67,7 @@ class Square:
         return cls(row, col)
 
     @classmethod
-    def from_any(cls, coordinate: str | tuple | "Square") -> "Square":
+    def from_coord(cls, coordinate: Coordinate) -> "Square":
         if isinstance(coordinate, cls):
             return coordinate
         elif isinstance(coordinate, str):
@@ -87,7 +88,7 @@ class Square:
         d_col, d_row = direction.value
         if not Square.is_valid(self.row + d_row, self.col + d_col):
             return None
-        return self.from_any((self.row + d_row, self.col + d_col))
+        return self.__class__.from_coord((self.row + d_row, self.col + d_col))
 
     def is_adjacent_to(self, square: Square, moveset: set[Direction] = Direction.straight_and_diagonal()):
         adjacent_squares = [self.adjacent(direction) for direction in moveset]
