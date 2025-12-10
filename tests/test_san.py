@@ -41,7 +41,7 @@ def test_san_castling():
     assert move.end == Square.from_str("g1")
 
 def test_san_disambiguation():
-    board = Board.from_fen("rnbqkbnr/pppppppp/8/8/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 1")
+    board = Board.from_fen("8/8/8/8/8/5N2/8/1N4K1 w - - 0 1")
     move = Move.from_san("Nbd2", Game(board))
     assert move.start == Square.from_str("b1")
     assert move.end == Square.from_str("d2")
@@ -70,12 +70,12 @@ def test_san_check_stripping():
     assert move.end == Square.from_str("e4")
 
 def test_san_ambiguous_move_raises():
-    board = Board.from_fen("8/8/8/8/8/8/8/R3R3 w - - 0 1")
+    board = Board.from_fen("6k1/8/8/8/8/8/8/R3R1K1 w - - 0 1")
     try:
         Move.from_san("Rc1", Game(board))
         raise AssertionError("Should have raised ValueError for ambiguous move")
     except ValueError as e:
-        assert "Ambiguous" in str(e)
+        assert "ambiguous" in str(e)
 
 def test_san_pawn_capture_validation():
     board = Board.starting_setup()
