@@ -99,7 +99,7 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
         while True:
             data = await websocket.receive_text()
             message = json.loads(data)
-            
+
             if message["type"] == "move":
                 move_uci = message["uci"]
                 try:
