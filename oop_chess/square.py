@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from oop_chess.enums import Color, Direction
 from typing import TypeAlias
 
-Coordinate: TypeAlias = str | tuple[int, int] | "Square"
+Coordinate: TypeAlias = str | tuple | "Square"
 
 @dataclass(frozen=True)
 class Square:
@@ -77,7 +77,7 @@ class Square:
         else:
             raise TypeError(f"Invalid coordinate type: {type(coordinate)}")
 
-    def adjacent(self, direction: Direction) -> Square | None:
+    def adjacent(self, direction: Direction) -> Square:
         """Return a new coordinate one step in a direction.
 
         NOTE: This method assumes the result is a valid square and is typically
@@ -87,7 +87,7 @@ class Square:
         """
         d_col, d_row = direction.value
         if not Square.is_valid(self.row + d_row, self.col + d_col):
-            return None
+            return NoSquare
         return self.__class__.from_coord((self.row + d_row, self.col + d_col))
 
     def is_adjacent_to(self, square: Square, moveset: set[Direction] = Direction.straight_and_diagonal()):
