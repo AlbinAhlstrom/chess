@@ -67,7 +67,7 @@ class Pawn(Piece):
 
     @property
     def theoretical_move_paths(self):
-        """Array of coordinates reachable when moving in all directions"""
+        """Array of squares reachable when moving in all directions"""
         return [self.forward_squares, [square for square in self.capture_squares]]
 
     def __str__(self):
