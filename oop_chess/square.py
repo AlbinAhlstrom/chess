@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from oop_chess.enums import Color, Direction
 from typing import TypeAlias
 
-Coordinate: TypeAlias = str | tuple | "Square"
 
 @dataclass(frozen=True)
 class Square:
@@ -100,3 +99,4 @@ class Square:
 
 
 NoSquare = Square(-1, -1)
+Coordinate: TypeAlias = str | tuple | Square
