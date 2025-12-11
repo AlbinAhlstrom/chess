@@ -30,6 +30,10 @@ class Game:
         return self.is_over and self.board.current_player_in_check
 
     @property
+    def is_check(self):
+        return self.board.current_player_in_check
+
+    @property
     def is_draw(self):
          return self.is_over and not self.board.current_player_in_check
 

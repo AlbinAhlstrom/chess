@@ -14,10 +14,15 @@ export function Pieces({ onFenChange }) {
     const [gameId, setGameId] = useState(null);
     const [legalMoves, setLegalMoves] = useState([]);
     const [selectedSquare, setSelectedSquare] = useState(null);
+    const [inCheck, setInCheck] = useState(false);
     const ws = useRef(null);
     const [isPromotionDialogOpen, setPromotionDialogOpen] = useState(false);
     const [promotionMove, setPromotionMove] = useState(null);
     const lastNotifiedFen = useRef(null);
+    const moveSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-self.mp3"));
+    const captureSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/capture.mp3"));
+    const castleSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/castle.mp3"));
+    const checkSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-check.mp3"));
 
     useEffect(() => {
         const newGame = async () => {
@@ -31,6 +36,7 @@ export function Pieces({ onFenChange }) {
                 const message = JSON.parse(event.data);
                 if (message.type === "game_state") {
                     setFen(message.fen);
+                    setInCheck(message.in_check);
                     setSelectedSquare(null);
                     setLegalMoves([]);
 
@@ -58,10 +64,46 @@ export function Pieces({ onFenChange }) {
 
     useEffect(() => {
         if (fen && fen !== lastNotifiedFen.current) {
+            if (lastNotifiedFen.current) {
+                const countPieces = (fenString) => {
+                    return fenString.split(' ')[0].split('').filter(c => /[pnbrqkPNBRQK]/.test(c)).length;
+                };
+
+                const findKingCol = (fenString, isWhite) => {
+                    const grid = fenToPosition(fenString);
+                    const kingChar = isWhite ? 'K' : 'k';
+                    for (let r = 0; r < 8; r++) {
+                        for (let c = 0; c < 8; c++) {
+                            if (grid[r][c] === kingChar) return c;
+                        }
+                    }
+                    return -1;
+                };
+
+                const prevTurn = lastNotifiedFen.current.split(' ')[1];
+                const isWhiteTurn = prevTurn === 'w';
+                
+                const prevKingCol = findKingCol(lastNotifiedFen.current, isWhiteTurn);
+                const currKingCol = findKingCol(fen, isWhiteTurn);
+                const isCastling = prevKingCol !== -1 && currKingCol !== -1 && Math.abs(prevKingCol - currKingCol) > 1;
+
+                const prevCount = countPieces(lastNotifiedFen.current);
+                const currentCount = countPieces(fen);
+
+                if (inCheck) {
+                    checkSound.current.play().catch(e => console.error("Error playing check sound:", e));
+                } else if (isCastling) {
+                    castleSound.current.play().catch(e => console.error("Error playing castle sound:", e));
+                } else if (currentCount < prevCount) {
+                     captureSound.current.play().catch(e => console.error("Error playing capture sound:", e));
+                } else {
+                     moveSound.current.play().catch(e => console.error("Error playing move sound:", e));
+                }
+            }
             onFenChange(fen);
             lastNotifiedFen.current = fen;
         }
-    }, [fen, onFenChange]);
+    }, [fen, onFenChange, inCheck]);
 
     const position = fen ? fenToPosition(fen) : [];
 

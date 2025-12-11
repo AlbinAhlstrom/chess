@@ -95,6 +95,7 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
             "fen": game.board.fen,
             "turn": game.board.player_to_move.value,
             "is_over": game.is_over,
+            "in_check": game.is_check,
             "status": "connected"
         }))
         while True:
@@ -121,6 +122,7 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                     "fen": game.board.fen,
                     "turn": game.board.player_to_move.value,
                     "is_over": game.is_over,
+                    "in_check": game.is_check,
                     "status": status
                 }))
 
