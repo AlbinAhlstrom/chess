@@ -10,11 +10,11 @@ import { useState, useRef, useEffect } from 'react'
 
 export function Pieces({ onFenChange }) {
     const ref = useRef()
+    const highlightRef = useRef(null);
     const [fen, setFen] = useState();
     const [gameId, setGameId] = useState(null);
     const [legalMoves, setLegalMoves] = useState([]);
     const [selectedSquare, setSelectedSquare] = useState(null);
-    const [hoveredSquare, setHoveredSquare] = useState(null);
     const [inCheck, setInCheck] = useState(false);
     const ws = useRef(null);
     const [isPromotionDialogOpen, setPromotionDialogOpen] = useState(false);
@@ -41,7 +41,7 @@ export function Pieces({ onFenChange }) {
                     setInCheck(message.in_check);
                     setSelectedSquare(null);
                     setLegalMoves([]);
-                    setHoveredSquare(null);
+                    if (highlightRef.current) highlightRef.current.style.display = 'none';
 
                     if (message.status === "checkmate") {
                         console.log("Checkmate detected!");
@@ -119,20 +119,31 @@ export function Pieces({ onFenChange }) {
     }
 
     const handlePieceDragHover = (clientX, clientY) => {
+        if (!highlightRef.current) return;
+        
         if (!clientX || !clientY) {
-            setHoveredSquare(null);
+            highlightRef.current.style.display = 'none';
             return;
         }
         const { file, rank } = calculateSquare({ clientX, clientY });
+        
         if (file >= 0 && file <= 7 && rank >= 0 && rank <= 7) {
-             setHoveredSquare({ file, rank });
+            highlightRef.current.style.display = 'block';
+            highlightRef.current.style.left = `calc(${file} * var(--square-size))`;
+            highlightRef.current.style.top = `calc(${rank} * var(--square-size))`;
+            
+            const isDark = (file + rank) % 2 !== 0;
+            highlightRef.current.style.border = isDark 
+                ? '5px solid var(--drag-hover-dark-border)' 
+                : '5px solid var(--drag-hover-light-border)';
         } else {
-             setHoveredSquare(null);
+            highlightRef.current.style.display = 'none';
         }
     }
 
     const handleManualDrop = ({ clientX, clientY, piece, file, rank }) => {
-        setHoveredSquare(null);
+        if (highlightRef.current) highlightRef.current.style.display = 'none';
+        
         // Mock event object for calculateSquare
         const mockEvent = { clientX, clientY };
         const { rank: toRank, algebraic: toSquare } = calculateSquare(mockEvent);
@@ -233,23 +244,37 @@ export function Pieces({ onFenChange }) {
                 onClick={handleSquareClick}
                 >
     
-                {isPromotionDialogOpen && <PromotionDialog onPromote={handlePromotion} onCancel={handleCancelPromotion} color={promotionColor} />}
+                            {isPromotionDialogOpen && <PromotionDialog onPromote={handlePromotion} onCancel={handleCancelPromotion} color={promotionColor} />}
     
-                            {hoveredSquare && (
-                                <div style={{
+                
+    
+                            <div 
+    
+                                ref={highlightRef}
+    
+                                style={{
+    
                                     position: 'absolute',
-                                    left: `calc(${hoveredSquare.file} * var(--square-size))`,
-                                    top: `calc(${hoveredSquare.rank} * var(--square-size))`,
+    
                                     width: 'var(--square-size)',
+    
                                     height: 'var(--square-size)',
-                                    border: (hoveredSquare.file + hoveredSquare.rank) % 2 !== 0 
-                                        ? '5px solid var(--drag-hover-dark-border)' // Darker border for dark squares
-                                                                : '5px solid var(--drag-hover-light-border)', // Very light grey (white-ish) for light squares
-                                                            boxSizing: 'border-box',
-                                                            zIndex: 6, 
-                                                            pointerEvents: 'none'
-                                                        }}/>
-                                                    )}                {selectedSquare && (() => {
+    
+                                    boxSizing: 'border-box',
+    
+                                    zIndex: 6, 
+    
+                                    pointerEvents: 'none',
+    
+                                    display: 'none'
+    
+                                }}
+    
+                            />
+    
+                
+    
+                            {selectedSquare && (() => {
                     const { file, rank } = algebraicToCoords(selectedSquare);
                     const isDark = (file + rank) % 2 !== 0; // Chessboard pattern
                     return <HighlightSquare
