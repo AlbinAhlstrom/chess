@@ -1,10 +1,12 @@
 :root {
     --square-size: 100px;
-    --light-square: #e4f5e5;
-    --dark-square: #419457;
+    --light-square: #ECE4B7;
+    --dark-square: #63934D;
     --bg-color: #202020;
-    --highlight-light-square: #e8e680;
-    --highlight-dark-square: #b9ca42;
-    --drag-hover-light-border: #fff;
-    --drag-hover-dark-border: #b4bfb7;
+    --highlight-light-square: #D8C86E;
+    --highlight-dark-square: #D4C25E;
+    --drag-hover-light-border: #F6F3DF;
+    --drag-hover-dark-border: #77AB5F;
+    --legal-move-dot-color: rgba(0, 0, 0, 0.1);
+    --legal-move-dot-size: 33%;
 }

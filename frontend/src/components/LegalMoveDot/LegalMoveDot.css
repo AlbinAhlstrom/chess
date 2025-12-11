@@ -13,8 +13,8 @@
 .legal-move-dot::after {
     content: '';
     display: block;
-    width: 30%; /* Smaller inner dot */
-    height: 30%; /* Smaller inner dot */
+    width: var(--legal-move-dot-size); /* Smaller inner dot */
+    height: var(--legal-move-dot-size); /* Smaller inner dot */
     border-radius: 50%;
-    background-color: rgba(0, 128, 0, 0.8); /* Darker green for visibility */
+    background-color: var(--legal-move-dot-color); /* Darker green for visibility */
 }
