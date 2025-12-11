@@ -141,12 +141,9 @@ export function Pieces({ onFenChange }) {
         const { file, rank, algebraic: clickedSquare } = calculateSquare(e);
 
 
-        const isMyPiece = (f, r) => {
+        const isPiece = (f, r) => {
             const piece = position[r][f];
-            if (!piece) return false;
-            const turn = fen.split(' ')[1];
-            const isWhitePiece = piece === piece.toUpperCase();
-            return (turn === 'w' && isWhitePiece) || (turn === 'b' && !isWhitePiece);
+            return !!piece;
         };
 
         if (selectedSquare) {
@@ -166,7 +163,7 @@ export function Pieces({ onFenChange }) {
                 if (clickedSquare === selectedSquare) {
                     setSelectedSquare(null);
                     setLegalMoves([]);
-                } else if (isMyPiece(file, rank)) {
+                } else if (isPiece(file, rank)) {
                     setSelectedSquare(clickedSquare);
                     try {
                         const response = await getLegalMoves(gameId, clickedSquare);
@@ -182,7 +179,7 @@ export function Pieces({ onFenChange }) {
                 }
             }
         } else {
-            if (isMyPiece(file, rank)) {
+            if (isPiece(file, rank)) {
                 setSelectedSquare(clickedSquare);
                 try {
                     const response = await getLegalMoves(gameId, clickedSquare);
