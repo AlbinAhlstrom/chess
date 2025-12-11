@@ -244,13 +244,12 @@ export function Pieces({ onFenChange }) {
                                     height: 'var(--square-size)',
                                     border: (hoveredSquare.file + hoveredSquare.rank) % 2 !== 0 
                                         ? '5px solid var(--drag-hover-dark-border)' // Darker border for dark squares
-                                        : '5px solid var(--drag-hover-light-border)', // Very light grey (white-ish) for light squares
-                                    boxSizing: 'border-box',
-                                    zIndex: 5, 
-                                    pointerEvents: 'none'
-                                }}/>
-                            )}    
-                {selectedSquare && (() => {
+                                                                : '5px solid var(--drag-hover-light-border)', // Very light grey (white-ish) for light squares
+                                                            boxSizing: 'border-box',
+                                                            zIndex: 6, 
+                                                            pointerEvents: 'none'
+                                                        }}/>
+                                                    )}                {selectedSquare && (() => {
                     const { file, rank } = algebraicToCoords(selectedSquare);
                     const isDark = (file + rank) % 2 !== 0; // Chessboard pattern
                     return <HighlightSquare
