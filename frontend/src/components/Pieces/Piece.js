@@ -25,8 +25,8 @@ function Piece({ piece, file, rank, onDragStartCallback, onDragEndCallback, onDr
 
         // 2. Create custom ghost (fully opaque)
         const rect = e.target.getBoundingClientRect();
-        const offsetX = e.clientX - rect.left;
-        const offsetY = e.clientY - rect.top;
+        const offsetX = rect.width / 2;
+        const offsetY = rect.height / 2;
 
         const ghost = document.createElement("div");
         ghost.classList.add("piece");
