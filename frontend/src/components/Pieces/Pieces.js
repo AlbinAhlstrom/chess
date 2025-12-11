@@ -73,14 +73,15 @@ export function Pieces({ onFenChange }) {
         return { file, rank, algebraic: coordsToAlgebraic(file, rank) };
     }
 
-    const onDrop = async e => {
+    const handleManualDrop = ({ clientX, clientY, piece, file, rank }) => {
         setLegalMoves([]);
         setSelectedSquare(null);
-        const { rank: toRank, algebraic: toSquare } = calculateSquare(e);
-        const [piece, fromFileStr, fromRankStr] = e.dataTransfer.getData("text").split(",");
-        const fromFileIndex = parseInt(fromFileStr, 10);
-        const fromRankIndex = parseInt(fromRankStr, 10);
-        const fromSquare = coordsToAlgebraic(fromFileIndex, fromRankIndex);
+        
+        // Mock event object for calculateSquare
+        const mockEvent = { clientX, clientY };
+        const { rank: toRank, algebraic: toSquare } = calculateSquare(mockEvent);
+        
+        const fromSquare = coordsToAlgebraic(file, rank);
 
         const isPawn = piece.toLowerCase() === 'p';
         const isPromotion = isPawn && (toRank === 0 || toRank === 7);
@@ -195,7 +196,6 @@ export function Pieces({ onFenChange }) {
         }
     };
 
-    const onDragOver = e => e.preventDefault()
     const promotionColor = fen && fen.split(' ')[1] === 'w' ? 'w' : 'b';
 
 
@@ -203,8 +203,6 @@ export function Pieces({ onFenChange }) {
         <div
             className="pieces"
             ref={ref}
-            onDragOver={onDragOver}
-            onDrop={onDrop}
             onClick={handleSquareClick}
             >
 
@@ -236,6 +234,7 @@ export function Pieces({ onFenChange }) {
                             piece={pieceType}
                             onDragStartCallback={handlePieceDragStart}
                             onDragEndCallback={handlePieceDragEnd}
+                            onDropCallback={handleManualDrop}
                           />
                         : null
                 )
