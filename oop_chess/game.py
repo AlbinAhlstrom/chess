@@ -74,9 +74,8 @@ class Game:
             if move.end.row == piece.promotion_row and not move.promotion_piece is not None:
                 return False, "Pawns must promote when reaching last row."
 
-        if not isinstance(piece, Pawn):
-            if move.end not in self.board.unblocked_paths(piece):
-                return False, "Path is blocked."
+        if move.end not in self.board.unblocked_paths(piece):
+            return False, "Path is blocked."
 
         if move.promotion_piece:
             if not move.end.is_promotion_row(self.board.player_to_move):
