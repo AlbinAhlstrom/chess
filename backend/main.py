@@ -80,15 +80,15 @@ class SquareSelection(BaseModel):
 
 
 class NewGameRequest(BaseModel):
-    variant: Optional[str] = "standard"
+    variant: str = "standard"
 
 
 @app.post("/api/game/new")
-def new_game(req: NewGameRequest = None):
+def new_game(req: NewGameRequest):
     game_id = str(uuid4())
     
     rules = StandardRules()
-    if req and req.variant == "antichess":
+    if req.variant == "antichess":
         rules = AntichessRules()
         
     game = Game(rules=rules)
