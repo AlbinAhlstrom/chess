@@ -1,3 +1,6 @@
 __pycache__/
 *.py[cod]
 clean_comments.py
+.hypothesis
+AGENTS.md
+oop_chess_engine.egg-info/
