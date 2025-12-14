@@ -172,8 +172,19 @@ export function Pieces({ onFenChange, variant = "standard" }) {
             }
             onFenChange(fen);
             lastNotifiedFen.current = fen;
+            
+            // Log all legal moves when turn switches
+            if (gameId) {
+                getAllLegalMoves(gameId).then(response => {
+                    if (response.status === "success") {
+                        console.log("All Legal Moves for current turn:", response.moves);
+                    }
+                }).catch(error => {
+                    console.error("Failed to fetch all legal moves:", error);
+                });
+            }
         }
-    }, [fen, onFenChange, inCheck]);
+    }, [fen, onFenChange, inCheck, gameId]);
 
     const position = fen ? fenToPosition(fen) : [];
 

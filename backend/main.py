@@ -195,3 +195,13 @@ def get_legal_moves_for_square(req: SquareRequest):
         "moves": piece_moves,
         "status": "success",
     }
+
+
+@app.post("/api/moves/all_legal")
+def get_all_legal_moves(req: GameRequest):
+    game = get_game(req.game_id)
+    all_legal_moves = [m.uci for m in game.legal_moves]
+    return {
+        "moves": all_legal_moves,
+        "status": "success",
+    }
