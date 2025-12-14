@@ -20,7 +20,7 @@ class Board:
     """
     STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
 
-    def __init__(self, pieces: dict[Square, Piece] = None):
+    def __init__(self, pieces: dict[Square, Piece] = {}):
         self.board: dict[Square, Piece] = pieces if pieces else {}
 
     @classmethod
