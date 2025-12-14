@@ -81,8 +81,9 @@ class SquareSelection(BaseModel):
 def new_game():
     game_id = str(uuid4())
     board = Board.starting_setup()
-    games[game_id] = Game(board)
-    return {"game_id": game_id, "fen": board.fen, "turn": board.player_to_move}
+    game = Game(board)
+    games[game_id] = game
+    return {"game_id": game_id, "fen": game.state.fen, "turn": game.state.turn}
 
 
 @app.websocket("/ws/{game_id}")
@@ -92,8 +93,8 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
         game = get_game(game_id)
         await manager.broadcast(game_id, json.dumps({
             "type": "game_state",
-            "fen": game.board.fen,
-            "turn": game.board.player_to_move.value,
+            "fen": game.state.fen,
+            "turn": game.state.turn.value,
             "is_over": game.is_over,
             "in_check": game.is_check,
             "move_history": game.move_history,
@@ -106,7 +107,7 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
             if message["type"] == "move":
                 move_uci = message["uci"]
                 try:
-                    move = Move.from_uci(move_uci, player_to_move=game.board.player_to_move)
+                    move = Move.from_uci(move_uci, player_to_move=game.state.turn)
                     game.take_turn(move)
                 except (ValueError, IllegalMoveException) as e:
                     await websocket.send_text(json.dumps({"type": "error", "message": str(e)}))
@@ -120,8 +121,8 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
 
                 await manager.broadcast(game_id, json.dumps({
                     "type": "game_state",
-                    "fen": game.board.fen,
-                    "turn": game.board.player_to_move.value,
+                    "fen": game.state.fen,
+                    "turn": game.state.turn.value,
                     "is_over": game.is_over,
                     "in_check": game.is_check,
                     "move_history": game.move_history,
@@ -142,8 +143,8 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
 
                 await manager.broadcast(game_id, json.dumps({
                     "type": "game_state",
-                    "fen": game.board.fen,
-                    "turn": game.board.player_to_move.value,
+                    "fen": game.state.fen,
+                    "turn": game.state.turn.value,
                     "is_over": game.is_over,
                     "in_check": game.is_check,
                     "move_history": game.move_history,
@@ -166,12 +167,12 @@ def get_legal_moves_for_square(req: SquareRequest):
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid square format.")
 
-    piece = game.board.get_piece(sq_obj)
+    piece = game.state.board.get_piece(sq_obj)
 
     if piece is None:
         return {"moves": [], "status": "success"}
 
-    if piece.color != game.board.player_to_move:
+    if piece.color != game.state.turn:
         raise HTTPException(status_code=400, detail=f"Piece belongs to the opponent ({piece.color}).")
 
     all_legal_moves = game.legal_moves

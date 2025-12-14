@@ -46,32 +46,32 @@ def diagnose_moves3():
             game.take_turn(move)
         except Exception as e:
             print(f"FAILED at move {i+1} ({san}): {e}")
-            print(f"Current FEN: {game.board.fen}")
-            print(f"Player to move: {game.board.player_to_move}")
+            print(f"Current FEN: {game.state.fen}")
+            print(f"Player to move: {game.state.turn}")
 
             if "Kc7" in san:
                 from oop_chess.piece.king import King
                 from oop_chess.square import Square
                 from oop_chess.enums import Color
-                pieces = game.board.get_pieces(King, game.board.player_to_move)
+                pieces = game.state.board.get_pieces(King, game.state.turn)
                 print(f"King found: {pieces}")
                 if pieces:
                     king = pieces[0]
                     print(f"King Square: {king.square}")
 
                     target_sq = Square.from_str("c7")
-                    is_attacked_by_black_on_original = game.board.is_under_attack(target_sq, Color.BLACK)
+                    is_attacked_by_black_on_original = game.state.board.is_under_attack(target_sq, Color.BLACK)
                     print(f"Original board: Is c7 attacked by Black? {is_attacked_by_black_on_original}")
 
                     if is_attacked_by_black_on_original:
-                        black_pieces_original = game.board.get_pieces(color=Color.BLACK)
+                        black_pieces_original = game.state.board.get_pieces(color=Color.BLACK)
                         for p in black_pieces_original:
-                            if p.square is not None and game.board.is_attacking(p, target_sq):
+                            if p.square is not None and game.state.board.is_attacking(p, target_sq):
                                 print(f"Original board Attacker: {p} at {p.square}")
 
 
                     print("\n--- Simulating king_left_in_check for Kc7 ---")
-                    initial_fen = game.board.fen
+                    initial_fen = game.state.fen
                     temp_board = Board.from_fen(initial_fen)
                     simulated_move = Move(king.square, target_sq)
                     temp_board.make_move(simulated_move)
@@ -95,7 +95,7 @@ def diagnose_moves3():
 
 
 
-    assert game.board.fen == initial_fen
+    assert game.state.fen == initial_fen
 
 
 

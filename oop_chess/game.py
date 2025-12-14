@@ -37,10 +37,6 @@ class Game:
         self.move_history: list[str] = []
 
     @property
-    def board(self) -> Board:
-        return self.state.board
-
-    @property
     def is_over(self):
         return not bool(self.legal_moves)
 
@@ -52,7 +48,7 @@ class Game:
     @property
     def is_check(self):
 
-        return self.board.is_check(self.state.turn)
+        return self.state.board.is_check(self.state.turn)
 
     @property
     def is_draw(self):
@@ -63,8 +59,8 @@ class Game:
 
     def is_move_pseudo_legal(self, move: Move) -> tuple[bool, str]:
         """Determine if a move is pseudolegal."""
-        piece = self.board.get_piece(move.start)
-        target = self.board.get_piece(move.end)
+        piece = self.state.board.get_piece(move.start)
+        target = self.state.board.get_piece(move.end)
 
         if piece is None:
             return False, "No piece moved."
@@ -105,7 +101,7 @@ class Game:
             if move.end.row == piece.promotion_row and not move.promotion_piece is not None:
                 return False, "Pawns must promote when reaching last row."
 
-        if move.end not in self.board.unblocked_paths(piece, piece.theoretical_move_paths(move.start)):
+        if move.end not in self.state.board.unblocked_paths(piece, piece.theoretical_move_paths(move.start)):
 
             is_pawn_double_push = False
             if isinstance(piece, Pawn):
@@ -114,7 +110,7 @@ class Game:
                  one_step = move.start.get_step(direction)
                  two_step = one_step.get_step(direction) if one_step else None
                  if is_start_rank and move.end == two_step:
-                     if self.board.get_piece(one_step) is None and self.board.get_piece(two_step) is None:
+                     if self.state.board.get_piece(one_step) is None and self.state.board.get_piece(two_step) is None:
                          is_pawn_double_push = True
 
             if not is_pawn_double_push:
@@ -160,15 +156,15 @@ class Game:
         if required_right not in self.state.castling_rights:
             return False, f"Castling right {required_right.value} not available."
 
-        rook_piece = self.board.get_piece(rook_start_square)
+        rook_piece = self.state.board.get_piece(rook_start_square)
         if not (rook_piece and isinstance(rook_piece, Rook) and rook_piece.color == piece.color):
             return False, f"Rook not present at {rook_start_square} or is not a {piece.color.name} Rook for castling."
 
-        if self.board.is_check(piece.color):
+        if self.state.board.is_check(piece.color):
             return False, "Cannot castle while in check."
 
         for sq in squares_to_check:
-            if self.board.is_under_attack(sq, piece.color.opposite):
+            if self.state.board.is_under_attack(sq, piece.color.opposite):
                 return False, f"Cannot castle through or into attacked square {sq}."
 
         return True, ""
@@ -176,7 +172,7 @@ class Game:
     @property
     def theoretical_moves(self):
         moves = []
-        for sq, piece in self.board.board.items():
+        for sq, piece in self.state.board.board.items():
             if piece and piece.color == self.state.turn:
                 for end in piece.theoretical_moves(sq):
                     moves.append(Move(sq, end))
@@ -223,7 +219,7 @@ class Game:
 
     def render(self):
         """Print the board."""
-        self.board.print()
+        self.state.board.print()
 
     def king_left_in_check(self, move: Move) -> bool:
         """Returns True if king is left in check after a move."""

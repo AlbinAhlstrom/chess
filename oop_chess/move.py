@@ -40,7 +40,7 @@ class Move:
 
     def get_san(self, game: "Game") -> str:
         """Returns the Standard Algebraic Notation (SAN) string for the move."""
-        piece = game.board.get_piece(self.start)
+        piece = game.state.board.get_piece(self.start)
         if piece is None:
             return self.uci
 
@@ -60,7 +60,7 @@ class Move:
 
         candidates = []
 
-        for sq, p in game.board.board.items():
+        for sq, p in game.state.board.board.items():
             if p and isinstance(p, type(piece)) and p.color == piece.color:
                 if sq == self.start:
                     continue
@@ -93,7 +93,7 @@ class Move:
                 san += str(self.start).lower()
 
 
-        target = game.board.get_piece(self.end)
+        target = game.state.board.get_piece(self.end)
 
         is_en_passant = isinstance(piece, Pawn) and self.start.col != self.end.col and target is None
 
@@ -199,7 +199,7 @@ class Move:
 
 
         candidates = []
-        for sq, p in game.board.board.items():
+        for sq, p in game.state.board.board.items():
             if p and isinstance(p, piece_type) and p.color == game.state.turn:
                  candidates.append(sq)
 

@@ -8,21 +8,21 @@ def main():
     game = Game(board)
 
     while True:
-        board.print()
+        print(game.state.board)
 
         if game.is_over:
             message = "Checkmate!" if game.is_checkmate else "Draw!"
             print(message)
             break
 
-        print(f"Player to move: {game.board.player_to_move}")
+        print(f"Player to move: {game.state.turn}")
         print(f"Legal moves: {[str(move) for move in game.legal_moves]}")
-        print(f"{game.board.fen=}")
+        print(f"{game.state.fen=}")
 
         uci_str = input("Enter a move: ")
 
         try:
-            move = Move.from_uci(uci_str, game.board.player_to_move)
+            move = Move.from_uci(uci_str, game.state.turn)
             if game.is_move_legal(move):
                 game.take_turn(move)
             else:
