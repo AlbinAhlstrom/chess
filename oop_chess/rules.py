@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from itertools import chain
 
 from oop_chess.board import Board
-from oop_chess.enums import MoveLegalityReason, StatusReason, Color, CastlingRight, Direction
+from oop_chess.enums import GameOverReason, MoveLegalityReason, StatusReason, Color, CastlingRight, Direction
 from oop_chess.move import Move
 from oop_chess.piece import King, Pawn, Piece, Rook
 from oop_chess.piece.knight import Knight
@@ -21,7 +21,7 @@ class Rules(ABC):
     def is_game_over(self, state: GameState) -> bool: ...
 
     @abstractmethod
-    def is_checkmate(self, state: GameState) -> bool: ...
+    def game_over_reason(self, state: GameState) -> GameOverReason: ...
 
     @abstractmethod
     def is_draw(self, state: GameState) -> bool: ...
@@ -52,8 +52,10 @@ class StandardRules(Rules):
     def is_game_over(self, state: GameState) -> bool:
         return not bool(self.get_legal_moves(state))
 
-    def is_checkmate(self, state: GameState) -> bool:
-        return self.is_check(state) and self.is_game_over(state)
+    def game_over_reason(self, state: GameState) -> GameOverReason:
+        if self.is_game_over(state) and self.is_check(state):
+            return GameOverReason.CHECKMATE
+        return GameOverReason.GAME_ONGOING
 
     def is_draw(self, state: GameState) -> bool:
         return self.is_game_over(state) and not self.is_check(state)
@@ -158,7 +160,6 @@ class StandardRules(Rules):
                 for end in piece.theoretical_moves(sq):
                     moves.append(Move(sq, end))
 
-
                 if isinstance(piece, Pawn):
                      is_start_rank = (sq.row == 6 if piece.color == Color.WHITE else sq.row == 1)
                      if is_start_rank:
@@ -168,13 +169,13 @@ class StandardRules(Rules):
                          if two_step:
                              moves.append(Move(sq, two_step))
 
-
                 if isinstance(piece, King):
                      row = 7 if piece.color == Color.WHITE else 0
                      moves.append(Move(sq, Square(row, 6)))
                      moves.append(Move(sq, Square(row, 2)))
 
         return moves
+
     def is_move_pseudo_legal(self, state: GameState, move: Move) -> bool:
         return self.move_pseudo_legality_reason(state, move) == MoveLegalityReason.LEGAL
 

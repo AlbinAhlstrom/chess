@@ -4,8 +4,7 @@ from oop_chess.move import Move
 
 
 def main():
-    board = Board.starting_setup()
-    game = Game(board)
+    game = Game()
 
     while True:
         print(game.state.board)

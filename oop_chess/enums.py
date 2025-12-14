@@ -41,6 +41,15 @@ class MoveLegalityReason(StrEnum):
     LEGAL = "move is legal"
 
 
+class GameOverReason(StrEnum):
+    CHECKMATE = "checkmate"
+    STALEMATE = "stalemate"
+    REPETITION = "repetition"
+    FIFTY_MOVE_RULE = "50 move rule"
+    MUTUAL_AGREEMENT = "mutual agreement"
+    TIMEOUT = "timeout"
+
+
 class State(Enum):
     """The state of the game."""
     ONGOING = auto()
