@@ -21,13 +21,25 @@ class Rules(ABC):
     def is_game_over(self, state: GameState) -> bool: ...
 
     @abstractmethod
-    def apply_move(self, state: GameState, move: Move) -> GameState: ...
+    def is_checkmate(self, state: GameState) -> bool: ...
+
+    @abstractmethod
+    def is_draw(self, state: GameState) -> bool: ...
 
     @abstractmethod
     def is_board_state_legal(self, state: GameState) -> bool: ...
 
     @abstractmethod
     def board_state_legality_reason(self, state: GameState) -> StatusReason: ...
+
+    @abstractmethod
+    def move_legality_reason(self, state: GameState, move: Move) -> MoveLegalityReason: ...
+
+    @abstractmethod
+    def apply_move(self, state: GameState, move: Move) -> GameState: ...
+
+    @abstractmethod
+    def is_move_legal(self, state: GameState, move: Move) -> bool: ...
 
 
 class StandardRules(Rules):
@@ -49,15 +61,15 @@ class StandardRules(Rules):
     def is_move_legal(self, state: GameState, move: Move) -> bool:
         return self.move_legality_reason(state, move) == "Move is legal"
 
-    def move_legality_reason(self, state: GameState, move: Move) -> str:
+    def move_legality_reason(self, state: GameState, move: Move) -> MoveLegalityReason:
         pseudo_reason = self.move_pseudo_legality_reason(state, move)
         if pseudo_reason != MoveLegalityReason.LEGAL:
-            return pseudo_reason.value
+            return pseudo_reason
 
         if self.king_left_in_check(state, move):
-            return "King left in check"
+            return MoveLegalityReason.KING_LEFT_IN_CHECK
 
-        return "Move is legal"
+        return MoveLegalityReason.LEGAL
 
     def king_left_in_check(self, state: GameState, move: Move) -> bool:
         """Returns True if king is left in check after a move."""

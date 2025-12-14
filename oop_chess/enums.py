@@ -2,6 +2,7 @@ from __future__ import annotations
 from enum import Enum, StrEnum, auto
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from oop_chess.square import Square
 
@@ -73,6 +74,7 @@ class CastlingRight(StrEnum):
     BLACK_SHORT = "k"
     WHITE_LONG = "Q"
     BLACK_LONG = "q"
+    NONE = "-"
 
     @property
     def expected_rook_square(self) -> Square:
@@ -86,6 +88,8 @@ class CastlingRight(StrEnum):
                 return Square.from_str("h8")
             case CastlingRight.BLACK_LONG:
                 return Square.from_str("a8")
+            case CastlingRight.NONE:
+                return Square.none()
 
     @property
     def expected_king_square(self) -> Square:
@@ -95,6 +99,8 @@ class CastlingRight(StrEnum):
                 return Square.from_str("e1")
             case CastlingRight.BLACK_SHORT | CastlingRight.BLACK_LONG:
                 return Square.from_str("e8")
+            case CastlingRight.NONE:
+                return Square.none()
 
     @property
     def color(self) -> Color:
@@ -103,6 +109,8 @@ class CastlingRight(StrEnum):
                 return Color.WHITE
             case CastlingRight.BLACK_SHORT | CastlingRight.BLACK_LONG:
                 return Color.BLACK
+            case CastlingRight.NONE:
+                raise ValueError("CastlingRight.NONE has no associated color")
 
     @classmethod
     def short(cls, color: Color) -> CastlingRight:
@@ -119,10 +127,10 @@ class CastlingRight(StrEnum):
         return cls.BLACK_LONG
 
     @classmethod
-    def from_fen(cls, fen_castling_string: str) -> list[CastlingRight]:
+    def from_fen(cls, fen_castling_string: str) -> tuple[CastlingRight, ...]:
         if not fen_castling_string or fen_castling_string == "-":
-            return []
-        return [cls(char) for char in fen_castling_string]
+            return (CastlingRight.NONE,)
+        return tuple(cls(char) for char in fen_castling_string)
 
 
 class Direction(Enum):

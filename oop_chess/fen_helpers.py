@@ -1,7 +1,10 @@
-from oop_chess.enums import Color
+from typing import TYPE_CHECKING
+from oop_chess.enums import CastlingRight, Color
 from oop_chess.piece.piece import Piece
 from oop_chess.square import Square
 from oop_chess.piece import piece_from_char
+if TYPE_CHECKING:
+    from oop_chess.game_state import GameState
 
 
 def board_from_fen(fen_board: str) -> dict[Square, Piece]:
@@ -44,3 +47,45 @@ def get_fen_board_row(self, row) -> str:
     if empty_squares > 0:
         fen_row_string += str(empty_squares)
     return fen_row_string
+
+def state_from_fen(fen: str) -> GameState:
+    from oop_chess.game_state import GameState
+    from oop_chess.board import Board
+
+    fen_parts = fen.split()
+    if len(fen_parts) != 6:
+        raise ValueError("Invalid FEN format: Must contain 6 fields.")
+
+    board = Board(fen_parts[0])
+    active_color = Color(fen_parts[1])
+    castling_rights = CastlingRight.from_fen(fen_parts[2])
+    en_passant = None if fen_parts[3] == "-" else Square.from_coord(fen_parts[3])
+
+    try:
+        halfmove_clock = int(fen_parts[4])
+        fullmove_count = int(fen_parts[5])
+    except ValueError:
+        raise ValueError("FEN halfmove and fullmove must be int.")
+
+    return GameState(
+        board,
+        active_color,
+        castling_rights,
+        en_passant,
+        halfmove_clock,
+        fullmove_count,
+    )
+
+def state_to_fen(state: GameState) -> str:
+    """Serializes the state to FEN."""
+    placement = state.board.fen
+    active = state.turn.value
+
+    rights_str = "".join([r.value for r in state.castling_rights]) or "-"
+
+    ep = str(state.ep_square) if state.ep_square else "-"
+    hm = str(state.halfmove_clock)
+    fm = str(state.fullmove_count)
+
+    return f"{placement} {active} {rights_str} {ep} {hm} {fm}"
+

@@ -2,7 +2,6 @@ import re
 from dataclasses import dataclass
 import pytest
 
-from oop_chess.board import Board
 from oop_chess.game import Game
 from oop_chess.move import Move
 

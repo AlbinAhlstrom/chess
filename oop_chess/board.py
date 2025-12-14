@@ -50,13 +50,8 @@ class Board:
         return pieces
 
     @classmethod
-    def empty(cls) -> "Board":
-        return board_from_fen(cls.EMPTY_BOARD_FEN)
-
-    @classmethod
     def starting_setup(cls):
         board_from_fen(cls.STARTING_POSITION_FEN)
-
 
     @property
     def fen(self) -> str:
@@ -70,3 +65,5 @@ class Board:
     def copy(self) -> "Board":
         return Board(self.board.copy())
 
+    def print(self):
+        print("printing board")

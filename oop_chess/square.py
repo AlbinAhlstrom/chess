@@ -12,9 +12,6 @@ class Square:
     Index 0 for row corresponds to the 8th rank of the board.
     Index 0 for column corresponds to the A-file.
     """
-
-
-
     row: int
     col: int
 
@@ -71,7 +68,7 @@ class Square:
     @classmethod
     def from_coord(cls, coordinate: Coordinate | None) -> "Square":
         if coordinate is None:
-            return NoSquare
+            return cls.none()
         if isinstance(coordinate, cls):
             return coordinate
         elif isinstance(coordinate, str):
@@ -91,7 +88,7 @@ class Square:
         """
         d_col, d_row = direction.value
         if not Square.is_valid(self.row + d_row, self.col + d_col):
-            return NoSquare
+            return self.__class__.none()
         return self.__class__.from_coord((self.row + d_row, self.col + d_col))
 
     def is_adjacent_to(self, square: Square, moveset: set[Direction] = Direction.straight_and_diagonal()):
@@ -102,7 +99,10 @@ class Square:
         """Return algebraic notation."""
         return f"{chr(self.col + ord('a'))}{8 - self.row}"
 
+    @classmethod
+    def none(cls):
+        return Square(-1, -1)
 
-NoSquare = Square(-1, -1)
+
 Coordinate: TypeAlias = str | tuple | Square
 
