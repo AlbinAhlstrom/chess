@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
+from itertools import chain
 
 from oop_chess.board import Board
 from oop_chess.enums import MoveLegalityReason, StatusReason, Color, CastlingRight, Direction
 from oop_chess.move import Move
 from oop_chess.piece import King, Pawn, Piece, Rook
+from oop_chess.piece.knight import Knight
 from oop_chess.square import Square
 from oop_chess.game_state import GameState
 
@@ -33,7 +35,7 @@ class StandardRules(Rules):
         return [move for move in self.get_theoretical_moves(state) if self.is_move_legal(state, move)]
 
     def is_check(self, state: GameState) -> bool:
-        return state.board.is_check(state.turn)
+        return self._is_color_in_check(state.board, state.turn)
 
     def is_game_over(self, state: GameState) -> bool:
         return not bool(self.get_legal_moves(state))
@@ -206,7 +208,7 @@ class StandardRules(Rules):
             if move.end.row == piece.promotion_row and not move.promotion_piece is not None:
                 return MoveLegalityReason.NON_PROMOTION
 
-        if move.end not in state.board.unblocked_paths(piece, piece.theoretical_move_paths(move.start)):
+        if move.end not in self.unblocked_paths(state.board, piece, piece.theoretical_move_paths(move.start)):
              if not is_pawn_double_push_valid:
                  return MoveLegalityReason.PATH_BLOCKED
 
@@ -257,24 +259,31 @@ class StandardRules(Rules):
         if not (rook_piece and isinstance(rook_piece, Rook) and rook_piece.color == piece.color):
             raise AttributeError("No rook found on expected square")
 
-        if state.board.is_check(piece.color):
+        if self._is_color_in_check(state.board, piece.color):
             return MoveLegalityReason.CASTLING_FROM_CHECK
 
         for sq in squares_to_check:
-            if state.board.is_under_attack(sq, piece.color.opposite):
+            if self.is_under_attack(state.board, sq, piece.color.opposite):
                 return MoveLegalityReason.CASTLING_THROUGH_CHECK
 
         return MoveLegalityReason.LEGAL
 
-    def is_attacking(self, piece: Piece, square: Square, board: Board, piece_square: Square) -> bool:
-        return board.is_attacking(piece, square, piece_square)
+    def is_attacking(self, board: Board, piece: Piece, square: Square, piece_square: Square) -> bool:
+        if isinstance(piece, (Knight)):
+            return square in piece.capture_squares(piece_square)
+        else:
+            return square in self.unblocked_paths(board, piece, piece.capture_paths(piece_square))
 
     def is_under_attack(self, board: Board, square: Square, by_color: Color) -> bool:
         """Check if square is attacked by the given color."""
-        return board.is_under_attack(square, by_color)
+        for piece_square, piece in board.board.items():
+            if piece and piece.color == by_color:
+                if self.is_attacking(board, piece, square, piece_square):
+                    return True
+        return False
 
     def player_in_check(self, board: Board, color: Color) -> bool:
-        return board.is_check(color)
+        return self._is_color_in_check(board, color)
 
     def is_board_state_legal(self, state: GameState) -> bool:
         return self.board_state_legality_reason(state) == StatusReason.VALID
@@ -328,7 +337,7 @@ class StandardRules(Rules):
         return StatusReason.VALID
 
     def inactive_player_in_check(self, state: GameState) -> bool:
-        return state.board.is_check(state.turn.opposite)
+        return self._is_color_in_check(state.board, state.turn.opposite)
 
     def invalid_castling_rights(self, state: GameState) -> list[CastlingRight]:
         invalid = []
@@ -342,6 +351,38 @@ class StandardRules(Rules):
                 invalid.append(right)
                 continue
         return invalid
+
+    def unblocked_path(self, board: Board, piece: Piece, path: list[Square]) -> list[Square]:
+        try:
+            stop_index = next(
+                i for i, coord in enumerate(path) if board.get_piece(coord) is not None
+            )
+        except StopIteration:
+            return path
+
+        target_piece = board.get_piece(path[stop_index])
+
+        if target_piece and target_piece.color != piece.color:
+            return path[: stop_index + 1]
+        else:
+            return path[:stop_index]
+
+    def unblocked_paths(self, board: Board, piece: Piece, paths: list[list[Square]]) -> list[Square]:
+        """Return all unblocked squares in a piece's moveset"""
+        return list(chain.from_iterable([self.unblocked_path(board, piece, path) for path in paths]))
+
+    def _is_color_in_check(self, board: Board, color: Color) -> bool:
+        """Check if the King of the given color is under attack."""
+        king_sq = None
+        for sq, piece in board.board.items():
+            if isinstance(piece, King) and piece.color == color:
+                king_sq = sq
+                break
+
+        if king_sq is None:
+            return False
+
+        return self.is_under_attack(board, king_sq, color.opposite)
 
 class AntichessRules(StandardRules):
     def move_legality_reason(self, state: GameState, move: Move) -> str:

@@ -1,11 +1,8 @@
 from typing import TypeVar
-from itertools import chain
 
 from oop_chess.piece import piece_from_char
 from oop_chess.enums import Color
-from oop_chess.piece.king import King
 from oop_chess.piece.piece import Piece
-from oop_chess.piece.knight import Knight
 from oop_chess.square import Coordinate, Square
 
 
@@ -22,6 +19,31 @@ class Board:
 
     def __init__(self, pieces: dict[Square, Piece] = {}):
         self.board: dict[Square, Piece] = pieces if pieces else {}
+
+    def get_piece(self, coordinate: Coordinate) -> Piece | None:
+        return self.board.get(Square.from_coord(coordinate))
+
+    def set_piece(self, piece: Piece, square: str | tuple | Square):
+        square = Square.from_coord(square)
+        self.board[square] = piece
+
+    def remove_piece(self, coordinate: Coordinate) -> Piece | None:
+        square = Square.from_coord(coordinate)
+        return self.board.pop(square, None)
+
+    def move_piece(self, piece: Piece, start: Square, end: Square):
+        """Moves a piece on the board. Does not handle capture logic or rules."""
+        self.set_piece(piece, end)
+        self.remove_piece(start)
+
+    def get_pieces(
+        self, piece_type: type[T] = Piece, color: Color | None = None
+    ) -> list[T]:
+        pieces = [piece for piece in self.board.values() if piece]
+        pieces = [piece for piece in pieces if isinstance(piece, piece_type)]
+        if color is not None:
+            pieces = [piece for piece in pieces if piece.color.value == color.value]
+        return pieces
 
     @classmethod
     def empty(cls) -> "Board":
@@ -51,77 +73,6 @@ class Board:
                     coord = Square(row, col + empty_squares)
                     board[coord] = piece
         return cls(board)
-
-    def get_piece(self, coordinate: Coordinate) -> Piece | None:
-        return self.board.get(Square.from_coord(coordinate))
-
-    def set_piece(self, piece: Piece, square: str | tuple | Square):
-        square = Square.from_coord(square)
-        self.board[square] = piece
-
-    def remove_piece(self, coordinate: Coordinate) -> Piece | None:
-        square = Square.from_coord(coordinate)
-        return self.board.pop(square, None)
-
-    def move_piece(self, piece: Piece, start: Square, end: Square):
-        """Moves a piece on the board. Does not handle capture logic or rules."""
-        self.set_piece(piece, end)
-        self.remove_piece(start)
-
-    def get_pieces(
-        self, piece_type: type[T] = Piece, color: Color | None = None
-    ) -> list[T]:
-        pieces = [piece for piece in self.board.values() if piece]
-        pieces = [piece for piece in pieces if isinstance(piece, piece_type)]
-        if color is not None:
-            pieces = [piece for piece in pieces if piece.color.value == color.value]
-        return pieces
-
-    def is_attacking(self, piece: Piece, square: Square, piece_square: Square) -> bool:
-        if isinstance(piece, (Knight)):
-            return square in piece.capture_squares(piece_square)
-        else:
-            return square in self.unblocked_paths(piece, piece.capture_paths(piece_square))
-
-    def is_under_attack(self, square: Square, by_color: Color) -> bool:
-        """Check if square is attacked by the given color."""
-        for piece_square, piece in self.board.items():
-            if piece and piece.color == by_color:
-                if self.is_attacking(piece, square, piece_square):
-                    return True
-        return False
-
-    def is_check(self, color: Color) -> bool:
-        """Check if the King of the given color is under attack."""
-        king_sq = None
-        for sq, piece in self.board.items():
-            if isinstance(piece, King) and piece.color == color:
-                king_sq = sq
-                break
-
-        if king_sq is None:
-            return False
-
-        return self.is_under_attack(king_sq, color.opposite)
-
-    def unblocked_path(self, piece: Piece, path: list[Square]) -> list[Square]:
-        try:
-            stop_index = next(
-                i for i, coord in enumerate(path) if self.get_piece(coord) is not None
-            )
-        except StopIteration:
-            return path
-
-        target_piece = self.get_piece(path[stop_index])
-
-        if target_piece and target_piece.color != piece.color:
-            return path[: stop_index + 1]
-        else:
-            return path[:stop_index]
-
-    def unblocked_paths(self, piece: Piece, paths: list[list[Square]]) -> list[Square]:
-        """Return all unblocked squares in a piece's moveset"""
-        return list(chain.from_iterable([self.unblocked_path(piece, path) for path in paths]))
 
     def _get_fen_row(self, row) -> str:
         empty_squares = 0

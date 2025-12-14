@@ -60,13 +60,13 @@ def diagnose_moves3():
                     print(f"King Square: {king.square}")
 
                     target_sq = Square.from_str("c7")
-                    is_attacked_by_black_on_original = game.state.board.is_under_attack(target_sq, Color.BLACK)
+                    is_attacked_by_black_on_original = game.rules.is_under_attack(game.state.board, target_sq, Color.BLACK)
                     print(f"Original board: Is c7 attacked by Black? {is_attacked_by_black_on_original}")
 
                     if is_attacked_by_black_on_original:
                         black_pieces_original = game.state.board.get_pieces(color=Color.BLACK)
                         for p in black_pieces_original:
-                            if p.square is not None and game.state.board.is_attacking(p, target_sq):
+                            if p.square is not None and game.rules.is_attacking(game.state.board, p, target_sq, p.square):
                                 print(f"Original board Attacker: {p} at {p.square}")
 
 
@@ -87,12 +87,12 @@ def diagnose_moves3():
 
                     if is_check_on_temp_board:
                         sim_king_sq = target_sq
-                        is_attacked_on_temp = temp_board.is_under_attack(sim_king_sq, Color.BLACK)
+                        is_attacked_on_temp = temp_game.rules.is_under_attack(temp_board, sim_king_sq, Color.BLACK)
                         print(f"Temp board: Is c7 attacked by Black (after move)? {is_attacked_on_temp}")
                         if is_attacked_on_temp:
                             black_pieces_temp = temp_board.get_pieces(color=Color.BLACK)
                             for p in black_pieces_temp:
-                                if p.square is not None and temp_board.is_attacking(p, sim_king_sq):
+                                if p.square is not None and temp_game.rules.is_attacking(temp_board, p, sim_king_sq, p.square):
                                     print(f"Temp board Attacker: {p} at {p.square}")
 
 

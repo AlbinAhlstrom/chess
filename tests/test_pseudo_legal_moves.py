@@ -114,7 +114,7 @@ def test_pseudo_legal_path_is_blocked(board):
     assert reason == MoveLegalityReason.PATH_BLOCKED
 
     piece = board.get_piece(start)
-    assert end not in board.unblocked_paths(piece, piece.theoretical_move_paths(start))
+    assert end not in game.rules.unblocked_paths(board, piece, piece.theoretical_move_paths(start))
 
 def test_leaving_king_in_check_is_pseudo_legal():
     fen = "k7/r7/8/8/8/8/R7/K7 w - - 0 1"
