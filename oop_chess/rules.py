@@ -343,3 +343,73 @@ class StandardRules(Rules):
                 continue
         return invalid
 
+class AntichessRules(StandardRules):
+    def is_move_legal(self, state: GameState, move: Move) -> bool:
+        if self.move_pseudo_legality_reason(state, move) != MoveLegalityReason.LEGAL:
+            return False
+
+        if self._is_capture(state, move):
+            return True
+
+        # If move is not a capture, ensure no captures are available
+        for opt_move in self.get_theoretical_moves(state):
+            if self.move_pseudo_legality_reason(state, opt_move) == MoveLegalityReason.LEGAL:
+                if self._is_capture(state, opt_move):
+                    return False
+        return True
+
+    def _is_capture(self, state: GameState, move: Move) -> bool:
+        if state.board.get_piece(move.end):
+            return True
+        piece = state.board.get_piece(move.start)
+        if isinstance(piece, Pawn) and move.end == state.ep_square:
+            return True
+        return False
+
+    def is_check(self, state: GameState) -> bool:
+        return False
+
+    def inactive_player_in_check(self, state: GameState) -> bool:
+        return False
+
+    def is_game_over(self, state: GameState) -> bool:
+        if not state.board.get_pieces(color=state.turn):
+            return True
+        if not self.get_legal_moves(state):
+            return True
+        return False
+
+    def is_checkmate(self, state: GameState) -> bool:
+        return False
+
+    def is_draw(self, state: GameState) -> bool:
+        return False
+
+    def king_left_in_check(self, state: GameState, move: Move) -> bool:
+        return False
+
+    def castling_legality_reason(self, state: GameState, move: Move, piece: King) -> MoveLegalityReason:
+        return MoveLegalityReason.NO_CASTLING_RIGHT
+
+    def status(self, state: GameState) -> StatusReason:
+        white_pawns = state.board.get_pieces(Pawn, Color.WHITE)
+        black_pawns = state.board.get_pieces(Pawn, Color.BLACK)
+        pawns_on_backrank = []
+        for sq, piece in state.board.board.items():
+             if isinstance(piece, Pawn) and (sq.row == 0 or sq.row == 7):
+                 pawns_on_backrank.append(piece)
+
+        is_ep_square_valid = state.ep_square is None or state.ep_square.row in (2, 5)
+
+        if len(white_pawns) > 8:
+            return StatusReason.TOO_MANY_WHITE_PAWNS
+        if len(black_pawns) > 8:
+            return StatusReason.TOO_MANY_BLACK_PAWNS
+        if pawns_on_backrank:
+            return StatusReason.PAWNS_ON_BACKRANK
+        
+        if not is_ep_square_valid:
+            return StatusReason.INVALID_EP_SQUARE
+
+        return StatusReason.VALID
+
