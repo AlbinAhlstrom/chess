@@ -25,7 +25,7 @@ const RESET_ICON = (
     </svg>
 );
 
-export function Pieces({ onFenChange }) {
+export function Pieces({ onFenChange, variant = "standard" }) {
     const ref = useRef()
     const highlightRef = useRef(null);
     const [fen, setFen] = useState();
@@ -57,7 +57,7 @@ export function Pieces({ onFenChange }) {
             ws.current.close();
         }
 
-        const { game_id: newGameId, fen: initialFen } = await createGame();
+        const { game_id: newGameId, fen: initialFen } = await createGame(variant);
         setFen(initialFen);
         setGameId(newGameId);
         setMoveHistory([]);
@@ -127,7 +127,7 @@ export function Pieces({ onFenChange }) {
                 ws.current.close();
             }
         };
-    }, []);
+    }, [variant]);
 
     useEffect(() => {
         if (fen && fen !== lastNotifiedFen.current) {

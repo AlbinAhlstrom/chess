@@ -1,7 +1,11 @@
 const API_BASE = "http://127.0.0.1:8000/api";
 
-export const createGame = async () => {
-    const res = await fetch(`${API_BASE}/game/new`, { method: "POST" });
+export const createGame = async (variant = "standard") => {
+    const res = await fetch(`${API_BASE}/game/new`, { 
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ variant })
+    });
     return res.json();
 };
 

@@ -1,4 +1,5 @@
 from uuid import uuid4
+from typing import Optional
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -8,6 +9,7 @@ from oop_chess.game import Game, IllegalMoveException
 from oop_chess.board import Board
 from oop_chess.move import Move
 from oop_chess.square import Square
+from oop_chess.rules import AntichessRules, StandardRules
 
 
 app = FastAPI()
@@ -77,11 +79,19 @@ class SquareSelection(BaseModel):
     square: str
 
 
+class NewGameRequest(BaseModel):
+    variant: Optional[str] = "standard"
+
+
 @app.post("/api/game/new")
-def new_game():
+def new_game(req: NewGameRequest = None):
     game_id = str(uuid4())
-    board = Board.starting_setup()
-    game = Game(board)
+    
+    rules = StandardRules()
+    if req and req.variant == "antichess":
+        rules = AntichessRules()
+        
+    game = Game(rules=rules)
     games[game_id] = game
     return {"game_id": game_id, "fen": game.state.fen, "turn": game.state.turn}
 
