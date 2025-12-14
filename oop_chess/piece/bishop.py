@@ -27,3 +27,4 @@ class Bishop(Piece):
     @property
     def fen(self):
         return "B" if self.color == Color.WHITE else "b"
+

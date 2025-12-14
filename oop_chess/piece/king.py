@@ -31,3 +31,4 @@ class King(Piece):
     @property
     def fen(self):
         return "K" if self.color == Color.WHITE else "k"
+

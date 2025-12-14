@@ -29,3 +29,4 @@ class Knight(Piece):
     @property
     def fen(self):
         return "N" if self.color == Color.WHITE else "n"
+

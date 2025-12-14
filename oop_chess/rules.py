@@ -258,3 +258,4 @@ class StandardRules(Rules):
                 invalid.append(right)
                 continue
         return invalid
+

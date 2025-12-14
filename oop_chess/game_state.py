@@ -210,3 +210,4 @@ class GameState:
                 invalid.append(right)
                 continue
         return invalid
+

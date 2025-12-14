@@ -48,3 +48,4 @@ class Pawn(Piece):
     @property
     def fen(self):
         return "P" if self.color == Color.WHITE else "p"
+

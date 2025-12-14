@@ -27,3 +27,4 @@ class Queen(Piece):
     @property
     def fen(self):
         return "Q" if self.color == Color.WHITE else "q"
+

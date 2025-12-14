@@ -27,3 +27,4 @@ class Rook(Piece):
     @property
     def fen(self):
         return "R" if self.color == Color.WHITE else "r"
+

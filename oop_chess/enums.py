@@ -131,8 +131,6 @@ class Direction(Enum):
     Enum values are tuples repersenting row and col from an initial square.
     (x, y) = (col_delta, row_delta)
     """
-
-
     NONE = (0, 0)
 
     UP = (0, -1)
@@ -210,3 +208,4 @@ class Direction(Enum):
                 yield Square(new_r, new_c)
             else:
                 break
+

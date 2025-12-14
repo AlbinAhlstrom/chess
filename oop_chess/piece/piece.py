@@ -63,3 +63,4 @@ class Piece(ABC):
 
     def capture_squares(self, start: Square) -> list[Square]:
         return list(chain.from_iterable(self.capture_paths(start)))
+

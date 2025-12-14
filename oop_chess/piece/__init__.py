@@ -22,3 +22,4 @@ piece_from_char: dict[str, Type[Piece]] = {
     "P": Pawn,
     "p": Pawn,
 }
+

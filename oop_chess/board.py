@@ -3,10 +3,8 @@ from itertools import chain
 
 from oop_chess.piece import piece_from_char
 from oop_chess.enums import Color
-from oop_chess.piece.pawn import Pawn
 from oop_chess.piece.king import King
 from oop_chess.piece.piece import Piece
-from oop_chess.piece.rook import Rook
 from oop_chess.piece.knight import Knight
 from oop_chess.square import Coordinate, Square
 
@@ -20,9 +18,6 @@ class Board:
     It answers queries about piece locations and paths.
     It does NOT know about game state (turn, castling rights, etc.).
     """
-
-
-
     STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     EMPTY_FEN = "8/8/8/8/8/8/8/8 w - - 0 1"
 
@@ -169,3 +164,4 @@ class Board:
 
     def copy(self) -> "Board":
         return Board(self.board.copy())
+

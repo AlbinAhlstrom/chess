@@ -107,3 +107,4 @@ class Square:
 
 NoSquare = Square(-1, -1)
 Coordinate: TypeAlias = str | tuple | Square
+

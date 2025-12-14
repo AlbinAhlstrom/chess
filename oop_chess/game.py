@@ -62,7 +62,7 @@ class Game:
 
     def is_move_pseudo_legal(self, move: Move) -> tuple[bool, str]:
         """Determine if a move is pseudolegal.
-        
+
         This method is primarily used for testing and debugging.
         """
         reason = self.rules.move_pseudo_legality_reason(self.state, move)
@@ -113,3 +113,4 @@ class Game:
             if past_fen_key == current_fen_key:
                 count += 1
         return count
+
