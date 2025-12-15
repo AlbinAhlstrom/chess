@@ -16,5 +16,8 @@
     width: var(--legal-move-dot-size); /* Smaller inner dot */
     height: var(--legal-move-dot-size); /* Smaller inner dot */
     border-radius: 50%;
-    background-color: var(--legal-move-dot-color); /* Darker green for visibility */
+    background-color: var(--legal-move-dot-color); /* Dark Center */
+    border: 4px solid #6CA054; /* Light Ring, increased thickness */
+    box-shadow: 0 0 0 1px rgba(132, 132, 154, 0.5), 0 2px 5px rgba(0, 0, 0, 0.4);
+    box-sizing: border-box;
 }

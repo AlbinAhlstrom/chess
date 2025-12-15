@@ -7,7 +7,7 @@
     --highlight-dark-square: #D4C25E;
     --drag-hover-light-border: #F6F3DF;
     --drag-hover-dark-border: #77AB5F;
-    --legal-move-dot-color: rgba(0, 0, 0, 0.2);
+    --legal-move-dot-color: #486b38;
     --legal-move-dot-size: 30%;
     --king-check-flash-color: #D36135;
     --king-check-flash-duration: 0.25s;
