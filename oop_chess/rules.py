@@ -235,7 +235,9 @@ class StandardRules(Rules):
                  return MoveLegalityReason.PATH_BLOCKED
 
         if move.promotion_piece:
+            print(f"DEBUG: move_pseudo_legality_reason - Promotion piece: {move.promotion_piece}, End square: {move.end}, Player: {state.turn}")
             if not move.end.is_promotion_row(state.turn):
+                print(f"DEBUG: move_pseudo_legality_reason - EARLY_PROMOTION. Expected row for player {state.turn} is {move.end.row} (actual: {move.end.row})")
                 return MoveLegalityReason.EARLY_PROMOTION
 
             if isinstance(move.promotion_piece, King):

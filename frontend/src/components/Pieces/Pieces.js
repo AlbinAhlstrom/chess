@@ -314,9 +314,14 @@ export function Pieces({ onFenChange, variant = "standard" }) {
         };
 
         if (selectedSquare) {
-            const movesToTarget = legalMoves.filter(m => m.slice(2, 4) === clickedSquare);
+            const movesToTarget = legalMoves.filter(m => {
+                const targetSquareFromUci = m.length === 5 ? m.slice(2, 4) : m.slice(2, 4);
+                return targetSquareFromUci === clickedSquare;
+            });
 
             if (movesToTarget.length > 0) {
+                // If there are multiple moves to the target square (e.g., different promotion pieces)
+                // or if the move is a promotion (length 5 for UCI), open the promotion dialog.
                 if (movesToTarget.length > 1 || movesToTarget[0].length === 5) {
                     setPromotionMove({ from: selectedSquare, to: clickedSquare });
                     setPromotionDialogOpen(true);

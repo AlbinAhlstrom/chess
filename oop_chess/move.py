@@ -130,12 +130,15 @@ class Move:
         start = Square.from_coord(uci_str[:2])
         end = Square.from_coord(uci_str[2:4])
 
-        promotion_char = uci_str[4:]
-        piece = (
-            piece_from_char[promotion_char](player_to_move) if promotion_char else None
-        )
+                        promotion_char = uci_str[4:]
 
-        return cls(start, end, piece)
+                        piece = (
+
+                            piece_from_char[promotion_char](player_to_move) if promotion_char else None
+
+                        )
+
+                        return cls(start, end, piece)
 
     @classmethod
     def from_san_castling(cls, san_str: str, game: "Game") -> "Move":
