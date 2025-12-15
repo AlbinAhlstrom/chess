@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from oop_chess.piece.pawn import Pawn
@@ -12,11 +12,46 @@ if TYPE_CHECKING:
     from oop_chess.game import Game
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=True)
 class Move:
-    start: Square
-    end: Square
-    promotion_piece: Piece | None = None
+    """A piece moving from one square to another."""
+    start: Square = field(compare=True)
+    end: Square = field(compare=True)
+    promotion_piece: Piece | None = field(default=None, compare=True)
+
+    def __init__(self, *args, player_to_move: Color = Color.WHITE) -> None:
+        """Allows for instatiation using args or UCI string."""
+        _start: Square
+        _end: Square
+        _promotion_piece: Piece | None = None
+
+        if len(args) == 1 and isinstance(args[0], str):
+            uci_str = args[0]
+            if not Move.is_uci_valid(uci_str):
+                raise ValueError(f"Invalid UCI string: {uci_str}")
+            _start = Square(uci_str[:2])
+            _end = Square(uci_str[2:4])
+            _promotion_piece = piece_from_char[uci_str[4:]](player_to_move) if len(args) == 5 else None
+
+        elif len(args) >= 2:
+            if not (isinstance(args[0], Square) and isinstance(args[1], Square)):
+                raise TypeError("First two arguments must be Square objects.")
+            _start = args[0]
+            _end = args[1]
+
+            if len(args) == 3:
+                if not (isinstance(args[2], Piece) or args[2] is None):
+                    raise TypeError("Third argument (promotion_piece) must be a Piece or None.")
+                _promotion_piece = args[2]
+            elif len(args) > 3:
+                raise TypeError(f"Too many positional arguments for Move constructor: {args}")
+
+        else:
+            raise TypeError(f"Invalid number or type of arguments for Move constructor: {args}")
+
+        object.__setattr__(self, 'start', _start)
+        object.__setattr__(self, 'end', _end)
+        object.__setattr__(self, 'promotion_piece', _promotion_piece)
 
     @property
     def is_vertical(self) -> bool:
@@ -124,33 +159,18 @@ class Move:
             return False
 
     @classmethod
-    def from_uci(cls, uci_str: str, player_to_move: Color = Color.WHITE) -> "Move":
-        if not cls.is_uci_valid(uci_str):
-            raise ValueError(f"Invalid move: {uci_str}")
-        start = Square(uci_str[:2])
-        end = Square(uci_str[2:4])
-
-        promotion_char = uci_str[4:]
-
-        piece = (
-            piece_from_char[promotion_char](player_to_move) if promotion_char else None
-        )
-
-        return cls(start, end, piece)
-
-    @classmethod
     def from_san_castling(cls, san_str: str, game: "Game") -> "Move":
         color = game.state.turn
         if san_str == "O-O":
             if color == Color.WHITE:
-                move = cls.from_uci("e1g1")
+                move = Move("e1g1", player_to_move=color)
             else:
-                move =  cls.from_uci("e8g8")
+                move =  Move("e8g8", player_to_move=color)
         else:
             if color == Color.WHITE:
-                move = cls.from_uci("e1c1")
+                move = Move("e1c1", player_to_move=color)
             else:
-                move = cls.from_uci("e8c8")
+                move = Move("e8c8", player_to_move=color)
         return move
 
     @classmethod

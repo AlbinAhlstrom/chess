@@ -119,7 +119,7 @@ def test_pseudo_legal_path_is_blocked(board):
 def test_leaving_king_in_check_is_pseudo_legal():
     fen = "k7/r7/8/8/8/8/R7/K7 w - - 0 1"
     game = Game(fen=fen)
-    move = Move.from_uci("a2h2")
+    move = Move("a2h2")
 
     assert game.is_move_pseudo_legal(move)[0]
 
@@ -127,7 +127,7 @@ def test_pseudo_legal_en_passant_is_legal():
     """Test that a valid en passant capture is recognized as pseudo-legal."""
     fen = "4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 1"
     game = Game(fen=fen)
-    move = Move.from_uci("e5d6")
+    move = Move("e5d6")
 
     is_legal, reason = game.is_move_pseudo_legal(move)
     assert is_legal is True, f"En passant move was incorrectly deemed illegal: {reason}"
@@ -135,7 +135,7 @@ def test_pseudo_legal_en_passant_is_legal():
 def test_fen_after_initial_pawn_move():
     """Test that the FEN's en passant field is correctly 'a3' after 1. a4."""
     game = Game()
-    move = Move.from_uci("a2a4")
+    move = Move("a2a4")
     game.take_turn(move)
 
     expected_fen = "rnbqkbnr/pppppppp/8/8/P7/8/1PPPPPPP/RNBQKBNR b KQkq a3 0 1"
@@ -149,7 +149,7 @@ def test_en_passant_capture_removes_pawn():
 
     assert game.state.board.get_piece(captured_pawn_square) is not None
 
-    move = Move.from_uci("e5d6")
+    move = Move("e5d6")
     game.take_turn(move)
 
     assert game.state.board.get_piece(captured_pawn_square) is None
@@ -162,7 +162,7 @@ def test_en_passant_capture_from_start():
 
     moves_uci = ["a2a4", "a7a6", "a4a5", "b7b5", "a5b6"]
     for uci in moves_uci:
-        move = Move.from_uci(uci)
+        move = Move(uci)
         game.take_turn(move)
 
     captured_pawn_square = Square('b5')

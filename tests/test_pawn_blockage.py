@@ -10,7 +10,7 @@ def test_pawn_double_push_blocked_by_friendly_piece():
     game = Game(fen=fen)
 
 
-    move = Move.from_uci("f2f4")
+    move = Move("f2f4")
 
 
     is_legal = game.is_move_legal(move)

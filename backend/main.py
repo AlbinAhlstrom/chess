@@ -86,11 +86,11 @@ class NewGameRequest(BaseModel):
 @app.post("/api/game/new")
 def new_game(req: NewGameRequest):
     game_id = str(uuid4())
-    
+
     rules = StandardRules()
     if req.variant == "antichess":
         rules = AntichessRules()
-        
+
     game = Game(rules=rules)
     games[game_id] = game
     return {"game_id": game_id, "fen": game.state.fen, "turn": game.state.turn}
@@ -117,7 +117,7 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
             if message["type"] == "move":
                 move_uci = message["uci"]
                 try:
-                    move = Move.from_uci(move_uci, player_to_move=game.state.turn)
+                    move = Move(move_uci, player_to_move=game.state.turn)
                     game.take_turn(move)
                 except (ValueError, IllegalMoveException) as e:
                     await websocket.send_text(json.dumps({"type": "error", "message": str(e)}))
@@ -144,7 +144,7 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                 except ValueError as e:
                     await websocket.send_text(json.dumps({"type": "error", "message": str(e)}))
                     continue
-                
+
                 status = "active"
                 if game.is_checkmate:
                     status = "checkmate"

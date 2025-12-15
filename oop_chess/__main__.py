@@ -1,4 +1,3 @@
-from oop_chess.board import Board
 from oop_chess.game import Game, IllegalMoveException
 from oop_chess.move import Move
 
@@ -21,7 +20,7 @@ def main():
         uci_str = input("Enter a move: ")
 
         try:
-            move = Move.from_uci(uci_str, game.state.turn)
+            move = Move(uci_str, game.state.turn)
             if game.is_move_legal(move):
                 game.take_turn(move)
             else:

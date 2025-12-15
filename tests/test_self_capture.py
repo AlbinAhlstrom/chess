@@ -39,10 +39,10 @@ def test_capture_own_king_bug():
 
     move_uci = "a1e1"
     try:
-        move = Move.from_uci(move_uci, player_to_move=board.player_to_move)
+        move = Move(move_uci, player_to_move=board.player_to_move)
         print(f"Move created from UCI '{move_uci}': {move}")
     except Exception as e:
-        print(f"FAIL: Move.from_uci failed: {e}")
+        print(f"FAIL: Move failed: {e}")
         return
 
 
