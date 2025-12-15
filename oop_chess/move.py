@@ -31,7 +31,7 @@ class Move:
                 raise ValueError(f"Invalid UCI string: {uci_str}")
             _start = Square(uci_str[:2])
             _end = Square(uci_str[2:4])
-            _promotion_piece = piece_from_char[uci_str[4:]](player_to_move) if len(args) == 5 else None
+            _promotion_piece = piece_from_char[uci_str[4:]](player_to_move) if len(uci_str) == 5 else None
 
         elif len(args) >= 2:
             if not (isinstance(args[0], Square) and isinstance(args[1], Square)):

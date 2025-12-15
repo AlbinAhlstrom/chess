@@ -40,7 +40,7 @@ class Game:
 
     @property
     def is_draw(self):
-         return self.rules.is_draw(self.state)
+         return self.rules.is_draw(self.state) or self.repetitions_of_position >= 3
 
     @property
     def legal_moves(self) -> list[Move]:
