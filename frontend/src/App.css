@@ -3,11 +3,42 @@
 html,body {
     margin: 0;
     padding: 0;
+    background: var(--bg-color); /* Extend background to full page */
+    color: white; /* Ensure text is visible if it leaks */
 }
  
 .App {
     display: grid;
     place-content: center;
-    height: 100vh;
-    background: var(--bg-color)
+    min-height: 100vh; /* Changed from height to min-height to allow scrolling on mobile */
+    background: var(--bg-color);
+    padding: 20px; /* Add padding for mobile spacing */
+    box-sizing: border-box;
+}
+
+@media (max-width: 850px) {
+    :root {
+        --square-size: 80px;
+    }
+}
+
+@media (max-width: 650px) {
+    :root {
+        --square-size: 55px;
+    }
+}
+
+@media (max-width: 450px) {
+    :root {
+        --square-size: 11vw; /* Fluid size for very small screens */
+    }
+    
+    .App {
+        display: block; /* Remove grid centering to allow natural flow */
+        padding-top: 50px;
+    }
+    
+    .board {
+        margin: 0 auto; /* Center board */
+    }
 }

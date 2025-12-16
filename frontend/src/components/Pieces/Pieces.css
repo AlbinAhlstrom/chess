@@ -31,9 +31,105 @@
     width: var(--square-size);
     height: var(--square-size);
     pointer-events: none;
-    z-index: 4; /* Below pieces (10), selected (5 - wait, HighlightSquare is 5? drag hover is 6). Check z-indices. */
-    /* HighlightSquare is 5. If this is "warning", maybe on top of highlight? Or below piece? */
-    /* Pieces are z-index 10. This should be visible under the King. */
+    z-index: 4; 
     animation: flash-animation var(--king-check-flash-duration) ease-in-out;
     animation-iteration-count: 2;
+}
+
+/* Sidebar and Controls */
+.game-sidebar {
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-family: var(--main-font-family);
+    width: var(--history-width);
+}
+
+.move-history {
+    height: calc(4 * var(--square-size));
+    overflow-y: auto;
+    color: var(--history-text-color);
+    width: 100%;
+    background-color: var(--history-bg-color);
+    border-radius: 4px;
+    padding: 10px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    font-weight: 600;
+}
+
+.history-header {
+    position: sticky;
+    top: 0;
+    background-color: var(--history-bg-color);
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+    border-bottom: 1px solid #444;
+    font-weight: 700;
+    z-index: 1;
+}
+
+.history-row {
+    margin-bottom: 5px;
+    display: grid;
+    grid-template-columns: 30px 1fr 1fr;
+    gap: 10px;
+    align-items: center;
+}
+
+.game-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.control-button {
+    padding: 0;
+    font-size: 16px;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+    background-color: var(--button-bg-color);
+    color: var(--button-text-color);
+    border: none;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--button-size);
+    height: var(--button-height);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 850px) {
+    .game-sidebar {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        transform: none;
+        margin-left: 0;
+        margin-top: 20px;
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        z-index: 50; /* Ensure it is above other potential layers */
+    }
+
+    .move-history {
+        width: 100%;
+        height: 150px;
+        order: 2; /* Put history below controls on mobile? Or above? */
+    }
+
+    .game-controls {
+        width: 100%;
+        justify-content: center;
+        order: 1;
+    }
 }

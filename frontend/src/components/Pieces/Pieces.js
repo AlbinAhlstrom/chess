@@ -430,41 +430,9 @@ export function Pieces({ onFenChange, variant = "standard" }) {
             onClick={handleSquareClick}
             >
 
-            <div style={{
-                position: 'absolute',
-                left: '100%',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                marginLeft: '20px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '10px',
-                fontFamily: 'var(--main-font-family)',
-                width: 'var(--history-width)'
-            }}>
-                <div style={{ 
-                    height: 'calc(4 * var(--square-size))',
-                    overflowY: 'auto', 
-                    color: 'var(--history-text-color)', 
-                    width: '100%',
-                    backgroundColor: 'var(--history-bg-color)',
-                    borderRadius: '4px',
-                    padding: '10px',
-                    boxSizing: 'border-box',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    fontWeight: '600'
-                }}>
-                    <div style={{ 
-                        position: 'sticky', 
-                        top: 0, 
-                        backgroundColor: 'var(--history-bg-color)', 
-                        paddingBottom: '5px', 
-                        marginBottom: '5px', 
-                        borderBottom: '1px solid #444',
-                        fontWeight: '700',
-                        zIndex: 1
-                    }}>
+            <div className="game-sidebar">
+                <div className="move-history">
+                    <div className="history-header">
                         Moves
                     </div>
                     {moveHistory.reduce((rows, move, index) => {
@@ -472,13 +440,7 @@ export function Pieces({ onFenChange, variant = "standard" }) {
                         else rows[rows.length - 1].push(move);
                         return rows;
                     }, []).map((row, i) => (
-                        <div key={i} style={{ 
-                            marginBottom: '5px', 
-                            display: 'grid', 
-                            gridTemplateColumns: '30px 1fr 1fr', 
-                            gap: '10px',
-                            alignItems: 'center'
-                        }}>
+                        <div key={i} className="history-row">
                             <span style={{ color: '#888' }}>{i + 1}.</span>
                             <span>{row[0]}</span>
                             <span>{row[1] || ''}</span>
@@ -486,92 +448,32 @@ export function Pieces({ onFenChange, variant = "standard" }) {
                     ))}
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div className="game-controls">
                     <button 
                         onClick={handleUndo}
                         title="Undo"
-                        style={{
-                            padding: '0',
-                            fontSize: '16px',
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap',
-                            fontFamily: 'inherit',
-                            backgroundColor: 'var(--button-bg-color)',
-                            color: 'var(--button-text-color)',
-                            border: 'none',
-                            borderRadius: '4px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: 'var(--button-size)',
-                            height: 'var(--button-height)'
-                        }}
+                        className="control-button"
                     >
                         {UNDO_ICON}
                     </button>
                     <button 
                         onClick={copyFenToClipboard}
                         title="Export Game"
-                        style={{
-                            padding: '0',
-                            fontSize: '16px',
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap',
-                            fontFamily: 'inherit',
-                            backgroundColor: 'var(--button-bg-color)',
-                            color: 'var(--button-text-color)',
-                            border: 'none',
-                            borderRadius: '4px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: 'var(--button-size)',
-                            height: 'var(--button-height)'
-                        }}
+                        className="control-button"
                     >
                         {EXPORT_ICON}
                     </button>
                     <button 
                         onClick={handleImportClick}
                         title="Import Game"
-                        style={{
-                            padding: '0',
-                            fontSize: '16px',
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap',
-                            fontFamily: 'inherit',
-                            backgroundColor: 'var(--button-bg-color)',
-                            color: 'var(--button-text-color)',
-                            border: 'none',
-                            borderRadius: '4px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: 'var(--button-size)',
-                            height: 'var(--button-height)'
-                        }}
+                        className="control-button"
                     >
                         {IMPORT_ICON}
                     </button>
                     <button 
                         onClick={handleReset}
                         title="Reset Game"
-                        style={{
-                            padding: '0',
-                            fontSize: '16px',
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap',
-                            fontFamily: 'inherit',
-                            backgroundColor: 'var(--button-bg-color)',
-                            color: 'var(--button-text-color)',
-                            border: 'none',
-                            borderRadius: '4px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: 'var(--button-size)',
-                            height: 'var(--button-height)'
-                        }}
+                        className="control-button"
                     >
                         {RESET_ICON}
                     </button>

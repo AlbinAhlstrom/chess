@@ -17,6 +17,7 @@
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     width: 400px;
+    max-width: 90vw; /* Added max-width */
     color: var(--button-text-color, #fff);
     font-family: var(--main-font-family, 'Segoe UI', sans-serif);
 }
