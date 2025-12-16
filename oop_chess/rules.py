@@ -263,26 +263,31 @@ class StandardRules(Rules):
     def castling_legality_reason(self, state: GameState, move: Move, piece: King) -> MoveLegalityReason:
         """Determine if a castling move is pseudolegal."""
         required_right = None
-        squares_to_check = []
+        squares_to_check_attack = []
+        squares_to_check_occupancy = []
         rook_start_square = None
 
         if piece.color == Color.WHITE:
             if move.end == Square(7, 6):
                 required_right = CastlingRight.WHITE_SHORT
-                squares_to_check = [Square(7, 5), Square(7, 6)]
+                squares_to_check_attack = [Square(7, 5), Square(7, 6)]
+                squares_to_check_occupancy = [Square(7, 5), Square(7, 6)]
                 rook_start_square = Square(7, 7)
             else:
                 required_right = CastlingRight.WHITE_LONG
-                squares_to_check = [Square(7, 3), Square(7, 2)]
+                squares_to_check_attack = [Square(7, 3), Square(7, 2)]
+                squares_to_check_occupancy = [Square(7, 3), Square(7, 2), Square(7, 1)]
                 rook_start_square = Square(7, 0)
         else:
             if move.end == Square(0, 6):
                 required_right = CastlingRight.BLACK_SHORT
-                squares_to_check = [Square(0, 5), Square(0, 6)]
+                squares_to_check_attack = [Square(0, 5), Square(0, 6)]
+                squares_to_check_occupancy = [Square(0, 5), Square(0, 6)]
                 rook_start_square = Square(0, 7)
             else:
                 required_right = CastlingRight.BLACK_LONG
-                squares_to_check = [Square(0, 3), Square(0, 2)]
+                squares_to_check_attack = [Square(0, 3), Square(0, 2)]
+                squares_to_check_occupancy = [Square(0, 3), Square(0, 2), Square(0, 1)]
                 rook_start_square = Square(0, 0)
 
         if required_right is None:
@@ -295,10 +300,14 @@ class StandardRules(Rules):
         if not (rook_piece and isinstance(rook_piece, Rook) and rook_piece.color == piece.color):
             raise AttributeError("No rook found on expected square")
 
+        for sq in squares_to_check_occupancy:
+            if state.board.get_piece(sq) is not None:
+                return MoveLegalityReason.PATH_BLOCKED
+
         if self._is_color_in_check(state.board, piece.color):
             return MoveLegalityReason.CASTLING_FROM_CHECK
 
-        for sq in squares_to_check:
+        for sq in squares_to_check_attack:
             if self.is_under_attack(state.board, sq, piece.color.opposite):
                 return MoveLegalityReason.CASTLING_THROUGH_CHECK
 
