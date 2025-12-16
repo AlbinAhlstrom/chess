@@ -87,7 +87,7 @@ class Move:
                 return "O-O-O"
 
         san = ""
-        piece_char = str(piece).upper()
+        piece_char = piece.fen.upper()
 
         if not isinstance(piece, Pawn):
             san += piece_char
