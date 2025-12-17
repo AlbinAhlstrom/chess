@@ -17,16 +17,16 @@ def test_websocket_connection():
 def test_websocket_make_move():
     create_res = client.post("/api/game/new", json={"variant": "standard"})
     game_id = create_res.json()["game_id"]
-    
+
     with client.websocket_connect(f"/ws/{game_id}") as websocket:
-        # Initial state
         websocket.receive_json()
-        
-        # Send move e2e4
+
         websocket.send_json({"type": "move", "uci": "e2e4"})
-        
-        # Receive update
+
         data = websocket.receive_json()
+        if data["type"] == "error":
+            pytest.fail(f"Received error from server: {data.get('message')}")
+
         assert data["type"] == "game_state"
         assert data["status"] == "active"
         assert "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1" in data["fen"]
@@ -39,12 +39,10 @@ def test_websocket_invalid_move_format():
     with client.websocket_connect(f"/ws/{game_id}") as websocket:
         websocket.receive_json()
 
-        # Send garbage
         websocket.send_json({"type": "move", "uci": "garbage"})
 
         data = websocket.receive_json()
         assert data["type"] == "error"
-        # ValueError from Move init
 
 def test_websocket_illegal_move_logic():
     create_res = client.post("/api/game/new", json={"variant": "standard"})
@@ -53,12 +51,10 @@ def test_websocket_illegal_move_logic():
     with client.websocket_connect(f"/ws/{game_id}") as websocket:
         websocket.receive_json()
 
-        # Send illegal move (pawn jump)
         websocket.send_json({"type": "move", "uci": "e2e5"})
 
         data = websocket.receive_json()
         assert data["type"] == "error"
-        # IllegalMoveException
 
 def test_websocket_undo_move():
     create_res = client.post("/api/game/new", json={"variant": "standard"})
@@ -67,19 +63,22 @@ def test_websocket_undo_move():
     with client.websocket_connect(f"/ws/{game_id}") as websocket:
         websocket.receive_json()
 
-        # Move
         websocket.send_json({"type": "move", "uci": "e2e4"})
-        websocket.receive_json()
 
-        # Undo
+        move_resp = websocket.receive_json()
+        if move_resp["type"] == "error":
+             pytest.fail(f"Received error on move: {move_resp.get('message')}")
+
         websocket.send_json({"type": "undo"})
 
         data = websocket.receive_json()
+        if data["type"] == "error":
+            pytest.fail(f"Received error on undo: {data.get('message')}")
+
         assert data["type"] == "game_state"
         assert data["fen"] == "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 def test_websocket_checkmate_status():
-    # Setup Fool's Mate sequence
     create_res = client.post("/api/game/new", json={"variant": "standard"})
     game_id = create_res.json()["game_id"]
 
@@ -91,7 +90,8 @@ def test_websocket_checkmate_status():
         for m in moves:
             websocket.send_json({"type": "move", "uci": m})
             data = websocket.receive_json()
+            if data["type"] == "error":
+                pytest.fail(f"Received error on move {m}: {data.get('message')}")
 
-        # Last update should be checkmate
         assert data["status"] == "checkmate"
         assert data["is_over"] is True

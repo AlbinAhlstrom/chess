@@ -1,7 +1,3 @@
-from typing import Optional
-from dataclasses import replace
-
-from oop_chess.board import Board
 from oop_chess.game_state import GameState
 from oop_chess.move import Move
 from oop_chess.rules import Rules, StandardRules
@@ -38,15 +34,20 @@ class Game:
 
     @property
     def is_checkmate(self):
-        return self.rules.is_checkmate(self.state)
+        if hasattr(self.rules, "is_checkmate"):
+            return self.rules.is_checkmate(self.state)
+        return False
 
     @property
     def is_check(self):
-        return self.rules.is_check(self.state)
+        if hasattr(self.rules, "is_check"):
+            return self.rules.is_check(self.state)
+        return False
 
     @property
     def is_draw(self):
-         return self.rules.is_draw(self.state) or self.repetitions_of_position >= 3
+         is_rules_draw = self.rules.is_draw(self.state) if hasattr(self.rules, "is_draw") else False
+         return is_rules_draw or self.repetitions_of_position >= 3
 
     @property
     def legal_moves(self) -> list[Move]:
@@ -56,15 +57,19 @@ class Game:
         self.history.append(self.state)
 
     def is_move_legal(self, move: Move) -> bool:
-        return self.rules.is_move_legal(self.state, move)
+        if hasattr(self.rules, "is_move_legal"):
+             return self.rules.is_move_legal(self.state, move)
+        return move in self.rules.get_legal_moves(self.state)
 
     def is_move_pseudo_legal(self, move: Move) -> tuple[bool, str]:
         """Determine if a move is pseudolegal.
 
         This method is primarily used for testing and debugging.
         """
-        reason = self.rules.move_pseudo_legality_reason(self.state, move)
-        return reason == MoveLegalityReason.LEGAL, reason.value
+        if hasattr(self.rules, "move_pseudo_legality_reason"):
+             reason = self.rules.move_pseudo_legality_reason(self.state, move)
+             return reason == MoveLegalityReason.LEGAL, reason.value
+        return self.is_move_legal(move), "UNKNOWN"
 
     def render(self):
         """Print the board."""
@@ -72,12 +77,18 @@ class Game:
 
     def take_turn(self, move: Move):
         """Make a move by finding the corresponding legal move."""
-        if not self.rules.is_board_state_legal(self.state):
-            raise IllegalBoardException(f"Board state is illegal. Reason: {self.rules.status(self.state)}")
+        if hasattr(self.rules, "is_board_state_legal"):
+            if not self.rules.is_board_state_legal(self.state):
+                reason = self.rules.status(self.state) if hasattr(self.rules, "status") else "UNKNOWN"
+                raise IllegalBoardException(f"Board state is illegal. Reason: {reason}")
 
-        reason = self.rules.move_legality_reason(self.state, move)
-        if reason != MoveLegalityReason.LEGAL:
-            raise IllegalMoveException(f"Illegal move: {reason.value}")
+        if hasattr(self.rules, "move_legality_reason"):
+             reason = self.rules.move_legality_reason(self.state, move)
+             if reason != MoveLegalityReason.LEGAL:
+                 raise IllegalMoveException(f"Illegal move: {reason.value}")
+        else:
+             if not self.is_move_legal(move):
+                  raise IllegalMoveException(f"Illegal move: {move} is not in legal moves.")
 
         san = move.get_san(self)
 
@@ -111,4 +122,3 @@ class Game:
             if past_fen_key == current_fen_key:
                 count += 1
         return count
-

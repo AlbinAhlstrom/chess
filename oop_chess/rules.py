@@ -5,7 +5,6 @@ from oop_chess.board import Board
 from oop_chess.enums import GameOverReason, MoveLegalityReason, StatusReason, Color, CastlingRight, Direction
 from oop_chess.move import Move
 from oop_chess.piece import King, Pawn, Piece, Rook, Queen, Bishop, Knight
-from oop_chess.piece.knight import Knight
 from oop_chess.square import Square
 from oop_chess.game_state import GameState
 
@@ -15,37 +14,10 @@ class Rules(ABC):
     def get_legal_moves(self, state: GameState) -> list[Move]: ...
 
     @abstractmethod
-    def is_check(self, state: GameState) -> bool: ...
-
-    @abstractmethod
-    def is_checkmate(self, state: GameState) -> bool: ...
-
-    @abstractmethod
-    def is_game_over(self, state: GameState) -> bool: ...
-
-    @abstractmethod
-    def game_over_reason(self, state: GameState) -> GameOverReason: ...
-
-    @abstractmethod
-    def is_draw(self, state: GameState) -> bool: ...
-
-    @abstractmethod
-    def is_board_state_legal(self, state: GameState) -> bool: ...
-
-    @abstractmethod
-    def board_state_legality_reason(self, state: GameState) -> StatusReason: ...
-
-    @abstractmethod
-    def status(self, state: GameState) -> StatusReason: ...
-
-    @abstractmethod
-    def move_legality_reason(self, state: GameState, move: Move) -> MoveLegalityReason: ...
-
-    @abstractmethod
     def apply_move(self, state: GameState, move: Move) -> GameState: ...
 
     @abstractmethod
-    def is_move_legal(self, state: GameState, move: Move) -> bool: ...
+    def is_game_over(self, state: GameState) -> bool: ...
 
     @abstractmethod
     def get_winner(self, state: GameState) -> Color | None: ...
@@ -525,4 +497,3 @@ class AntichessRules(StandardRules):
             # Win if 0 pieces OR Stalemate (no legal moves but pieces remain)
             return state.turn
         return None
-
