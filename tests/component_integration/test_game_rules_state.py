@@ -10,28 +10,28 @@ def test_turn_switch():
     game = Game()
     assert game.state.turn == Color.WHITE
     
-    game.take_turn(Move("e2e4"))
+    game.take_turn(Move("e2e4", player_to_move=game.state.turn))
     assert game.state.turn == Color.BLACK
     
-    game.take_turn(Move("e7e5"))
+    game.take_turn(Move("e7e5", player_to_move=game.state.turn))
     assert game.state.turn == Color.WHITE
 
 def test_castling_rights_revoked():
     """Verify castling rights are revoked upon moving king/rook."""
     game = Game()
     
-    game.take_turn(Move("e2e4"))
-    game.take_turn(Move("e7e5"))
+    game.take_turn(Move("e2e4", player_to_move=game.state.turn))
+    game.take_turn(Move("e7e5", player_to_move=game.state.turn))
     
-    game.take_turn(Move("h2h3"))
-    game.take_turn(Move("h7h6"))
+    game.take_turn(Move("h2h3", player_to_move=game.state.turn))
+    game.take_turn(Move("h7h6", player_to_move=game.state.turn))
     
-    game.take_turn(Move("h1h2"))
+    game.take_turn(Move("h1h2", player_to_move=game.state.turn))
     assert CastlingRight.WHITE_SHORT not in game.state.castling_rights
     assert CastlingRight.WHITE_LONG in game.state.castling_rights
     
-    game.take_turn(Move("a7a6"))
-    game.take_turn(Move("e1e2"))
+    game.take_turn(Move("a7a6", player_to_move=game.state.turn))
+    game.take_turn(Move("e1e2", player_to_move=game.state.turn))
     assert CastlingRight.WHITE_LONG not in game.state.castling_rights
     assert len(game.state.castling_rights) == 2
 
@@ -40,10 +40,10 @@ def test_en_passant_square_lifecycle():
     game = Game()
     assert game.state.ep_square is None
     
-    game.take_turn(Move("e2e4"))
+    game.take_turn(Move("e2e4", player_to_move=game.state.turn))
     assert game.state.ep_square == Square("e3")
     
-    game.take_turn(Move("e7e5"))
+    game.take_turn(Move("e7e5", player_to_move=game.state.turn))
     assert game.state.ep_square == Square("e6")
 
 def test_halfmove_clock_reset_and_increment():
@@ -51,13 +51,13 @@ def test_halfmove_clock_reset_and_increment():
     game = Game()
     assert game.state.halfmove_clock == 0
     
-    game.take_turn(Move("g1f3"))
+    game.take_turn(Move("g1f3", player_to_move=game.state.turn))
     assert game.state.halfmove_clock == 1
     
-    game.take_turn(Move("g8f6"))
+    game.take_turn(Move("g8f6", player_to_move=game.state.turn))
     assert game.state.halfmove_clock == 2
     
-    game.take_turn(Move("e2e4"))
+    game.take_turn(Move("e2e4", player_to_move=game.state.turn))
     assert game.state.halfmove_clock == 0
 
 def test_fullmove_count_increment():
@@ -65,10 +65,10 @@ def test_fullmove_count_increment():
     game = Game()
     assert game.state.fullmove_count == 1
     
-    game.take_turn(Move("e2e4"))
+    game.take_turn(Move("e2e4", player_to_move=game.state.turn))
     assert game.state.fullmove_count == 1
     
-    game.take_turn(Move("e7e5"))
+    game.take_turn(Move("e7e5", player_to_move=game.state.turn))
     assert game.state.fullmove_count == 2
 
 def test_game_initialization_from_fen():
@@ -85,7 +85,7 @@ def test_game_state_serialization_matches_internal():
     """Verify GameState FEN property matches internal state after moves."""
     game = Game()
     
-    game.take_turn(Move("e2e4"))
+    game.take_turn(Move("e2e4", player_to_move=game.state.turn))
     expected_fen = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
     assert game.state.fen == expected_fen
 
@@ -94,7 +94,7 @@ def test_history_immutability():
     game = Game()
     initial_fen = game.state.fen
     
-    game.take_turn(Move("e2e4"))
+    game.take_turn(Move("e2e4", player_to_move=game.state.turn))
     second_fen = game.state.fen
     
     assert len(game.history) == 1

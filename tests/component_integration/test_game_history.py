@@ -18,19 +18,22 @@ def test_repetitions_counts_accurately():
     """Verify repetitions_of_position counts accurately based on history."""
     game = Game()
     # 1
-    game.take_turn(Move("g1f3"))
-    game.take_turn(Move("g8f6"))
+    game.take_turn(Move("g1f3", player_to_move=game.state.turn))
+    game.take_turn(Move("g8f6", player_to_move=game.state.turn))
     # 2
-    game.take_turn(Move("f3g1"))
-    game.take_turn(Move("f6g8"))
+    game.take_turn(Move("f3g1", player_to_move=game.state.turn))
+    game.take_turn(Move("f6g8", player_to_move=game.state.turn))
     
     assert game.repetitions_of_position == 2
     
     # 3
-    game.take_turn(Move("g1f3"))
-    game.take_turn(Move("g8f6"))
-    # 4
-    game.take_turn(Move("f3g1"))
-    game.take_turn(Move("f6g8"))
+    game.take_turn(Move("g1f3", player_to_move=game.state.turn))
+    game.take_turn(Move("g8f6", player_to_move=game.state.turn))
     
     assert game.repetitions_of_position == 3
+    
+    # 4
+    game.take_turn(Move("f3g1", player_to_move=game.state.turn))
+    game.take_turn(Move("f6g8", player_to_move=game.state.turn))
+    
+    assert game.repetitions_of_position == 4

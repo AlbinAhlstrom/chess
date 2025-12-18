@@ -57,6 +57,7 @@ def get_fen_from_board(board: "Board") -> str:
 def state_from_fen(fen: str) -> "GameState":
     from oop_chess.game_state import GameState
     from oop_chess.board import Board
+    from oop_chess.rules import StandardRules
 
     fen_parts = fen.split()
     if len(fen_parts) != 6:
@@ -73,14 +74,18 @@ def state_from_fen(fen: str) -> "GameState":
     except ValueError:
         raise ValueError("FEN halfmove and fullmove must be int.")
 
-    return GameState(
+    rules = StandardRules()
+    state = GameState(
         board,
         active_color,
         castling_rights,
         en_passant,
         halfmove_clock,
         fullmove_count,
+        rules
     )
+    rules.state = state
+    return state
 
 def state_to_fen(state: GameState) -> str:
     """Serializes the state to FEN."""

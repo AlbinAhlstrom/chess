@@ -108,8 +108,8 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
     try:
         game = get_game(game_id)
 
-        reason = game.rules.get_game_over_reason(game.state)
-        winner_color = game.rules.get_winner(game.state)
+        reason = game.rules.get_game_over_reason()
+        winner_color = game.rules.get_winner()
         is_over = reason != GameOverReason.ONGOING or game.repetitions_of_position >= 3
 
         await manager.broadcast(game_id, json.dumps({
@@ -117,7 +117,7 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
             "fen": game.state.fen,
             "turn": game.state.turn.value,
             "is_over": is_over,
-            "in_check": game.rules.is_check(game.state),
+            "in_check": game.rules.is_check(),
             "winner": winner_color.value if winner_color else None,
             "move_history": game.move_history,
             "status": "connected"
@@ -143,8 +143,8 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                     await websocket.send_text(json.dumps({"type": "error", "message": str(e)}))
                     continue
 
-            reason = game.rules.get_game_over_reason(game.state)
-            winner_color = game.rules.get_winner(game.state)
+            reason = game.rules.get_game_over_reason()
+            winner_color = game.rules.get_winner()
             is_over = reason != GameOverReason.ONGOING or game.repetitions_of_position >= 3
 
             status = "active"
@@ -158,7 +158,7 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                 "fen": game.state.fen,
                 "turn": game.state.turn.value,
                 "is_over": is_over,
-                "in_check": game.rules.is_check(game.state),
+                "in_check": game.rules.is_check(),
                 "winner": winner_color.value if winner_color else None,
                 "move_history": game.move_history,
                 "status": status
@@ -188,7 +188,7 @@ def get_legal_moves_for_square(req: SquareRequest):
     if piece.color != game.state.turn:
         raise HTTPException(status_code=400, detail=f"Piece belongs to the opponent ({piece.color}).")
 
-    all_legal_moves = game.rules.get_legal_moves(game.state)
+    all_legal_moves = game.rules.get_legal_moves()
     piece_moves = [
         m.uci for m in all_legal_moves
         if m.start == sq_obj
@@ -203,7 +203,7 @@ def get_legal_moves_for_square(req: SquareRequest):
 @app.post("/api/moves/all_legal")
 def get_all_legal_moves(req: GameRequest):
     game = get_game(req.game_id)
-    all_legal_moves = [m.uci for m in game.rules.get_legal_moves(game.state)]
+    all_legal_moves = [m.uci for m in game.rules.get_legal_moves()]
     return {
         "moves": all_legal_moves,
         "status": "success",

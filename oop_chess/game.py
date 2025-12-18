@@ -1,12 +1,9 @@
-from typing import Optional
 from dataclasses import replace
-
-from oop_chess.board import Board
 from oop_chess.game_state import GameState
 from oop_chess.move import Move
 from oop_chess.rules import Rules, StandardRules
 from oop_chess.exceptions import IllegalMoveException, IllegalBoardException
-from oop_chess.enums import MoveLegalityReason, Color, StatusReason, GameOverReason
+from oop_chess.enums import MoveLegalityReason, StatusReason, GameOverReason
 
 
 class Game:
@@ -22,7 +19,17 @@ class Game:
         elif state is None:
             self.state = GameState.starting_setup()
 
-        self.rules = rules or StandardRules()
+        if rules:
+            # If specific rules are requested, override the state's rules
+            rules.state = self.state
+            self.state = replace(self.state, rules=rules)
+            self.rules = rules
+        else:
+            # Use the rules embedded in the state
+            self.rules = self.state.rules
+            # Ensure the rules object points to the current state (in case it was stale)
+            self.rules.state = self.state
+
         self.history: list[GameState] = []
         self.move_history: list[str] = []
 
@@ -35,18 +42,19 @@ class Game:
 
     def take_turn(self, move: Move):
         """Make a move by finding the corresponding legal move."""
-        board_status = self.rules.validate_board_state(self.state)
+        board_status = self.rules.validate_board_state()
         if board_status != StatusReason.VALID:
              raise IllegalBoardException(f"Board state is illegal. Reason: {board_status}")
 
-        move_status = self.rules.validate_move(self.state, move)
+        move_status = self.rules.validate_move(move)
         if move_status != MoveLegalityReason.LEGAL:
             raise IllegalMoveException(f"Illegal move: {move_status.value}")
 
         san = move.get_san(self)
 
         self.add_to_history()
-        self.state = self.rules.apply_move(self.state, move)
+        self.state = self.rules.apply_move(move)
+        self.rules = self.state.rules
 
         # Checkmate/Check annotation relies on rules, but strictly for string formatting.
         # We can keep this or remove it.
@@ -57,8 +65,8 @@ class Game:
         # But SAN generation checking is_checkmate might be crossing the line?
         # Let's keep the SAN annotation logic minimal.
         
-        is_check = self.rules.is_check(self.state)
-        is_game_over = self.rules.get_game_over_reason(self.state) != GameOverReason.ONGOING
+        is_check = self.rules.is_check()
+        is_game_over = self.rules.get_game_over_reason() != GameOverReason.ONGOING
         
         if is_game_over and is_check:
              san += "#"
@@ -73,6 +81,7 @@ class Game:
             raise ValueError("No moves to undo.")
 
         self.state = self.history.pop()
+        self.rules = self.state.rules
         if self.move_history:
             self.move_history.pop()
         print(f"Undo move. Restored FEN: {self.state.fen}")
@@ -87,3 +96,34 @@ class Game:
             if past_fen_key == current_fen_key:
                 count += 1
         return count
+
+    @property
+    def is_check(self) -> bool:
+        return self.rules.is_check()
+
+    @property
+    def is_checkmate(self) -> bool:
+        return self.rules.get_game_over_reason() == GameOverReason.CHECKMATE
+
+    @property
+    def is_over(self) -> bool:
+        return self.rules.get_game_over_reason() != GameOverReason.ONGOING
+
+    @property
+    def is_draw(self) -> bool:
+        return self.rules.get_game_over_reason() in (
+            GameOverReason.STALEMATE,
+            GameOverReason.REPETITION,
+            GameOverReason.FIFTY_MOVE_RULE,
+        )
+
+    @property
+    def legal_moves(self) -> list[Move]:
+        return self.rules.get_legal_moves()
+
+    def is_move_legal(self, move: Move) -> bool:
+        return self.rules.validate_move(move) == MoveLegalityReason.LEGAL
+
+    def is_move_pseudo_legal(self, move: Move) -> tuple[bool, MoveLegalityReason]:
+        reason = self.rules.move_pseudo_legality_reason(move)
+        return reason == MoveLegalityReason.LEGAL, reason

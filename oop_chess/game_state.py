@@ -1,10 +1,13 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from oop_chess.board import Board
 from oop_chess.square import Square
 from oop_chess.enums import Color, CastlingRight
 from oop_chess.fen_helpers import state_from_fen, state_to_fen
+
+if TYPE_CHECKING:
+    from oop_chess.rules.core import Rules
 
 
 @dataclass(frozen=True)
@@ -20,6 +23,7 @@ class GameState:
     ep_square: Optional[Square]
     halfmove_clock: int
     fullmove_count: int
+    rules: "Rules"
 
     STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     EMPTY_BOARD_FEN = "8/8/8/8/8/8/8/8 w KQkq - 0 1"

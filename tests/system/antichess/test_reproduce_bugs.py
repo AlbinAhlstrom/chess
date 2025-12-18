@@ -46,16 +46,16 @@ def test_reproduce_illegal_board_valid():
     assert isinstance(game.rules, AntichessRules)
     
     # Verify internal check
-    # game.rules.is_board_state_legal(game.state)
+    # game.rules.is_board_state_legal()
     # Should use AntichessRules.is_board_state_legal (Inherited from Standard)
     # which calls self.board_state_legality_reason (Overridden in Antichess)
-    
-    is_legal = game.rules.is_board_state_legal(game.state)
+    from oop_chess.enums import StatusReason
+    is_legal = game.rules.validate_board_state() == StatusReason.VALID
     
     # This should be True for Antichess
     assert is_legal is True
     
     # If we use StandardRules, it should be False
     from oop_chess.rules import StandardRules
-    std_rules = StandardRules()
-    assert std_rules.is_board_state_legal(game.state) is False # No black king
+    std_rules = StandardRules(game.state)
+    assert (std_rules.validate_board_state() == StatusReason.VALID) is False # No black king

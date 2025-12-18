@@ -13,7 +13,7 @@ def test_take_turn_raises_illegal_move():
 def test_take_turn_executes_legal_move():
     """Verify take_turn executes a legal move without error."""
     game = Game()
-    move = Move("e2e4")
+    move = Move("e2e4", player_to_move=game.state.turn)
     
     try:
         game.take_turn(move)
@@ -37,18 +37,18 @@ def test_san_generation_normal():
 def test_san_generation_check():
     """Verify SAN includes check indicator (+)."""
     game = Game("rnbqkbnr/ppp2ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2")
-    game.take_turn(Move("f1b5")) # check
+    game.take_turn(Move("f1b5", player_to_move=game.state.turn)) # check
     
     assert game.move_history[-1] == "Bb5+"
 
 def test_san_generation_capture():
     """Verify SAN includes capture indicator (x)."""
     game = Game("rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2")
-    move = Move("f3e5") # capture
+    move = Move("f3e5", player_to_move=game.state.turn) # capture
     assert move.get_san(game) == "Nxe5"
 
 def test_san_generation_ambiguous_knight():
     """Verify SAN handles ambiguity."""
     game = Game("7k/8/8/8/8/2N1N3/8/K7 w - - 0 1")
-    move = Move("c3d5")
+    move = Move("c3d5", player_to_move=game.state.turn)
     assert move.get_san(game) == "Ncd5"

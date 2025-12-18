@@ -10,20 +10,24 @@ from oop_chess.move import Move
 from oop_chess.square import Square
 from oop_chess.enums import Color, CastlingRight
 from oop_chess.game_state import GameState
+from oop_chess.rules import StandardRules
 
 def test_capture_own_king_bug():
     print("--- Diagnostic Test: Capture Own King ---")
 
 
     board = Board.starting_setup()
+    rules = StandardRules()
     state = GameState(
         board=board,
         turn=Color.WHITE,
         castling_rights=(CastlingRight.WHITE_SHORT, CastlingRight.WHITE_LONG, CastlingRight.BLACK_SHORT, CastlingRight.BLACK_LONG),
         ep_square=None,
         halfmove_clock=0,
-        fullmove_count=1
+        fullmove_count=1,
+        rules=rules
     )
+    rules.state = state
     game = Game(state)
     print("Board initialized with starting setup.")
 
@@ -55,7 +59,7 @@ def test_capture_own_king_bug():
         return
 
 
-    is_pseudo, reason = game.is_move_pseudo_legal(move)
+    is_pseudo, reason = game.rules.is_move_pseudo_legal(move)
     print(f"is_move_pseudo_legal: {is_pseudo}, Reason: '{reason}'")
 
     if is_pseudo:
@@ -64,7 +68,7 @@ def test_capture_own_king_bug():
         print("PASS: Move is correctly rejected as pseudo-illegal.")
 
 
-    is_legal = game.is_move_legal(move)
+    is_legal = game.rules.is_legal(move)
     print(f"is_move_legal: {is_legal}")
 
     if is_legal:

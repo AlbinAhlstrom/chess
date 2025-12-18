@@ -1,7 +1,5 @@
 import pytest
-from oop_chess.board import Board
 from oop_chess.move import Move
-from oop_chess.square import Square
 from oop_chess.game import Game
 from oop_chess.exceptions import IllegalMoveException
 
@@ -13,7 +11,7 @@ def test_pawn_double_push_blocked_by_friendly_piece():
     move = Move("f2f4")
 
 
-    is_legal = game.is_move_legal(move)
+    is_legal = game.rules.is_legal(move)
     assert not is_legal, "Move f2f4 should be illegal because f3 is blocked by a Knight"
 
     with pytest.raises(IllegalMoveException):

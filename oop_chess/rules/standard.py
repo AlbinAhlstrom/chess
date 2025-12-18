@@ -22,51 +22,51 @@ class StandardRules(Rules):
     def has_check(self) -> bool:
         return True
 
-    def get_legal_moves(self, state: GameState) -> list[Move]:
-        return [move for move in self.get_theoretical_moves(state) if self.validate_move(state, move) == MoveLegalityReason.LEGAL]
+    def get_legal_moves(self) -> list[Move]:
+        return [move for move in self.get_theoretical_moves() if self.validate_move(move) == MoveLegalityReason.LEGAL]
 
-    def get_winner(self, state: GameState) -> Color | None:
-        reason = self.get_game_over_reason(state)
+    def get_winner(self) -> Color | None:
+        reason = self.get_game_over_reason()
         if reason == GameOverReason.CHECKMATE:
-            return state.turn.opposite
+            return self.state.turn.opposite
         return None
 
-    def is_check(self, state: GameState) -> bool:
-        return self._is_color_in_check(state.board, state.turn)
+    def is_check(self) -> bool:
+        return self._is_color_in_check(self.state.board, self.state.turn)
 
-    def get_game_over_reason(self, state: GameState) -> GameOverReason:
-        if not self.get_legal_moves(state):
-            if self.is_check(state):
+    def get_game_over_reason(self) -> GameOverReason:
+        if not self.get_legal_moves():
+            if self.is_check():
                 return GameOverReason.CHECKMATE
             return GameOverReason.STALEMATE
         return GameOverReason.ONGOING
 
-    def validate_move(self, state: GameState, move: Move) -> MoveLegalityReason:
-        pseudo_reason = self.move_pseudo_legality_reason(state, move)
+    def validate_move(self, move: Move) -> MoveLegalityReason:
+        pseudo_reason = self.move_pseudo_legality_reason(move)
         if pseudo_reason != MoveLegalityReason.LEGAL:
             return pseudo_reason
 
-        if self.king_left_in_check(state, move):
+        if self.king_left_in_check(move):
             return MoveLegalityReason.KING_LEFT_IN_CHECK
 
         return MoveLegalityReason.LEGAL
 
-    def validate_board_state(self, state: GameState) -> StatusReason:
-        white_kings = state.board.get_pieces(King, Color.WHITE)
-        black_kings = state.board.get_pieces(King, Color.BLACK)
-        white_pawns = state.board.get_pieces(Pawn, Color.WHITE)
-        black_pawns = state.board.get_pieces(Pawn, Color.BLACK)
-        white_non_pawns = [piece for piece in state.board.get_pieces(color=Color.WHITE) if not isinstance(piece, Pawn)]
-        black_non_pawns = [piece for piece in state.board.get_pieces(color=Color.BLACK) if not isinstance(piece, Pawn)]
+    def validate_board_state(self) -> StatusReason:
+        white_kings = self.state.board.get_pieces(King, Color.WHITE)
+        black_kings = self.state.board.get_pieces(King, Color.BLACK)
+        white_pawns = self.state.board.get_pieces(Pawn, Color.WHITE)
+        black_pawns = self.state.board.get_pieces(Pawn, Color.BLACK)
+        white_non_pawns = [piece for piece in self.state.board.get_pieces(color=Color.WHITE) if not isinstance(piece, Pawn)]
+        black_non_pawns = [piece for piece in self.state.board.get_pieces(color=Color.BLACK) if not isinstance(piece, Pawn)]
         white_piece_max = 16 - len(white_pawns)
         black_piece_max = 16 - len(black_pawns)
 
         pawns_on_backrank = []
-        for sq, piece in state.board.board.items():
+        for sq, piece in self.state.board.board.items():
              if isinstance(piece, Pawn) and (sq.row == 0 or sq.row == 7):
                  pawns_on_backrank.append(piece)
 
-        is_ep_square_valid = state.ep_square is None or state.ep_square.row in (2, 5)
+        is_ep_square_valid = self.state.ep_square is None or self.state.ep_square.row in (2, 5)
 
         if len(white_kings) < 1:
             return StatusReason.NO_WHITE_KING
@@ -87,25 +87,25 @@ class StandardRules(Rules):
         if len(black_non_pawns) > black_piece_max:
             return StatusReason.TOO_MANY_BLACK_PIECES
 
-        if self.invalid_castling_rights(state):
+        if self.invalid_castling_rights():
             return StatusReason.INVALID_CASTLING_RIGHTS
 
         if not is_ep_square_valid:
             return StatusReason.INVALID_EP_SQUARE
 
-        if self.inactive_player_in_check(state):
+        if self.inactive_player_in_check():
             return StatusReason.OPPOSITE_CHECK
 
         return StatusReason.VALID
 
-    def king_left_in_check(self, state: GameState, move: Move) -> bool:
+    def king_left_in_check(self, move: Move) -> bool:
         """Returns True if king is left in check after a move."""
-        next_state = self.apply_move(state, move)
-        return self.inactive_player_in_check(next_state)
+        next_state = self.apply_move(move)
+        return next_state.rules.inactive_player_in_check()
 
-    def apply_move(self, state: GameState, move: Move) -> GameState:
+    def apply_move(self, move: Move) -> GameState:
         """Returns a new GameState with the move applied."""
-        new_board = state.board.copy()
+        new_board = self.state.board.copy()
 
         piece = new_board.get_piece(move.start)
         if piece is None:
@@ -115,15 +115,15 @@ class StandardRules(Rules):
 
         is_castling = isinstance(piece, King) and abs(move.start.col - move.end.col) == 2
         is_pawn_move = isinstance(piece, Pawn)
-        is_en_passant = is_pawn_move and move.end == state.ep_square
+        is_en_passant = is_pawn_move and move.end == self.state.ep_square
         is_capture = target is not None or is_en_passant
 
-        new_halfmove_clock = state.halfmove_clock + 1
+        new_halfmove_clock = self.state.halfmove_clock + 1
         if is_pawn_move or is_capture:
             new_halfmove_clock = 0
 
-        new_fullmove_count = state.fullmove_count
-        if state.turn == Color.BLACK:
+        new_fullmove_count = self.state.fullmove_count
+        if self.state.turn == Color.BLACK:
             new_fullmove_count += 1
 
         new_board.move_piece(piece, move.start, move.end)
@@ -145,7 +145,7 @@ class StandardRules(Rules):
         if move.promotion_piece is not None:
             new_board.set_piece(move.promotion_piece, move.end)
 
-        new_castling_rights = set(state.castling_rights)
+        new_castling_rights = set(self.state.castling_rights)
 
         def revoke_rights(color: Color):
             to_remove = [r for r in new_castling_rights if r != CastlingRight.NONE and r.color == color]
@@ -171,17 +171,18 @@ class StandardRules(Rules):
 
         return GameState(
             board=new_board,
-            turn=state.turn.opposite,
+            turn=self.state.turn.opposite,
             castling_rights=tuple(sorted(new_castling_rights, key=lambda x: x.value)),
             ep_square=new_ep_square,
             halfmove_clock=new_halfmove_clock,
-            fullmove_count=new_fullmove_count
+            fullmove_count=new_fullmove_count,
+            rules=self
         )
 
-    def get_theoretical_moves(self, state: GameState) -> list[Move]:
+    def get_theoretical_moves(self) -> list[Move]:
         moves = []
-        for sq, piece in state.board.board.items():
-            if piece and piece.color == state.turn:
+        for sq, piece in self.state.board.board.items():
+            if piece and piece.color == self.state.turn:
                 for end in piece.theoretical_moves(sq):
                     moves.append(Move(sq, end))
 
@@ -215,10 +216,10 @@ class StandardRules(Rules):
                     moves.append(Move(sq, Square(row, 2)))
         return moves
 
-    def move_pseudo_legality_reason(self, state: GameState, move: Move) -> MoveLegalityReason:
+    def move_pseudo_legality_reason(self, move: Move) -> MoveLegalityReason:
         """Determine if a move is pseudolegal."""
-        piece = state.board.get_piece(move.start)
-        target = state.board.get_piece(move.end)
+        piece = self.state.board.get_piece(move.start)
+        target = self.state.board.get_piece(move.end)
 
         is_pawn_double_push = False
         is_pawn_double_push_valid = False
@@ -229,19 +230,19 @@ class StandardRules(Rules):
             two_step = one_step.get_step(direction) if one_step else None
             if is_start_rank and move.end == two_step:
                 is_pawn_double_push = True
-                if state.board.get_piece(one_step) is None and state.board.get_piece(two_step) is None:
+                if self.state.board.get_piece(one_step) is None and self.state.board.get_piece(two_step) is None:
                      is_pawn_double_push_valid = True
 
         if piece is None:
             return MoveLegalityReason.NO_PIECE
-        if piece.color != state.turn:
+        if piece.color != self.state.turn:
             return MoveLegalityReason.WRONG_COLOR
         if isinstance(piece, King) and abs(move.start.col - move.end.col) == 2:
-            return self.castling_legality_reason(state, move, piece)
+            return self.castling_legality_reason(move, piece)
         if not (move.end in piece.theoretical_moves(move.start) or is_pawn_double_push):
             return MoveLegalityReason.NOT_IN_MOVESET
 
-        if target and target.color == state.turn:
+        if target and target.color == self.state.turn:
             return MoveLegalityReason.OWN_PIECE_CAPTURE
 
         if isinstance(piece, Pawn):
@@ -251,18 +252,18 @@ class StandardRules(Rules):
             if (
                 move.is_diagonal
                 and target is None
-                and move.end != state.ep_square
+                and move.end != self.state.ep_square
             ):
                 return MoveLegalityReason.PAWN_DIAGONAL_NON_CAPTURE
             if move.end.row == piece.promotion_row and not move.promotion_piece is not None:
                 return MoveLegalityReason.NON_PROMOTION
 
-        if move.end not in self.unblocked_paths(state.board, piece, piece.theoretical_move_paths(move.start)):
+        if move.end not in self.unblocked_paths(self.state.board, piece, piece.theoretical_move_paths(move.start)):
              if not is_pawn_double_push_valid:
                  return MoveLegalityReason.PATH_BLOCKED
 
         if move.promotion_piece:
-            if not move.end.is_promotion_row(state.turn):
+            if not move.end.is_promotion_row(self.state.turn):
                 return MoveLegalityReason.EARLY_PROMOTION
 
             if isinstance(move.promotion_piece, King):
@@ -270,7 +271,7 @@ class StandardRules(Rules):
 
         return MoveLegalityReason.LEGAL
 
-    def castling_legality_reason(self, state: GameState, move: Move, piece: King) -> MoveLegalityReason:
+    def castling_legality_reason(self, move: Move, piece: King) -> MoveLegalityReason:
         """Determine if a castling move is pseudolegal."""
         required_right = None
         squares_to_check_attack = []
@@ -303,22 +304,22 @@ class StandardRules(Rules):
         if required_right is None:
             return MoveLegalityReason.NO_CASTLING_RIGHT
 
-        if required_right not in state.castling_rights:
+        if required_right not in self.state.castling_rights:
             return MoveLegalityReason.NO_CASTLING_RIGHT
 
-        rook_piece = state.board.get_piece(rook_start_square)
+        rook_piece = self.state.board.get_piece(rook_start_square)
         if not (rook_piece and isinstance(rook_piece, Rook) and rook_piece.color == piece.color):
             raise AttributeError("No rook found on expected square")
 
         for sq in squares_to_check_occupancy:
-            if state.board.get_piece(sq) is not None:
+            if self.state.board.get_piece(sq) is not None:
                 return MoveLegalityReason.PATH_BLOCKED
 
-        if self._is_color_in_check(state.board, piece.color):
+        if self._is_color_in_check(self.state.board, piece.color):
             return MoveLegalityReason.CASTLING_FROM_CHECK
 
         for sq in squares_to_check_attack:
-            if self.is_under_attack(state.board, sq, piece.color.opposite):
+            if self.is_under_attack(self.state.board, sq, piece.color.opposite):
                 return MoveLegalityReason.CASTLING_THROUGH_CHECK
 
         return MoveLegalityReason.LEGAL
@@ -337,14 +338,14 @@ class StandardRules(Rules):
                     return True
         return False
 
-    def inactive_player_in_check(self, state: GameState) -> bool:
-        return self._is_color_in_check(state.board, state.turn.opposite)
+    def inactive_player_in_check(self) -> bool:
+        return self._is_color_in_check(self.state.board, self.state.turn.opposite)
 
-    def invalid_castling_rights(self, state: GameState) -> list[CastlingRight]:
+    def invalid_castling_rights(self) -> list[CastlingRight]:
         invalid = []
-        for right in state.castling_rights:
-            king = state.board.get_piece(right.expected_king_square)
-            rook = state.board.get_piece(right.expected_rook_square)
+        for right in self.state.castling_rights:
+            king = self.state.board.get_piece(right.expected_king_square)
+            rook = self.state.board.get_piece(right.expected_rook_square)
             if not (isinstance(king, King) and king.color == right.color):
                 invalid.append(right)
                 continue
@@ -385,58 +386,56 @@ class StandardRules(Rules):
 
         return self.is_under_attack(board, king_sq, color.opposite)
 
-    def get_legal_castling_moves(self, state: GameState) -> list[Move]:
+    def get_legal_castling_moves(self) -> list[Move]:
         # Implementation of castling logic reuse
         moves = []
-        for sq, piece in state.board.board.items():
-            if isinstance(piece, King) and piece.color == state.turn:
+        for sq, piece in self.state.board.board.items():
+            if isinstance(piece, King) and piece.color == self.state.turn:
                  # Check short
                  m_short = Move(sq, Square(sq.row, 6))
-                 if self.castling_legality_reason(state, m_short, piece) == MoveLegalityReason.LEGAL:
+                 if self.castling_legality_reason(m_short, piece) == MoveLegalityReason.LEGAL:
                      moves.append(m_short)
                  # Check long
                  m_long = Move(sq, Square(sq.row, 2))
-                 if self.castling_legality_reason(state, m_long, piece) == MoveLegalityReason.LEGAL:
+                 if self.castling_legality_reason(m_long, piece) == MoveLegalityReason.LEGAL:
                      moves.append(m_long)
         return moves
 
-    def get_legal_en_passant_moves(self, state: GameState) -> list[Move]:
-        if state.ep_square is None:
+    def get_legal_en_passant_moves(self) -> list[Move]:
+        if self.state.ep_square is None:
             return []
         moves = []
-        for sq, piece in state.board.board.items():
-             if isinstance(piece, Pawn) and piece.color == state.turn:
+        for sq, piece in self.state.board.board.items():
+             if isinstance(piece, Pawn) and piece.color == self.state.turn:
                  direction = piece.direction
                  if (
-                     (sq.col == state.ep_square.col - 1 or sq.col == state.ep_square.col + 1)
-                     and sq.row == state.ep_square.row - direction.value[1]
+                     (sq.col == self.state.ep_square.col - 1 or sq.col == self.state.ep_square.col + 1)
+                     and sq.row == self.state.ep_square.row - direction.value[1]
                  ):
-                     # Candidate for EP
-                     move = Move(sq, state.ep_square)
-                     if self.validate_move(state, move) == MoveLegalityReason.LEGAL:
+                     move = Move(sq, self.state.ep_square)
+                     if self.validate_move(move) == MoveLegalityReason.LEGAL:
                          moves.append(move)
         return moves
 
-    def get_legal_promotion_moves(self, state: GameState) -> list[Move]:
+    def get_legal_promotion_moves(self) -> list[Move]:
         moves = []
-        for sq, piece in state.board.board.items():
-            if isinstance(piece, Pawn) and piece.color == state.turn:
+        for sq, piece in self.state.board.board.items():
+            if isinstance(piece, Pawn) and piece.color == self.state.turn:
                  direction = piece.direction
-                 # Check if next step is promotion
                  next_sq = sq.get_step(direction)
                  if next_sq and next_sq.is_promotion_row(piece.color):
                      for promo_type in [Queen, Rook, Bishop, Knight]:
                          move = Move(sq, next_sq, promo_type(piece.color))
-                         if self.validate_move(state, move) == MoveLegalityReason.LEGAL:
+                         if self.validate_move(move) == MoveLegalityReason.LEGAL:
                              moves.append(move)
-                 # Capture promotion
+
                  for capture_dir in [Direction.UP_LEFT, Direction.UP_RIGHT] if piece.color == Color.WHITE else [Direction.DOWN_LEFT, Direction.DOWN_RIGHT]:
                      cap_sq = sq.get_step(capture_dir)
                      if cap_sq and cap_sq.is_promotion_row(piece.color):
-                         target = state.board.get_piece(cap_sq)
+                         target = self.state.board.get_piece(cap_sq)
                          if target and target.color != piece.color:
                              for promo_type in [Queen, Rook, Bishop, Knight]:
                                  move = Move(sq, cap_sq, promo_type(piece.color))
-                                 if self.validate_move(state, move) == MoveLegalityReason.LEGAL:
+                                 if self.validate_move(move) == MoveLegalityReason.LEGAL:
                                      moves.append(move)
         return moves

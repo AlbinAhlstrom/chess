@@ -7,16 +7,22 @@ from oop_chess.enums import Color, MoveLegalityReason, CastlingRight
 from oop_chess.piece.pawn import Pawn
 from oop_chess.piece.rook import Rook
 from oop_chess.game_state import GameState
+from oop_chess.rules import StandardRules
+
+from oop_chess.rules import StandardRules
 
 def make_game(board):
+    rules = StandardRules()
     state = GameState(
         board=board,
         turn=Color.WHITE,
         castling_rights=(CastlingRight.WHITE_SHORT, CastlingRight.WHITE_LONG, CastlingRight.BLACK_SHORT, CastlingRight.BLACK_LONG),
         ep_square=None,
         halfmove_clock=0,
-        fullmove_count=1
+        fullmove_count=1,
+        rules=rules
     )
+    rules.state = state
     return Game(state)
 
 def board():
@@ -147,7 +153,7 @@ def test_pseudo_legal_en_passant_is_legal():
 def test_fen_after_initial_pawn_move():
     """Test that the FEN's en passant field is correctly 'a3' after 1. a4."""
     game = Game()
-    move = Move("a2a4")
+    move = Move("a2a4", player_to_move=game.state.turn)
     game.take_turn(move)
 
     expected_fen = "rnbqkbnr/pppppppp/8/8/P7/8/1PPPPPPP/RNBQKBNR b KQkq a3 0 1"
@@ -161,7 +167,7 @@ def test_en_passant_capture_removes_pawn():
 
     assert game.state.board.get_piece(captured_pawn_square) is not None
 
-    move = Move("e5d6")
+    move = Move("e5d6", player_to_move=game.state.turn)
     game.take_turn(move)
 
     assert game.state.board.get_piece(captured_pawn_square) is None
@@ -174,7 +180,7 @@ def test_en_passant_capture_from_start():
 
     moves_uci = ["a2a4", "a7a6", "a4a5", "b7b5", "a5b6"]
     for uci in moves_uci:
-        move = Move(uci)
+        move = Move(uci, player_to_move=game.state.turn)
         game.take_turn(move)
 
     captured_pawn_square = Square('b5')

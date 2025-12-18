@@ -97,8 +97,8 @@ class Move:
                 if sq == self.start:
                     continue
 
-                candidate_move = Move(sq, self.end, self.promotion_piece)
-                if game.rules.validate_move(game.state, candidate_move) == MoveLegalityReason.LEGAL:
+                candidate_move = Move(sq, self.end, self.promotion_piece, player_to_move=game.state.turn)
+                if game.rules.validate_move(candidate_move) == MoveLegalityReason.LEGAL:
                     candidates.append(sq)
 
         if candidates:
@@ -225,9 +225,9 @@ class Move:
                 candidates = [sq for sq in candidates if sq.col == col and sq.row == row]
 
         legal_moves = [
-            Move(sq, end_square, promotion_piece)
+            Move(sq, end_square, promotion_piece, player_to_move=game.state.turn)
             for sq in candidates
-            if game.rules.validate_move(game.state, Move(sq, end_square, promotion_piece)) == MoveLegalityReason.LEGAL
+            if game.rules.validate_move(Move(sq, end_square, promotion_piece, player_to_move=game.state.turn)) == MoveLegalityReason.LEGAL
         ]
         if len(legal_moves) != 1:
             raise ValueError(f"San {san_str} is ambiguous or illegal. Found {len(legal_moves)} matches.")

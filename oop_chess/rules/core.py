@@ -1,12 +1,16 @@
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 from oop_chess.enums import Color, MoveLegalityReason, StatusReason, GameOverReason
-from oop_chess.game_state import GameState
 from oop_chess.move import Move
+
+if TYPE_CHECKING:
+    from oop_chess.game_state import GameState
 
 
 class Rules(ABC):
-    def __init__(self):
+    def __init__(self, state: "GameState | None" = None):
+        self.state = state
         if self.has_check and self.is_check.__func__ == Rules.is_check:
              raise TypeError(f"Class {self.__class__.__name__} has check but does not override is_check.")
 
@@ -29,54 +33,75 @@ class Rules(ABC):
         ...
 
     @abstractmethod
-    def get_legal_moves(self, state: GameState) -> list[Move]:
+    def get_legal_moves(self) -> list[Move]:
         """Returns all legal moves in the current state."""
         ...
 
     @abstractmethod
-    def apply_move(self, state: GameState, move: Move) -> GameState:
+    def apply_move(self, move: Move) -> "GameState":
         """Returns the new state after applying the move."""
         ...
 
     @abstractmethod
-    def validate_move(self, state: GameState, move: Move) -> MoveLegalityReason:
+    def validate_move(self, move: Move) -> MoveLegalityReason:
         """Returns the legality reason for a move."""
         ...
 
     @abstractmethod
-    def validate_board_state(self, state: GameState) -> StatusReason:
+    def move_pseudo_legality_reason(self, move: Move) -> MoveLegalityReason:
+        """Returns the pseudo-legality reason for a move."""
+        ...
+
+    @abstractmethod
+    def validate_board_state(self) -> StatusReason:
         """Returns the validity of the board state."""
         ...
 
     @abstractmethod
-    def get_game_over_reason(self, state: GameState) -> GameOverReason:
+    def get_game_over_reason(self) -> GameOverReason:
         """Returns the reason the game is over."""
         ...
 
     @abstractmethod
-    def get_winner(self, state: GameState) -> Color | None:
+    def get_winner(self) -> Color | None:
         """Returns the winner if the game is over, else None."""
         ...
 
     @abstractmethod
-    def get_legal_castling_moves(self, state: GameState) -> list[Move]:
+    def get_legal_castling_moves(self) -> list[Move]:
         """Returns legal castling moves for the current state."""
         ...
 
     @abstractmethod
-    def get_legal_en_passant_moves(self, state: GameState) -> list[Move]:
+    def get_legal_en_passant_moves(self) -> list[Move]:
         """Returns legal en passant moves for the current state."""
         ...
 
     @abstractmethod
-    def get_legal_promotion_moves(self, state: GameState) -> list[Move]:
+    def get_legal_promotion_moves(self) -> list[Move]:
         """Returns legal promotion moves for the current state."""
         ...
 
-    def is_check(self, state: GameState) -> bool:
+    def is_check(self) -> bool:
         """Returns True if the current player is in check.
 
         If has_check is False, this method returns False.
         If has_check is True, this method MUST be overridden.
         """
         return False
+
+    def is_game_over(self) -> bool:
+        """Returns True if the game is over."""
+        return self.get_game_over_reason() == GameOverReason.ONGOING
+
+    def is_legal(self, move: Move | None = None) -> bool:
+        """
+        Checks if a move or board state is legal/valid.
+
+        Args:
+            move: The Move to validate, defaults to None. Will check board state if it is None.
+        """
+        if isinstance(move, Move):
+            return self.validate_move(move) == MoveLegalityReason.LEGAL
+        else:
+            return self.validate_board_state() == StatusReason.VALID
