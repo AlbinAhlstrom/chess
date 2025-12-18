@@ -1,14 +1,18 @@
+from typing import Optional
+from dataclasses import replace
+
+from oop_chess.board import Board
 from oop_chess.game_state import GameState
 from oop_chess.move import Move
 from oop_chess.rules import Rules, StandardRules
 from oop_chess.exceptions import IllegalMoveException, IllegalBoardException
-from oop_chess.enums import MoveLegalityReason, Color
+from oop_chess.enums import MoveLegalityReason, Color, StatusReason, GameOverReason
 
 
 class Game:
     """Represents a chess game.
 
-    Responsible for turn management.
+    Responsible for turn management and history.
     """
     def __init__(self, state: GameState | str | None = None, rules: Rules | None = None):
         if isinstance(state, GameState):
@@ -22,54 +26,8 @@ class Game:
         self.history: list[GameState] = []
         self.move_history: list[str] = []
 
-    @property
-    def is_over(self):
-        return self.rules.is_game_over(self.state) or self.is_draw
-
-    @property
-    def winner(self) -> Color | None:
-        if self.repetitions_of_position >= 3:
-            return None
-        return self.rules.get_winner(self.state)
-
-    @property
-    def is_checkmate(self):
-        if hasattr(self.rules, "is_checkmate"):
-            return self.rules.is_checkmate(self.state)
-        return False
-
-    @property
-    def is_check(self):
-        if hasattr(self.rules, "is_check"):
-            return self.rules.is_check(self.state)
-        return False
-
-    @property
-    def is_draw(self):
-         is_rules_draw = self.rules.is_draw(self.state) if hasattr(self.rules, "is_draw") else False
-         return is_rules_draw or self.repetitions_of_position >= 3
-
-    @property
-    def legal_moves(self) -> list[Move]:
-        return self.rules.get_legal_moves(self.state)
-
     def add_to_history(self):
         self.history.append(self.state)
-
-    def is_move_legal(self, move: Move) -> bool:
-        if hasattr(self.rules, "is_move_legal"):
-             return self.rules.is_move_legal(self.state, move)
-        return move in self.rules.get_legal_moves(self.state)
-
-    def is_move_pseudo_legal(self, move: Move) -> tuple[bool, str]:
-        """Determine if a move is pseudolegal.
-
-        This method is primarily used for testing and debugging.
-        """
-        if hasattr(self.rules, "move_pseudo_legality_reason"):
-             reason = self.rules.move_pseudo_legality_reason(self.state, move)
-             return reason == MoveLegalityReason.LEGAL, reason.value
-        return self.is_move_legal(move), "UNKNOWN"
 
     def render(self):
         """Print the board."""
@@ -77,28 +35,35 @@ class Game:
 
     def take_turn(self, move: Move):
         """Make a move by finding the corresponding legal move."""
-        if hasattr(self.rules, "is_board_state_legal"):
-            if not self.rules.is_board_state_legal(self.state):
-                reason = self.rules.status(self.state) if hasattr(self.rules, "status") else "UNKNOWN"
-                raise IllegalBoardException(f"Board state is illegal. Reason: {reason}")
+        board_status = self.rules.validate_board_state(self.state)
+        if board_status != StatusReason.VALID:
+             raise IllegalBoardException(f"Board state is illegal. Reason: {board_status}")
 
-        if hasattr(self.rules, "move_legality_reason"):
-             reason = self.rules.move_legality_reason(self.state, move)
-             if reason != MoveLegalityReason.LEGAL:
-                 raise IllegalMoveException(f"Illegal move: {reason.value}")
-        else:
-             if not self.is_move_legal(move):
-                  raise IllegalMoveException(f"Illegal move: {move} is not in legal moves.")
+        move_status = self.rules.validate_move(self.state, move)
+        if move_status != MoveLegalityReason.LEGAL:
+            raise IllegalMoveException(f"Illegal move: {move_status.value}")
 
         san = move.get_san(self)
 
         self.add_to_history()
         self.state = self.rules.apply_move(self.state, move)
 
-        if self.is_checkmate:
-            san += "#"
-        elif self.is_check:
-            san += "+"
+        # Checkmate/Check annotation relies on rules, but strictly for string formatting.
+        # We can keep this or remove it.
+        # The user said "remove all Game's references to methods/attributes of Rules"
+        # "Let all of that be accessed through game.rules"
+        # If I strictly follow this, I shouldn't even call rules inside take_turn?
+        # No, take_turn *requires* rules to transition state.
+        # But SAN generation checking is_checkmate might be crossing the line?
+        # Let's keep the SAN annotation logic minimal.
+        
+        is_check = self.rules.is_check(self.state)
+        is_game_over = self.rules.get_game_over_reason(self.state) != GameOverReason.ONGOING
+        
+        if is_game_over and is_check:
+             san += "#"
+        elif is_check:
+             san += "+"
 
         self.move_history.append(san)
 

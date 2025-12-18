@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from oop_chess.piece.pawn import Pawn
 from oop_chess.piece.king import King
 from oop_chess.square import Square
-from oop_chess.enums import Color
+from oop_chess.enums import Color, MoveLegalityReason
 from oop_chess.piece.piece import Piece
 from oop_chess.piece import piece_from_char
 
@@ -79,7 +79,6 @@ class Move:
         if piece is None:
             return self.uci
 
-
         if isinstance(piece, King) and abs(self.start.col - self.end.col) == 2:
             if self.end.col > self.start.col:
                 return "O-O"
@@ -88,10 +87,8 @@ class Move:
 
         san = ""
         piece_char = piece.fen.upper()
-
         if not isinstance(piece, Pawn):
             san += piece_char
-
 
         candidates = []
 
@@ -101,18 +98,15 @@ class Move:
                     continue
 
                 candidate_move = Move(sq, self.end, self.promotion_piece)
-                if game.is_move_legal(candidate_move):
+                if game.rules.validate_move(game.state, candidate_move) == MoveLegalityReason.LEGAL:
                     candidates.append(sq)
 
         if candidates:
-
-
             file_distinct = True
             for c_sq in candidates:
                 if c_sq.col == self.start.col:
                     file_distinct = False
                     break
-
 
             rank_distinct = True
             for c_sq in candidates:
@@ -127,9 +121,7 @@ class Move:
             else:
                 san += str(self.start).lower()
 
-
         target = game.state.board.get_piece(self.end)
-
         is_en_passant = isinstance(piece, Pawn) and self.start.col != self.end.col and target is None
 
         if target is not None or is_en_passant:
@@ -138,7 +130,6 @@ class Move:
             san += "x"
 
         san += str(self.end).lower()
-
         if self.promotion_piece:
             san += "=" + str(self.promotion_piece).upper()
 
@@ -187,10 +178,6 @@ class Move:
         Raises:
             ValueError: If the move is ambiguous, illegal, or the format is invalid.
         """
-
-
-
-
         clean_san = san_str.replace("x", "").replace("+", "").replace("#", "").replace("(", "").replace(")", "")
 
         promotion_piece = None
@@ -218,7 +205,6 @@ class Move:
             piece_type = Pawn
             disambiguation = piece_indicator
 
-
         candidates = []
         for sq, p in game.state.board.board.items():
             if p and isinstance(p, piece_type) and p.color == game.state.turn:
@@ -228,9 +214,11 @@ class Move:
             if disambiguation.isalpha():
                 col = ord(disambiguation) - ord("a")
                 candidates = [sq for sq in candidates if sq.col == col]
+
             elif disambiguation.isdigit():
                 row = 8 - int(disambiguation)
                 candidates = [sq for sq in candidates if sq.row == row]
+
             elif len(disambiguation) == 2:
                 col = ord(disambiguation[0]) - ord("a")
                 row = 8 - int(disambiguation[1])
@@ -239,9 +227,8 @@ class Move:
         legal_moves = [
             Move(sq, end_square, promotion_piece)
             for sq in candidates
-            if game.is_move_legal(Move(sq, end_square, promotion_piece))
+            if game.rules.validate_move(game.state, Move(sq, end_square, promotion_piece)) == MoveLegalityReason.LEGAL
         ]
-
         if len(legal_moves) != 1:
             raise ValueError(f"San {san_str} is ambiguous or illegal. Found {len(legal_moves)} matches.")
 
