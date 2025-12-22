@@ -5,8 +5,8 @@ import HighlightSquare from '../HighlightSquare/HighlightSquare.js';
 import PromotionDialog from '../PromotionDialog/PromotionDialog.js';
 import ImportDialog from '../ImportDialog/ImportDialog.js';
 import { fenToPosition, coordsToAlgebraic, algebraicToCoords } from '../../helpers.js'
-import { createGame, getLegalMoves, getAllLegalMoves, getGame } from '../../api.js'
-import { useState, useRef, useEffect } from 'react'
+import { createGame, getLegalMoves, getAllLegalMoves, getGame, getMe, login, logout, getWsBase } from '../../api.js'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom';
 
 const UNDO_ICON = (
@@ -91,6 +91,8 @@ export function Pieces({ onFenChange, variant = "standard" }) {
     const isPromoting = useRef(false);
     const navigate = useNavigate();
 
+    const [user, setUser] = useState(null);
+
     // Time Control State
     const [isTimeControlEnabled, setIsTimeControlEnabled] = useState(true);
     const [startingTime, setStartingTime] = useState(10);
@@ -145,7 +147,7 @@ export function Pieces({ onFenChange, variant = "standard" }) {
             ws.current.close();
         }
 
-        const wsBase = process.env.REACT_APP_WS_URL || "ws://127.0.0.1:8000/ws";
+        const wsBase = getWsBase();
         ws.current = new WebSocket(`${wsBase}/${id}`);
 
         ws.current.onmessage = (event) => {
@@ -238,6 +240,15 @@ export function Pieces({ onFenChange, variant = "standard" }) {
             navigate('/', { replace: true });
         }
     };
+
+    useEffect(() => {
+        getMe().then(data => {
+            if (data.user) {
+                setUser(data.user);
+                setPlayerName(data.user.name);
+            }
+        }).catch(e => console.error("Failed to fetch user:", e));
+    }, []);
 
     useEffect(() => {
         if (urlGameId) {

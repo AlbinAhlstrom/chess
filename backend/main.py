@@ -15,17 +15,57 @@ from oop_chess.rules import (
     CrazyhouseRules, HordeRules, KingOfTheHillRules, RacingKingsRules,
     ThreeCheckRules
 )
-from backend.database import init_db, async_session, GameModel
+from backend.database import init_db, async_session, GameModel, User
 from sqlalchemy import select, update
 import json
+import os
+from starlette.middleware.sessions import SessionMiddleware
+from authlib.integrations.starlette_client import OAuth, OAuthError
+from fastapi import Request
+from fastapi.responses import RedirectResponse
+from dotenv import load_dotenv, find_dotenv
+
+load_dotenv(find_dotenv())
+
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+SECRET_KEY = os.environ.get("SECRET_KEY", "a-very-secret-key")
+REDIRECT_URI = os.environ.get("REDIRECT_URI") # Optional override
 
 app = FastAPI()
+
+if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+    print("WARNING: GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not set. Google Login will not work.")
+
+app.add_middleware(
+    SessionMiddleware, 
+    secret_key=SECRET_KEY,
+    session_cookie="v_chess_session",
+    same_site="lax",
+    https_only=False
+)
+
+oauth = OAuth()
+oauth.register(
+    name='google',
+    client_id=GOOGLE_CLIENT_ID,
+    client_secret=GOOGLE_CLIENT_SECRET,
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={
+        'scope': 'openid email profile'
+    },
+    authorize_params={
+        'prompt': 'select_account'
+    }
+)
 
 origins = [
     "https://v-chess.com",
     "https://www.v-chess.com",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
 ]
 
 app.add_middleware(
@@ -229,6 +269,70 @@ class NewGameRequest(BaseModel):
     variant: str = "standard"
     fen: Optional[str] = None
     time_control: Optional[dict] = None
+
+
+@app.get("/auth/login")
+async def login(request: Request):
+    # Use REDIRECT_URI if provided in .env, otherwise generate one
+    redirect_uri = REDIRECT_URI
+    if not redirect_uri:
+        redirect_uri = request.url_for('auth')
+    
+    print(f"DEBUG: Using redirect_uri: {redirect_uri}")
+    return await oauth.google.authorize_redirect(request, str(redirect_uri))
+
+
+@app.get("/auth/auth")
+async def auth(request: Request):
+    try:
+        token = await oauth.google.authorize_access_token(request)
+    except OAuthError as error:
+        return {"error": error.error}
+    
+    user_info = token.get('userinfo')
+    if user_info:
+        async with async_session() as session:
+            async with session.begin():
+                stmt = select(User).where(User.google_id == user_info['sub'])
+                result = await session.execute(stmt)
+                user = result.scalar_one_or_none()
+                
+                if not user:
+                    user = User(
+                        google_id=user_info['sub'],
+                        email=user_info['email'],
+                        name=user_info['name'],
+                        picture=user_info.get('picture')
+                    )
+                    session.add(user)
+                    await session.flush() # Get user.id
+                else:
+                    user.name = user_info['name']
+                    user.picture = user_info.get('picture')
+                
+                request.session['user'] = {
+                    "id": user.id,
+                    "name": user.name,
+                    "email": user.email,
+                    "picture": user.picture
+                }
+
+    # Redirect to frontend
+    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+    return RedirectResponse(url=frontend_url)
+
+
+@app.get("/auth/logout")
+async def logout(request: Request):
+    request.session.clear()
+    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+    return RedirectResponse(url=frontend_url)
+
+
+@app.get("/api/me")
+async def me(request: Request):
+    user = request.session.get('user')
+    return {"user": user}
 
 
 @app.post("/api/game/new")

@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import String, Text, Boolean, Float, DateTime, func
+from sqlalchemy import String, Text, Boolean, Float, DateTime, func, ForeignKey
 import datetime
 from typing import Optional
 
@@ -12,9 +12,19 @@ async_session = async_sessionmaker(engine, expire_on_commit=False)
 class Base(DeclarativeBase):
     pass
 
+class User(Base):
+    __tablename__ = "users"
+    
+    id: Mapped[int] = mapped_column(primary_key=True)
+    google_id: Mapped[str] = mapped_column(String, unique=True, index=True)
+    email: Mapped[str] = mapped_column(String, unique=True, index=True)
+    name: Mapped[str] = mapped_column(String)
+    picture: Mapped[Optional[str]] = mapped_column(String)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, server_default=func.now())
+
 class GameModel(Base):
     __tablename__ = "games"
-
+    
     id: Mapped[str] = mapped_column(String, primary_key=True)
     variant: Mapped[str] = mapped_column(String)
     fen: Mapped[str] = mapped_column(String)
@@ -24,9 +34,10 @@ class GameModel(Base):
     last_move_at: Mapped[Optional[float]] = mapped_column(Float)
     is_over: Mapped[bool] = mapped_column(Boolean, default=False)
     winner: Mapped[Optional[str]] = mapped_column(String)
+    white_player_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
+    black_player_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
-
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

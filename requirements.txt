@@ -7,3 +7,7 @@ pytest
 hypothesis
 sqlalchemy
 aiosqlite
+authlib
+httpx
+itsdangerous
+python-dotenv

@@ -1,8 +1,52 @@
 import './App.css';
 import Board from './components/Board/Board.js';
 import { Pieces } from './components/Pieces/Pieces.js';
-import { useCallback } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { getMe, getAuthLinks } from './api.js';
+
+function Header() {
+  const [user, setUser] = useState(null);
+  const { loginLink, logoutLink } = getAuthLinks();
+
+  const fetchUser = useCallback(() => {
+    getMe().then(data => {
+      if (data.user) {
+        setUser(data.user);
+      } else {
+        setUser(null);
+      }
+    }).catch(e => {
+      console.error("Failed to fetch user:", e);
+      setUser(null);
+    });
+  }, []);
+
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
+
+  // Refresh user when tab is focused (e.g. returning from login redirect)
+  useEffect(() => {
+    window.addEventListener('focus', fetchUser);
+    return () => window.removeEventListener('focus', fetchUser);
+  }, [fetchUser]);
+
+  return (
+    <header className="main-header">
+      <div className="auth-section">
+        {user ? (
+          <div className="user-profile">
+            <img src={user.picture} alt={user.name} className="header-avatar" title={user.name} />
+            <a className="header-auth-link" href={logoutLink}>Logout</a>
+          </div>
+        ) : (
+          <a className="header-auth-link" href={loginLink}>Login</a>
+        )}
+      </div>
+    </header>
+  );
+}
 
 function GameBoard({ variant }) {
   const handleFenChange = useCallback((newFen) => {
@@ -21,6 +65,7 @@ function GameBoard({ variant }) {
 function App() {
   return (
     <BrowserRouter>
+      <Header />
       <Routes>
         <Route path="/" element={<GameBoard variant="standard" />} />
         <Route path="/standard" element={<GameBoard variant="standard" />} />
