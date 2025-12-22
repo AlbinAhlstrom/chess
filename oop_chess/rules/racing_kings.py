@@ -1,0 +1,78 @@
+from dataclasses import replace
+from oop_chess.enums import GameOverReason, MoveLegalityReason, BoardLegalityReason, Color
+from oop_chess.game_state import GameState
+from oop_chess.move import Move
+from oop_chess.piece import King
+from .standard import StandardRules
+
+
+class RacingKingsRules(StandardRules):
+    MoveLegalityReason = MoveLegalityReason.load("RacingKings")
+    BoardLegalityReason = BoardLegalityReason.load("RacingKings")
+    GameOverReason = GameOverReason.load("RacingKings")
+
+    @property
+    def name(self) -> str:
+        return "Racing Kings"
+
+    @property
+    def has_check(self) -> bool:
+        return False
+
+    def validate_move(self, move: Move) -> MoveLegalityReason:
+        pseudo = self.move_pseudo_legality_reason(move)
+        if pseudo != MoveLegalityReason.LEGAL:
+            return pseudo
+            
+        next_state = self.apply_move(move)
+        if next_state.rules.is_check():
+            return self.MoveLegalityReason.GIVES_CHECK
+            
+        if next_state.rules.inactive_player_in_check():
+             return self.MoveLegalityReason.KING_LEFT_IN_CHECK
+
+        return self.MoveLegalityReason.LEGAL
+
+    def is_check(self) -> bool:
+        return self._is_color_in_check(self.state.board, self.state.turn)
+
+    def get_game_over_reason(self) -> GameOverReason:
+        wk_on_8 = any(isinstance(p, King) and p.color == Color.WHITE and sq.row == 0 
+                      for sq, p in self.state.board.board.items())
+        bk_on_8 = any(isinstance(p, King) and p.color == Color.BLACK and sq.row == 0 
+                      for sq, p in self.state.board.board.items())
+        
+        if wk_on_8 and bk_on_8:
+            return self.GameOverReason.STALEMATE
+            
+        if bk_on_8:
+            return self.GameOverReason.KING_TO_EIGHTH_RANK
+            
+        if wk_on_8:
+            # White is on 8th. If turn is Black, Black has one last turn.
+            if self.state.turn == Color.BLACK:
+                return self.GameOverReason.ONGOING
+            else:
+                # Turn is White, and White is on 8th. White wins!
+                return self.GameOverReason.KING_TO_EIGHTH_RANK
+
+        return super().get_game_over_reason()
+
+    def get_winner(self) -> Color | None:
+        reason = self.get_game_over_reason()
+        if reason == self.GameOverReason.KING_TO_EIGHTH_RANK:
+            wk_on_8 = any(isinstance(p, King) and p.color == Color.WHITE and sq.row == 0 
+                          for sq, p in self.state.board.board.items())
+            if wk_on_8: return Color.WHITE
+            return Color.BLACK
+        return super().get_winner()
+
+    def validate_board_state(self) -> BoardLegalityReason:
+        res = super().validate_board_state()
+        if res != BoardLegalityReason.VALID:
+            return res
+            
+        if self.is_check() or self.inactive_player_in_check():
+            return self.BoardLegalityReason.KING_IN_CHECK
+            
+        return BoardLegalityReason.VALID

@@ -132,7 +132,7 @@ GAMEOVER_DISCREPANCIES = {
     "Antichess": {"add": ["ALL_PIECES_CAPTURED"], "remove": ["CHECKMATE"]},
     "Atomic": {"add": ["KING_EXPLODED"]},
     "Horde": {"add": ["ALL_PIECES_CAPTURED"]},
-    "RacingKings": {"add": ["KING_TO_EIGHTH_RANK"], "remove": ["CHECKMATE", "STALEMATE"]},
+    "RacingKings": {"add": ["KING_TO_EIGHTH_RANK"], "remove": ["CHECKMATE"]},
 }
 
 

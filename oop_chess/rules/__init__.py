@@ -6,3 +6,4 @@ from .three_check import ThreeCheckRules
 from .crazyhouse import CrazyhouseRules
 from .atomic import AtomicRules
 from .horde import HordeRules
+from .racing_kings import RacingKingsRules
