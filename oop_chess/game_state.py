@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Optional, TYPE_CHECKING, Tuple
+from functools import cached_property
 
 from oop_chess.board import Board
 from oop_chess.square import Square
@@ -42,7 +43,7 @@ class GameState:
     def empty(cls) -> "GameState":
         return state_from_fen(cls.EMPTY_BOARD_FEN)
 
-    @property
+    @cached_property
     def fen(self) -> str:
         return state_to_fen(self)
 

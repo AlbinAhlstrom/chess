@@ -42,11 +42,15 @@ class StandardRules(Rules):
             return cls.REPETITION
         if self.is_fifty_moves:
             return cls.FIFTY_MOVE_RULE
-        if not self.get_legal_moves():
+        if not self.has_legal_moves():
             if self.is_check():
                 return cls.CHECKMATE
             return cls.STALEMATE
         return cls.ONGOING
+
+    def has_legal_moves(self) -> bool:
+        """Returns True if there is at least one legal move."""
+        return any(self.validate_move(move) == MoveLegalityReason.LEGAL for move in self.get_theoretical_moves())
 
     def validate_move(self, move: Move) -> MoveLegalityReason:
         pseudo_reason = self.move_pseudo_legality_reason(move)
@@ -107,8 +111,7 @@ class StandardRules(Rules):
 
     def king_left_in_check(self, move: Move) -> bool:
         """Returns True if king is left in check after a move."""
-        next_state = self.apply_move(move)
-        return next_state.rules.inactive_player_in_check()
+        return self.state.board.bitboard.is_king_attacked_after_move(move, self.state.turn, self.state.board, self.state.ep_square)
 
     def apply_move(self, move: Move) -> GameState:
         """Returns a new GameState with the move applied."""
@@ -190,43 +193,51 @@ class StandardRules(Rules):
         new_rules.state = new_state
         return new_state
 
-    def get_theoretical_moves(self) -> list[Move]:
-        moves = []
-        for sq, piece in self.state.board.board.items():
-            if piece and piece.color == self.state.turn:
+    def get_theoretical_moves(self):
+        bb = self.state.board.bitboard
+        turn = self.state.turn
+        
+        for p_type, mask in bb.pieces[turn].items():
+            temp_mask = mask
+            while temp_mask:
+                sq_idx = (temp_mask & -temp_mask).bit_length() - 1
+                sq = Square(divmod(sq_idx, 8))
+                piece = self.state.board.get_piece(sq)
+                
                 # Basic moves from piece moveset
                 for end in piece.theoretical_moves(sq):
-                    moves.append(Move(sq, end))
+                    yield Move(sq, end)
 
-                if isinstance(piece, Pawn):
+                if p_type == Pawn:
                     # Double push
-                    is_start_rank = (sq.row == 6 if piece.color == Color.WHITE else sq.row == 1)
+                    is_start_rank = (sq.row == 6 if turn == Color.WHITE else sq.row == 1)
                     if is_start_rank:
                         direction = piece.direction
                         one_step = sq.get_step(direction)
                         two_step = one_step.get_step(direction) if one_step else None
                         if two_step:
-                            moves.append(Move(sq, two_step))
+                            yield Move(sq, two_step)
 
                     # Promotions
                     target_squares = []
-                    if piece.color == Color.WHITE and sq.row == 1:
+                    if turn == Color.WHITE and sq.row == 1:
                         target_squares.append(sq.get_step(Direction.UP))
                         target_squares.extend([sq.get_step(Direction.UP_LEFT), sq.get_step(Direction.UP_RIGHT)])
-                    elif piece.color == Color.BLACK and sq.row == 6:
+                    elif turn == Color.BLACK and sq.row == 6:
                         target_squares.append(sq.get_step(Direction.DOWN))
                         target_squares.extend([sq.get_step(Direction.DOWN_LEFT), sq.get_step(Direction.DOWN_RIGHT)])
 
                     for target_sq in target_squares:
-                        if target_sq and target_sq.is_promotion_row(piece.color):
+                        if target_sq and target_sq.is_promotion_row(turn):
                             for promo_piece_type in [Queen, Rook, Bishop, Knight]:
-                                moves.append(Move(sq, target_sq, promo_piece_type(piece.color)))
+                                yield Move(sq, target_sq, promo_piece_type(turn))
 
-                if isinstance(piece, King):
-                    row = 7 if piece.color == Color.WHITE else 0
-                    moves.append(Move(sq, Square(row, 6)))
-                    moves.append(Move(sq, Square(row, 2)))
-        return moves
+                if p_type == King:
+                    row = 7 if turn == Color.WHITE else 0
+                    yield Move(sq, Square(row, 6))
+                    yield Move(sq, Square(row, 2))
+                
+                temp_mask &= temp_mask - 1
 
     def move_pseudo_legality_reason(self, move: Move) -> MoveLegalityReason:
         """Determine if a move is pseudolegal."""

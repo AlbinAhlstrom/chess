@@ -273,7 +273,16 @@ class Direction(Enum):
 
     def get_path(self, square: Square, max_squares: int = 7) -> list[Square]:
         """Get all squares in a direction."""
-        return list(self.take_step(square, max_squares))
+        if not hasattr(self.__class__, "_PATH_CACHE"):
+            self.__class__._PATH_CACHE = {}
+            
+        cache_key = (self, square.index, max_squares)
+        if cache_key in self.__class__._PATH_CACHE:
+            return self.__class__._PATH_CACHE[cache_key]
+            
+        path = list(self.take_step(square, max_squares))
+        self.__class__._PATH_CACHE[cache_key] = path
+        return path
 
     def take_step(self, start_square: Square, max_squares: int):
         """

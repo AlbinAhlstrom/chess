@@ -43,6 +43,10 @@ class Rules(ABC):
         """Returns all legal moves in the current state."""
         ...
 
+    def has_legal_moves(self) -> bool:
+        """Returns True if there is at least one legal move."""
+        return len(self.get_legal_moves()) > 0
+
     @abstractmethod
     def apply_move(self, move: Move) -> "GameState":
         """Returns the new state after applying the move."""

@@ -61,7 +61,7 @@ class HordeRules(StandardRules):
     def get_game_over_reason(self) -> GameOverReason:
         # White wins if Black checkmated
         if self.state.turn == Color.BLACK:
-            if not self.get_legal_moves():
+            if not self.has_legal_moves():
                 if self.is_check():
                     return self.GameOverReason.CHECKMATE
                 return self.GameOverReason.STALEMATE
@@ -74,7 +74,7 @@ class HordeRules(StandardRules):
         # Black wins if White checkmated? (No white king, so no)
         # But White can be stalemated
         if self.state.turn == Color.WHITE:
-            if not self.get_legal_moves():
+            if not self.has_legal_moves():
                 return self.GameOverReason.STALEMATE
 
         res = super().get_game_over_reason()

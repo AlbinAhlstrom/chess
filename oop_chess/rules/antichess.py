@@ -52,7 +52,7 @@ class AntichessRules(StandardRules):
              return self.GameOverReason.FIFTY_MOVE_RULE
         if not self.state.board.get_pieces(color=self.state.turn):
             return self.GameOverReason.ALL_PIECES_CAPTURED
-        if not self.get_legal_moves():
+        if not self.has_legal_moves():
              return self.GameOverReason.STALEMATE
         return self.GameOverReason.ONGOING
 

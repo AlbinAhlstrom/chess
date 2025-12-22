@@ -119,16 +119,16 @@ class CrazyhouseRules(StandardRules):
         new_rules.state = new_state
         return new_state
 
-    def get_theoretical_moves(self) -> list[Move]:
-        moves = super().get_theoretical_moves()
+    def get_theoretical_moves(self):
+        yield from super().get_theoretical_moves()
         
         if not isinstance(self.state, CrazyhouseGameState):
-            return moves
+            return
             
         pocket_idx = 0 if self.state.turn == Color.WHITE else 1
         pocket = self.state.pockets[pocket_idx]
         if not pocket:
-            return moves
+            return
             
         unique_pieces = {type(p): p for p in pocket}.values()
         
@@ -140,9 +140,7 @@ class CrazyhouseRules(StandardRules):
                     for p in unique_pieces:
                         if isinstance(p, Pawn) and (r == 0 or r == 7):
                             continue
-                        moves.append(Move(Square(None), sq, None, p, player_to_move=self.state.turn))
-                        
-        return moves
+                        yield Move(Square(None), sq, None, p, player_to_move=self.state.turn)
 
     def move_pseudo_legality_reason(self, move: Move) -> MoveLegalityReason:
         if move.is_drop:

@@ -15,45 +15,48 @@ class Square:
     row: int = field(compare=True)
     col: int = field(compare=True)
 
-    def __init__(self, *args) -> None:
-        """Initialize a square from a variety of types.
+    _CACHE = {}
 
-        Allowed types are:
-        - row, col: individual args
-        - tuple[int, int]
-        - str: valid SAN string
-        - Square: re-initialization
-        - None: represents the None-square: row,col=(-1, -1)
-        """
+    def __new__(cls, *args) -> 'Square':
         _row: int
         _col: int
 
         if not args or args[0] is None:
             _row, _col = -1, -1
         elif len(args) == 2:
-            if not (isinstance(args[0], int) and isinstance(args[1], int)):
-                raise TypeError("Individual arguments must be (row: int, col: int).")
             _row, _col = args[0], args[1]
         elif len(args) == 1:
             arg = args[0]
             if isinstance(arg, Square):
-                _row, _col = arg.row, arg.col
+                return arg
             elif isinstance(arg, str):
-                _row, _col = self._parse_from_san(arg)
+                if len(arg) != 2: raise ValueError(f"Invalid length of {arg=}")
+                file_char = arg[0].lower()
+                rank_char = arg[1]
+                _col = ord(file_char) - ord("a")
+                _row = 8 - int(rank_char)
             elif isinstance(arg, tuple) and len(arg) == 2:
-                if not isinstance(arg[0], int) or not isinstance(arg[1], int):
-                    raise TypeError("When a tuple is provided, its elements must be integers (row, col).")
                 _row, _col = arg[0], arg[1]
             else:
                 raise TypeError(f"Invalid single argument type: {type(arg)}")
         else:
             raise TypeError(f"Invalid number of arguments: {len(args)}")
 
-        object.__setattr__(self, 'row', _row)
-        object.__setattr__(self, 'col', _col)
-        if self.is_valid(self.row, self.col) or self.is_none_square:
-            return
-        raise ValueError(f"Invalid Square: row={self.row}, col={self.col}")
+        if (_row, _col) in cls._CACHE:
+            return cls._CACHE[(_row, _col)]
+
+        if not (cls.is_valid(_row, _col) or (_row == -1 and _col == -1)):
+             raise ValueError(f"Invalid Square: row={_row}, col={_col}")
+
+        instance = super().__new__(cls)
+        object.__setattr__(instance, 'row', _row)
+        object.__setattr__(instance, 'col', _col)
+        cls._CACHE[(_row, _col)] = instance
+        return instance
+
+    def __init__(self, *args) -> None:
+        """Handled by __new__ for caching."""
+        pass
 
     @property
     def is_none_square(self) -> bool:
