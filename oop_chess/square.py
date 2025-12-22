@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
-from oop_chess.enums import Color, Direction
+from __future__ import annotations
+from enum import Enum
+from .enums import Direction
 from typing import TypeAlias
 
 

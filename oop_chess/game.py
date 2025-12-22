@@ -1,3 +1,4 @@
+from __future__ import annotations
 from dataclasses import replace
 from typing import Optional
 from oop_chess.game_state import GameState

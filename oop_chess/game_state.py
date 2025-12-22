@@ -1,3 +1,4 @@
+from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional, TYPE_CHECKING, Tuple
 from functools import cached_property
