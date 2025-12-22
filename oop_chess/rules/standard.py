@@ -23,7 +23,7 @@ class StandardRules(Rules):
         return True
 
     def get_legal_moves(self) -> list[Move]:
-        return [move for move in self.get_theoretical_moves() if self.validate_move(move) == MoveLegalityReason.LEGAL]
+        return [move for move in self.get_theoretical_moves() if self.is_legal(move)]
 
     def get_winner(self) -> Color | None:
         reason = self.get_game_over_reason()

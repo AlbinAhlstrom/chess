@@ -144,6 +144,8 @@ class Rules(ABC):
             move: The Move to validate, defaults to None. Will check board state if it is None.
         """
         if isinstance(move, Move):
-            return self.validate_move(move) == MoveLegalityReason.LEGAL
+            cls = getattr(self, "MoveLegalityReason", MoveLegalityReason)
+            return self.validate_move(move) == cls.LEGAL
         else:
-            return self.validate_board_state() == BoardLegalityReason.VALID
+            cls = getattr(self, "BoardLegalityReason", BoardLegalityReason)
+            return self.validate_board_state() == cls.VALID

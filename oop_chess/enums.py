@@ -120,8 +120,8 @@ MOVE_DISCREPANCIES = {
     },
     "Atomic": {"add": ["KING_EXPLODED"]},
     "RacingKings": {
-        "add": ["GIVES_CHECK", "CASTLING_DISABLED"],
-        "remove": ["KING_LEFT_IN_CHECK", "NO_CASTLING_RIGHT", "CASTLING_FROM_CHECK", "CASTLING_THROUGH_CHECK"]
+        "add": ["GIVES_CHECK", "CASTLING_DISABLED", "KING_LEFT_IN_CHECK"],
+        "remove": ["NO_CASTLING_RIGHT", "CASTLING_FROM_CHECK", "CASTLING_THROUGH_CHECK"]
     },
 }
 

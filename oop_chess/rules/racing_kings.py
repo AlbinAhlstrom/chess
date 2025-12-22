@@ -25,7 +25,7 @@ class RacingKingsRules(StandardRules):
 
     def validate_move(self, move: Move) -> MoveLegalityReason:
         pseudo = self.move_pseudo_legality_reason(move)
-        if pseudo != MoveLegalityReason.LEGAL:
+        if pseudo != self.MoveLegalityReason.LEGAL:
             return pseudo
 
         next_state = self.apply_move(move)
