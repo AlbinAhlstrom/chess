@@ -136,16 +136,14 @@ class AtomicRules(StandardRules):
 
     def validate_board_state(self) -> BoardLegalityReason:
         res = super().validate_board_state()
-        # In Atomic, NO_WHITE_KING or NO_BLACK_KING might be acceptable during game over,
-        # but validate_board_state is usually for start/import.
-        # Actually, let's keep standard king requirements for setup.
-        if res != BoardLegalityReason.VALID:
-            return res
-            
-        if self._kings_adjacent(self.state.board):
-            return self.BoardLegalityReason.KINGS_ADJACENT
-            
-        return BoardLegalityReason.VALID
+        
+        # Check adjacent kings if the board is otherwise valid or just has an opposite check
+        # (since adjacent kings imply opposite check, we want to report the specific reason)
+        if res == BoardLegalityReason.VALID or res == BoardLegalityReason.OPPOSITE_CHECK:
+            if self._kings_adjacent(self.state.board):
+                return self.BoardLegalityReason.KINGS_ADJACENT
+
+        return res
 
     def get_game_over_reason(self) -> GameOverReason:
         # Check if a king is missing
