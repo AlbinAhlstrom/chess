@@ -58,7 +58,7 @@ const VARIANTS = [
 ];
 
 const STARTING_TIME_VALUES = [
-    0.5, 1, 1.5, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 
+    0.25, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 
     25, 30, 35, 40, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180
 ];
 
@@ -91,9 +91,9 @@ export function Pieces({ onFenChange, variant = "standard" }) {
     const navigate = useNavigate();
 
     // Time Control State
-    const [isTimeControlEnabled, setIsTimeControlEnabled] = useState(false);
+    const [isTimeControlEnabled, setIsTimeControlEnabled] = useState(true);
     const [startingTime, setStartingTime] = useState(10);
-    const [increment, setIncrement] = useState(5);
+    const [increment, setIncrement] = useState(2);
 
     // Player Names State
     const [playerName, setPlayerName] = useState("Anonymous");
@@ -671,7 +671,8 @@ export function Pieces({ onFenChange, variant = "standard" }) {
                                         <div className="slider-label">
                                             <span>Starting Time</span>
                                             <span>
-                                                {startingTime === 0.5 ? '1/2' : 
+                                                {startingTime === 0.25 ? '1/4' : 
+                                                 startingTime === 0.5 ? '1/2' : 
                                                  startingTime === 1.5 ? '1 1/2' : 
                                                  startingTime} min
                                             </span>
