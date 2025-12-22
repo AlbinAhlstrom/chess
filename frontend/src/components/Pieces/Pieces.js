@@ -144,6 +144,9 @@ export function Pieces({ onFenChange, variant = "standard" }) {
                 } else if (message.status === "draw") {
                     console.log("Draw detected!");
                     gameEndSound.current.play().catch(e => console.error("Error playing game end sound:", e));
+                } else if (message.status === "game_over") {
+                    console.log("Game over detected!");
+                    gameEndSound.current.play().catch(e => console.error("Error playing game end sound:", e));
                 }
             } else if (message.type === "error") {
                 console.error("WebSocket error:", message.message);

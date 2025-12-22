@@ -44,8 +44,11 @@ class StandardRules(Rules):
             return cls.FIFTY_MOVE_RULE
         if not self.has_legal_moves():
             if self.is_check():
-                return cls.CHECKMATE
-            return cls.STALEMATE
+                reason = getattr(cls, "CHECKMATE", None)
+                if reason: return reason
+            reason = getattr(cls, "STALEMATE", None)
+            if reason: return reason
+            return cls.ONGOING
         return cls.ONGOING
 
     def has_legal_moves(self) -> bool:

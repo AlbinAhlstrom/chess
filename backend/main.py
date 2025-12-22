@@ -164,6 +164,8 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                 status = "checkmate"
             elif game.rules.is_draw:
                 status = "draw"
+            elif is_over:
+                status = "game_over"
 
             await manager.broadcast(game_id, json.dumps({
                 "type": "game_state",

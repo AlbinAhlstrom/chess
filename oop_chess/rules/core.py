@@ -114,25 +114,27 @@ class Rules(ABC):
     def is_checkmate(self) -> bool:
         """Returns True if the game is in checkmate."""
         cls = getattr(self, "GameOverReason", GameOverReason)
-        return self.get_game_over_reason() == cls.CHECKMATE
+        reason = getattr(cls, "CHECKMATE", None)
+        return reason is not None and self.get_game_over_reason() == reason
 
     @property
     def is_stalemate(self) -> bool:
         """Returns True if the game is in stalemate."""
         cls = getattr(self, "GameOverReason", GameOverReason)
-        return self.get_game_over_reason() == cls.STALEMATE
+        reason = getattr(cls, "STALEMATE", None)
+        return reason is not None and self.get_game_over_reason() == reason
 
     @property
     def is_draw(self) -> bool:
         """Returns True if the game is a draw."""
         cls = getattr(self, "GameOverReason", GameOverReason)
-        return self.get_game_over_reason() in (
-            cls.STALEMATE,
-            cls.REPETITION,
-            cls.FIFTY_MOVE_RULE,
-            cls.MUTUAL_AGREEMENT,
-            cls.INSUFFICIENT_MATERIAL
-        )
+        draw_reasons = []
+        for attr in ("STALEMATE", "REPETITION", "FIFTY_MOVE_RULE", "MUTUAL_AGREEMENT", "INSUFFICIENT_MATERIAL"):
+            reason = getattr(cls, attr, None)
+            if reason is not None:
+                draw_reasons.append(reason)
+        
+        return self.get_game_over_reason() in draw_reasons
 
     def is_legal(self, move: Move | None = None) -> bool:
         """
