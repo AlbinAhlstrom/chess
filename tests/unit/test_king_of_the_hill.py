@@ -35,14 +35,8 @@ def test_koth_checkmate_still_works():
 
 def test_koth_stalemate():
     """Test that stalemate is still a draw."""
-    # Stalemate position
-    fen = "k7/8/8/8/8/8/5Q2/K7 w - - 0 1" 
-    # Not actually stalemate yet, let's setup direct stalemate
-    # White King a1, White Queen c2. Black King a3.
-    # W: Ka1, Qc2. B: Ka3.
-    # If it is Black's turn? No moves?
-    # Actually: 7k/8/8/8/8/8/7p/7K w - - 0 1 (White to move, can't move)
-    fen = "7k/8/8/8/8/8/7p/7K w - - 0 1"
+    # Stalemate position: White King a1, Black Queen c2
+    fen = "7k/8/8/8/8/8/2q5/K7 w - - 0 1"
     game = Game(fen, rules=KingOfTheHillRules())
     
     assert game.is_over
