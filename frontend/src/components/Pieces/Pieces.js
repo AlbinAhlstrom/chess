@@ -7,6 +7,7 @@ import ImportDialog from '../ImportDialog/ImportDialog.js';
 import { fenToPosition, coordsToAlgebraic, algebraicToCoords } from '../../helpers.js'
 import { createGame, getLegalMoves, getAllLegalMoves } from '../../api.js'
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom';
 
 const UNDO_ICON = (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" style={{ width: 'var(--button-icon-size)', height: 'var(--button-icon-size)' }}>
@@ -20,9 +21,9 @@ const EXPORT_ICON = (
     </svg>
 );
 
-const RESET_ICON = (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" style={{ width: 'var(--button-icon-size)', height: 'var(--button-icon-size)' }}>
-        <path d="M463.5 224H472c13.3 0 24-10.7 24-24V72c0-9.7-5.8-18.5-14.8-22.2s-19.3-1.7-26.2 5.2L413.4 96.6c-87.6-86.5-228.7-86.2-315.8 1c-87.5 87.5-87.5 229.3 0 316.8s229.3 87.5 316.8 0c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0c-62.5 62.5-163.8 62.5-226.3 0s-62.5-163.8 0-226.3c62.2-62.2 162.7-62.5 225.3-1L327 183c-6.9 6.9-8.9 17.2-5.2 26.2s12.5 14.8 22.2 14.8H463.5z"/>
+const NEW_GAME_ICON = (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor" style={{ width: 'var(--button-icon-size)', height: 'var(--button-icon-size)' }}>
+        <path d="M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32V224H48c-17.7 0-32 14.3-32 32s14.3 32 32 32H192V432c0 17.7 14.3 32 32 32s32-14.3 32-32V288H400c17.7 0 32-14.3 32-32s-14.3-32-32-32H256V80z"/>
     </svg>
 );
 
@@ -31,6 +32,30 @@ const IMPORT_ICON = (
         <path d="M128 64c0-35.3 28.7-64 64-64H352V128c0 17.7 14.3 32 32 32H512V448c0 35.3-28.7 64-64 64H192c-35.3 0-64-28.7-64-64V336H302.1l-39 39c-9.4 9.4-9.4 24.6 0 33.9s24.6 9.4 33.9 0l80-80c9.4-9.4 9.4-24.6 0-33.9l-80-80c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l39 39H128V64zm0 224v48H24c-13.3 0-24-10.7-24-24s10.7-24 24-24H128zM512 128H384c-17.7 0-32-14.3-32-32V0L512 128z"/>
     </svg>
 );
+
+const RESET_ICON = (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" style={{ width: 'var(--button-icon-size)', height: 'var(--button-icon-size)' }}>
+        <path d="M463.5 224H472c13.3 0 24-10.7 24-24V72c0-9.7-5.8-18.5-14.8-22.2s-19.3-1.7-26.2 5.2L413.4 96.6c-87.6-86.5-228.7-86.2-315.8 1c-87.5 87.5-87.5 229.3 0 316.8s229.3 87.5 316.8 0c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0c-62.5 62.5-163.8 62.5-226.3 0s-62.5-163.8 0-226.3c62.2-62.2 162.7-62.5 225.3-1L327 183c-6.9 6.9-8.9 17.2-5.2 26.2s12.5 14.8 22.2 14.8H463.5z"/>
+    </svg>
+);
+
+const MORE_ICON = (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" style={{ width: 'var(--button-icon-size)', height: 'var(--button-icon-size)' }}>
+        <path d="M64 360a56 56 0 1 0 0 112 56 56 0 1 0 0-112zm0-160a56 56 0 1 0 0 112 56 56 0 1 0 0-112zM120 96A56 56 0 1 0 8 96a56 56 0 1 0 112 0z"/>
+    </svg>
+);
+
+const VARIANTS = [
+    { id: 'standard', title: 'Standard', icon: '♟️' },
+    { id: 'antichess', title: 'Antichess', icon: '🚫' },
+    { id: 'atomic', title: 'Atomic', icon: '⚛️' },
+    { id: 'chess960', title: 'Chess960', icon: '🎲' },
+    { id: 'crazyhouse', title: 'Crazyhouse', icon: '🏰' },
+    { id: 'horde', title: 'Horde', icon: '🧟' },
+    { id: 'kingofthehill', title: 'King of the Hill', icon: '⛰️' },
+    { id: 'racingkings', title: 'Racing Kings', icon: '🏎️' },
+    { id: 'threecheck', title: 'Three Check', icon: '3️⃣' },
+];
 
 export function Pieces({ onFenChange, variant = "standard" }) {
     const ref = useRef()
@@ -47,10 +72,13 @@ export function Pieces({ onFenChange, variant = "standard" }) {
     const ws = useRef(null);
     const [isPromotionDialogOpen, setPromotionDialogOpen] = useState(false);
     const [isImportDialogOpen, setImportDialogOpen] = useState(false);
+    const [isNewGameDialogOpen, setNewGameDialogOpen] = useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [promotionMove, setPromotionMove] = useState(null);
     const lastNotifiedFen = useRef(null);
     const dragStartSelectionState = useRef(false);
     const isPromoting = useRef(false);
+    const navigate = useNavigate();
     
     // Sounds
     const moveSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-self.mp3"));
@@ -378,9 +406,21 @@ export function Pieces({ onFenChange, variant = "standard" }) {
         }
     };
 
+    const handleNewGameClick = (e) => {
+        e.stopPropagation();
+        setNewGameDialogOpen(true);
+        setIsMenuOpen(false);
+    };
+
+    const handleVariantSelect = (variantId) => {
+        setNewGameDialogOpen(false);
+        navigate(variantId === 'standard' ? '/' : `/${variantId}`);
+    };
+
     const handleReset = (e) => {
         e.stopPropagation();
         initializeGame();
+        setIsMenuOpen(false);
     };
 
     const handleUndo = (e) => {
@@ -388,11 +428,13 @@ export function Pieces({ onFenChange, variant = "standard" }) {
         if (ws.current && ws.current.readyState === WebSocket.OPEN) {
             ws.current.send(JSON.stringify({ type: "undo" }));
         }
+        setIsMenuOpen(false);
     };
 
     const handleImportClick = (e) => {
         e.stopPropagation();
         setImportDialogOpen(true);
+        setIsMenuOpen(false);
     };
 
     const handleImport = (fenString, selectedVariant) => {
@@ -405,6 +447,11 @@ export function Pieces({ onFenChange, variant = "standard" }) {
     const handleCancelImport = () => {
         setImportDialogOpen(false);
     };
+    
+    const handleMenuToggle = (e) => {
+        e.stopPropagation();
+        setIsMenuOpen(!isMenuOpen);
+    }
 
     const isCaptureMove = (file, rank) => {
         if (!selectedSquare) return false;
@@ -412,13 +459,15 @@ export function Pieces({ onFenChange, variant = "standard" }) {
         return legalMoves.some(m => m.slice(2, 4) === targetSquare);
     };
 
-    const copyFenToClipboard = async () => {
+    const copyFenToClipboard = async (e) => {
+        if (e) e.stopPropagation();
         if (!fen) return;
         try {
             await navigator.clipboard.writeText(fen);
         } catch (err) {
             console.error('Failed to copy FEN: ', err);
         }
+        setIsMenuOpen(false);
     };
 
     const promotionColor = fen && fen.split(' ')[1] === 'w' ? 'w' : 'b';
@@ -427,10 +476,13 @@ export function Pieces({ onFenChange, variant = "standard" }) {
         <div
             className="pieces"
             ref={ref}
-            onClick={handleSquareClick}
+            onClick={(e) => {
+                handleSquareClick(e);
+                if (isMenuOpen) setIsMenuOpen(false);
+            }}
             >
 
-            <div className="game-sidebar">
+            <div className="game-sidebar" onClick={e => e.stopPropagation()}>
                 <div className="move-history">
                     <div className="history-header">
                         Moves
@@ -457,28 +509,62 @@ export function Pieces({ onFenChange, variant = "standard" }) {
                         {UNDO_ICON}
                     </button>
                     <button 
-                        onClick={copyFenToClipboard}
-                        title="Export Game"
-                        className="control-button"
-                    >
-                        {EXPORT_ICON}
-                    </button>
-                    <button 
-                        onClick={handleImportClick}
-                        title="Import Game"
-                        className="control-button"
-                    >
-                        {IMPORT_ICON}
-                    </button>
-                    <button 
                         onClick={handleReset}
                         title="Reset Game"
                         className="control-button"
                     >
                         {RESET_ICON}
                     </button>
+                    <button 
+                        onClick={handleNewGameClick}
+                        title="New Game"
+                        className="control-button"
+                    >
+                        {NEW_GAME_ICON}
+                    </button>
+                    <button 
+                        onClick={handleMenuToggle}
+                        title="More"
+                        className="control-button"
+                    >
+                        {MORE_ICON}
+                    </button>
+
+                    {isMenuOpen && (
+                        <div className="more-menu-dropdown">
+                             <button className="menu-item" onClick={copyFenToClipboard}>
+                                {EXPORT_ICON} Export Game
+                             </button>
+                             <button className="menu-item" onClick={handleImportClick}>
+                                {IMPORT_ICON} Import Game
+                             </button>
+                        </div>
+                    )}
                 </div>
             </div>
+
+            {isNewGameDialogOpen && (
+                <div className="new-game-dialog-overlay" onClick={() => setNewGameDialogOpen(false)}>
+                    <div className="new-game-dialog" onClick={e => e.stopPropagation()}>
+                        <h2>New Game</h2>
+                        <div className="variants-grid">
+                            {VARIANTS.map(v => (
+                                <button
+                                    key={v.id}
+                                    className={`variant-select-btn ${variant === v.id ? 'active' : ''}`}
+                                    onClick={() => handleVariantSelect(v.id)}
+                                >
+                                    <span className="variant-icon">{v.icon}</span>
+                                    <span>{v.title}</span>
+                                </button>
+                            ))}
+                        </div>
+                        <div className="dialog-actions">
+                            <button className="cancel-btn" onClick={() => setNewGameDialogOpen(false)}>Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {isPromotionDialogOpen && <PromotionDialog onPromote={handlePromotion} onCancel={handleCancelPromotion} color={promotionColor} />}
             {isImportDialogOpen && <ImportDialog onImport={handleImport} onCancel={handleCancelImport} />}
