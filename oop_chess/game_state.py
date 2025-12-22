@@ -24,6 +24,7 @@ class GameState:
     halfmove_clock: int
     fullmove_count: int
     rules: "Rules"
+    repetition_count: int = 1
 
     STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     EMPTY_BOARD_FEN = "8/8/8/8/8/8/8/8 w KQkq - 0 1"

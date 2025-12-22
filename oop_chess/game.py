@@ -53,21 +53,23 @@ class Game:
         san = move.get_san(self)
 
         self.add_to_history()
-        self.state = self.rules.apply_move(move)
+        new_state = self.rules.apply_move(move)
+
+        current_fen_key = " ".join(new_state.fen.split()[:4])
+
+        count = 1
+        for past_state in self.history:
+            past_fen_key = " ".join(past_state.fen.split()[:4])
+            if past_fen_key == current_fen_key:
+                count += 1
+
+        self.state = replace(new_state, repetition_count=count)
+        self.state.rules.state = self.state
         self.rules = self.state.rules
 
-        # Checkmate/Check annotation relies on rules, but strictly for string formatting.
-        # We can keep this or remove it.
-        # The user said "remove all Game's references to methods/attributes of Rules"
-        # "Let all of that be accessed through game.rules"
-        # If I strictly follow this, I shouldn't even call rules inside take_turn?
-        # No, take_turn *requires* rules to transition state.
-        # But SAN generation checking is_checkmate might be crossing the line?
-        # Let's keep the SAN annotation logic minimal.
-        
         is_check = self.rules.is_check()
-        is_game_over = self.rules.get_game_over_reason() != GameOverReason.ONGOING
-        
+        is_game_over = self.rules.is_game_over()
+
         if is_game_over and is_check:
              san += "#"
         elif is_check:
@@ -89,13 +91,7 @@ class Game:
 
     @property
     def repetitions_of_position(self) -> int:
-        current_fen_key = " ".join(self.state.fen.split()[:4])
-        count = 1
-        for past_state in self.history:
-            past_fen_key = " ".join(past_state.fen.split()[:4])
-            if past_fen_key == current_fen_key:
-                count += 1
-        return count
+        return self.state.repetition_count
 
     @property
     def is_check(self) -> bool:
@@ -103,19 +99,15 @@ class Game:
 
     @property
     def is_checkmate(self) -> bool:
-        return self.rules.get_game_over_reason() == GameOverReason.CHECKMATE
+        return self.rules.is_checkmate
 
     @property
     def is_over(self) -> bool:
-        return self.rules.get_game_over_reason() != GameOverReason.ONGOING
+        return self.rules.is_game_over()
 
     @property
     def is_draw(self) -> bool:
-        return self.rules.get_game_over_reason() in (
-            GameOverReason.STALEMATE,
-            GameOverReason.REPETITION,
-            GameOverReason.FIFTY_MOVE_RULE,
-        ) or self.repetitions_of_position >= 3
+        return self.rules.is_draw
 
     @property
     def legal_moves(self) -> list[Move]:

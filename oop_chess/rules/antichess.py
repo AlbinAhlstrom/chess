@@ -43,6 +43,8 @@ class AntichessRules(StandardRules):
         return False
 
     def get_game_over_reason(self) -> GameOverReason:
+        if self.state.repetition_count >= 3:
+             return GameOverReason.REPETITION
         if not self.state.board.get_pieces(color=self.state.turn):
             return GameOverReason.ALL_PIECES_CAPTURED
         if not self.get_legal_moves():

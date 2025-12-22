@@ -35,6 +35,8 @@ class StandardRules(Rules):
         return self._is_color_in_check(self.state.board, self.state.turn)
 
     def get_game_over_reason(self) -> GameOverReason:
+        if self.state.repetition_count >= 3:
+            return GameOverReason.REPETITION
         if not self.get_legal_moves():
             if self.is_check():
                 return GameOverReason.CHECKMATE
@@ -169,24 +171,30 @@ class StandardRules(Rules):
         if isinstance(piece, Pawn) and abs(move.start.row - move.end.row) > 1:
             new_ep_square = move.end.adjacent(direction)
 
-        return GameState(
+        new_rules = self.__class__()
+        new_state = GameState(
             board=new_board,
             turn=self.state.turn.opposite,
             castling_rights=tuple(sorted(new_castling_rights, key=lambda x: x.value)),
             ep_square=new_ep_square,
             halfmove_clock=new_halfmove_clock,
             fullmove_count=new_fullmove_count,
-            rules=self
+            rules=new_rules,
+            repetition_count=1
         )
+        new_rules.state = new_state
+        return new_state
 
     def get_theoretical_moves(self) -> list[Move]:
         moves = []
         for sq, piece in self.state.board.board.items():
             if piece and piece.color == self.state.turn:
+                # Basic moves from piece moveset
                 for end in piece.theoretical_moves(sq):
                     moves.append(Move(sq, end))
 
                 if isinstance(piece, Pawn):
+                    # Double push
                     is_start_rank = (sq.row == 6 if piece.color == Color.WHITE else sq.row == 1)
                     if is_start_rank:
                         direction = piece.direction
@@ -194,19 +202,18 @@ class StandardRules(Rules):
                         two_step = one_step.get_step(direction) if one_step else None
                         if two_step:
                             moves.append(Move(sq, two_step))
+
+                    # Promotions
                     target_squares = []
                     if piece.color == Color.WHITE and sq.row == 1:
                         target_squares.append(sq.get_step(Direction.UP))
-                    elif piece.color == Color.BLACK and sq.row == 6:
-                        target_squares.append(sq.get_step(Direction.DOWN))
-                    if piece.color == Color.WHITE and sq.row == 1:
                         target_squares.extend([sq.get_step(Direction.UP_LEFT), sq.get_step(Direction.UP_RIGHT)])
                     elif piece.color == Color.BLACK and sq.row == 6:
+                        target_squares.append(sq.get_step(Direction.DOWN))
                         target_squares.extend([sq.get_step(Direction.DOWN_LEFT), sq.get_step(Direction.DOWN_RIGHT)])
+
                     for target_sq in target_squares:
-                        if target_sq is None:
-                            continue
-                        if target_sq.is_promotion_row(piece.color):
+                        if target_sq and target_sq.is_promotion_row(piece.color):
                             for promo_piece_type in [Queen, Rook, Bishop, Knight]:
                                 moves.append(Move(sq, target_sq, promo_piece_type(piece.color)))
 

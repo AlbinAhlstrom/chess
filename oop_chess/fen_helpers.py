@@ -82,7 +82,8 @@ def state_from_fen(fen: str) -> "GameState":
         en_passant,
         halfmove_clock,
         fullmove_count,
-        rules
+        rules,
+        repetition_count=1
     )
     rules.state = state
     return state

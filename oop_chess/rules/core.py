@@ -92,7 +92,28 @@ class Rules(ABC):
 
     def is_game_over(self) -> bool:
         """Returns True if the game is over."""
-        return self.get_game_over_reason() == GameOverReason.ONGOING
+        return self.get_game_over_reason() != GameOverReason.ONGOING
+
+    @property
+    def is_checkmate(self) -> bool:
+        """Returns True if the game is in checkmate."""
+        return self.get_game_over_reason() == GameOverReason.CHECKMATE
+
+    @property
+    def is_stalemate(self) -> bool:
+        """Returns True if the game is in stalemate."""
+        return self.get_game_over_reason() == GameOverReason.STALEMATE
+
+    @property
+    def is_draw(self) -> bool:
+        """Returns True if the game is a draw."""
+        return self.get_game_over_reason() in (
+            GameOverReason.STALEMATE,
+            GameOverReason.REPETITION,
+            GameOverReason.FIFTY_MOVE_RULE,
+            GameOverReason.MUTUAL_AGREEMENT,
+            GameOverReason.INSUFFICIENT_MATERIAL
+        )
 
     def is_legal(self, move: Move | None = None) -> bool:
         """
