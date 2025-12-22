@@ -342,5 +342,11 @@
         width: 100%;
         justify-content: center;
         order: 1;
+        gap: 15px;
+    }
+
+    .control-button {
+        width: 60px;
+        height: 50px;
     }
 }
