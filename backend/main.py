@@ -4,10 +4,12 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import json
+import asyncio
 
 from oop_chess.game import Game, IllegalMoveException
 from oop_chess.move import Move
 from oop_chess.square import Square
+from oop_chess.enums import Color
 from oop_chess.rules import (
     AntichessRules, StandardRules, AtomicRules, Chess960Rules,
     CrazyhouseRules, HordeRules, KingOfTheHillRules, RacingKingsRules,
@@ -34,6 +36,44 @@ app.add_middleware(
 
 
 games: dict[str, Game] = {}
+
+
+async def timeout_monitor():
+    """Background task to check for timeouts every 100ms."""
+    print("Timeout monitor started.")
+    while True:
+        try:
+            active_games = list(games.items())
+            for game_id, game in active_games:
+                if game.clocks and not game.is_over:
+                    current_clocks = game.get_current_clocks()
+                    for color, time_left in current_clocks.items():
+                        if time_left <= 0:
+                            print(f"Timeout detected for game {game_id}, color {color}")
+                            game.is_over_by_timeout = True
+                            winner = Color.WHITE if color == Color.BLACK else Color.BLACK
+                            
+                            await manager.broadcast(game_id, json.dumps({
+                                "type": "game_state",
+                                "fen": game.state.fen,
+                                "turn": game.state.turn.value,
+                                "is_over": True,
+                                "in_check": game.rules.is_check(),
+                                "winner": winner.value,
+                                "move_history": game.move_history,
+                                "clocks": {c.value: 0 if c == color else t for c, t in current_clocks.items()},
+                                "status": "timeout"
+                            }))
+            
+            await asyncio.sleep(0.1)
+        except Exception as e:
+            print(f"Error in timeout monitor: {e}")
+            await asyncio.sleep(1)
+
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(timeout_monitor())
 
 
 class ConnectionManager:
@@ -168,12 +208,13 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
             elif is_over:
                 status = "game_over"
             
-            # Check for timeout
-            if game.clocks:
-                for color, time_left in game.clocks.items():
+            # Check for timeout using live clock method
+            current_clocks = game.get_current_clocks()
+            if current_clocks:
+                for color, time_left in current_clocks.items():
                     if time_left <= 0:
                         status = "timeout"
-                        game.clocks[color] = 0 # Clamp to zero
+                        current_clocks[color] = 0
 
             await manager.broadcast(game_id, json.dumps({
                 "type": "game_state",
@@ -183,7 +224,7 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                 "in_check": game.rules.is_check(),
                 "winner": winner_color.value if winner_color else (game.state.turn.opposite.value if status == "timeout" else None),
                 "move_history": game.move_history,
-                "clocks": {c.value: t for c, t in game.clocks.items()} if game.clocks else None,
+                "clocks": {c.value: t for c, t in current_clocks.items()} if current_clocks else None,
                 "status": status
             }))
 

@@ -41,6 +41,7 @@ class Game:
         self.time_control = time_control # {starting_time: min, increment: sec}
         self.clocks = None
         self.last_move_at = None
+        self.is_over_by_timeout = False
         
         if self.time_control:
             start_sec = float(self.time_control['starting_time'] * 60)
@@ -58,6 +59,9 @@ class Game:
 
     def take_turn(self, move: Move):
         """Make a move by finding the corresponding legal move."""
+        if self.is_over_by_timeout:
+             raise IllegalMoveException("Game is over by timeout.")
+
         board_status = self.rules.validate_board_state()
         if board_status != BoardLegalityReason.VALID:
              raise IllegalBoardException(f"Board state is illegal. Reason: {board_status}")
@@ -105,6 +109,17 @@ class Game:
 
         self.move_history.append(san)
 
+    def get_current_clocks(self) -> Optional[Dict[Color, float]]:
+        """Returns the clocks accounting for time passed since the last move."""
+        if not self.clocks or self.last_move_at is None:
+            return self.clocks
+            
+        current_clocks = self.clocks.copy()
+        # Deduct time passed from the player currently on move
+        elapsed = time.perf_counter() - self.last_move_at
+        current_clocks[self.state.turn] = max(0.0, current_clocks[self.state.turn] - elapsed)
+        return current_clocks
+
     def undo_move(self) -> str:
         """Revert to the previous board state."""
         if not self.history:
@@ -131,7 +146,7 @@ class Game:
 
     @property
     def is_over(self) -> bool:
-        return self.rules.is_game_over()
+        return self.rules.is_game_over() or self.is_over_by_timeout
 
     @property
     def is_draw(self) -> bool:
