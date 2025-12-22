@@ -4,3 +4,5 @@ from .antichess import AntichessRules
 from .king_of_the_hill import KingOfTheHillRules
 from .three_check import ThreeCheckRules
 from .crazyhouse import CrazyhouseRules
+from .atomic import AtomicRules
+from .horde import HordeRules
