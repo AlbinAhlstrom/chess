@@ -1,4 +1,3 @@
-import pytest
 from oop_chess.game import Game
 from oop_chess.rules import AntichessRules
 from oop_chess.move import Move
@@ -13,12 +12,12 @@ def test_forced_sequence():
     # White must capture a2.
     fen = "1r6/8/8/8/8/8/p7/R7 w - - 0 1"
     game = Game(fen, rules=AntichessRules())
-    
+
     # White attempts non-capture
     assert not game.rules.validate_move(Move("a1b1")) == MoveLegalityReason.LEGAL
     # White captures
     game.take_turn(Move("a1a2"))
-    
+
     # Now Black's turn. Black R b8. White R a2.
     # b8xa2? No, R b8 -> a2 is not theoretical move?
     # R moves straight. b8->a2 is Knight move.
@@ -31,11 +30,11 @@ def test_king_capture():
     # White R a1. Black K a2.
     fen = "8/8/8/8/8/8/k7/R7 w - - 0 1"
     game = Game(fen, rules=AntichessRules())
-    
+
     # White MUST capture K.
-    assert game.rules.validate_move(Move("a1a2")) == MoveLegalityReason.LEGAL    
+    assert game.rules.validate_move(Move("a1a2")) == MoveLegalityReason.LEGAL
     game.take_turn(Move("a1a2"))
-    
+
     assert game.state.board.get_piece("a2").color == "w"
     # Black has no King. Game continues?
     # In Antichess, King is not royal. Losing King is fine.
