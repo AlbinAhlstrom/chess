@@ -123,7 +123,8 @@ export function Pieces({ onFenChange, variant = "standard" }) {
         
         gameStartSound.current.play().catch(e => console.error("Error playing game start sound:", e));
 
-        ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/${newGameId}`);
+        const wsBase = process.env.REACT_APP_WS_URL || "ws://127.0.0.1:8000/ws";
+        ws.current = new WebSocket(`${wsBase}/${newGameId}`);
 
         ws.current.onmessage = (event) => {
             const message = JSON.parse(event.data);
