@@ -5,3 +5,4 @@ clean_comments.py
 AGENTS.md
 oop_chess_engine.egg-info/
 *.md
+*.db
