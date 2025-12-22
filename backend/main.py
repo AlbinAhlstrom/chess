@@ -108,9 +108,8 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
     try:
         game = get_game(game_id)
 
-        reason = game.rules.get_game_over_reason()
         winner_color = game.rules.get_winner()
-        is_over = reason != GameOverReason.ONGOING or game.repetitions_of_position >= 3
+        is_over = game.rules.is_game_over()
 
         await manager.broadcast(game_id, json.dumps({
             "type": "game_state",
@@ -143,14 +142,13 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                     await websocket.send_text(json.dumps({"type": "error", "message": str(e)}))
                     continue
 
-            reason = game.rules.get_game_over_reason()
             winner_color = game.rules.get_winner()
-            is_over = reason != GameOverReason.ONGOING or game.repetitions_of_position >= 3
+            is_over = game.rules.is_game_over()
 
             status = "active"
-            if reason == GameOverReason.CHECKMATE:
+            if game.rules.is_checkmate:
                 status = "checkmate"
-            elif (reason in (GameOverReason.STALEMATE, GameOverReason.FIFTY_MOVE_RULE) or game.repetitions_of_position >= 3):
+            elif game.rules.is_draw:
                 status = "draw"
 
             await manager.broadcast(game_id, json.dumps({
