@@ -6,7 +6,6 @@ from pydantic import BaseModel
 import json
 
 from oop_chess.game import Game, IllegalMoveException
-from oop_chess.board import Board
 from oop_chess.move import Move
 from oop_chess.square import Square
 from oop_chess.rules import (
@@ -14,16 +13,15 @@ from oop_chess.rules import (
     CrazyhouseRules, HordeRules, KingOfTheHillRules, RacingKingsRules,
     ThreeCheckRules
 )
-from oop_chess.enums import GameOverReason
 
 
 app = FastAPI()
 
 origins = [
+    "https://v-chess.com",
+    "https://www.v-chess.com",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000"
 ]
 
 app.add_middleware(
