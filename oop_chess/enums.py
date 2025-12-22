@@ -55,18 +55,6 @@ class GameOverReason(StrEnum):
     INSUFFICIENT_MATERIAL = "insufficient material"
 
 
-class State(Enum):
-    """The state of the game."""
-    ONGOING = auto()
-    CHECKMATE = auto()
-    STALEMATE = auto()
-    INSUFFICIENT_MATERIAL = auto()
-    SEVENTYFIVE_MOVES = auto()
-    FIVEFOLD_REPETITION = auto()
-    FIFTY_MOVES = auto()
-    THREEFOLD_REPETITION = auto()
-
-
 class Color(StrEnum):
     """Piece/player color."""
 
