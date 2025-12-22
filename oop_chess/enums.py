@@ -158,62 +158,56 @@ class CastlingRight(StrEnum):
     WHITE_LONG = "Q"
     BLACK_LONG = "q"
     NONE = "-"
+    
+    WA = "A"; WB = "B"; WC = "C"; WD = "D"; WE = "E"; WF = "F"; WG = "G"; WH = "H"
+    BA = "a"; BB = "b"; BC = "c"; BD = "d"; BE = "e"; BF = "f"; BG = "g"; BH = "h"
 
     @property
     def expected_rook_square(self) -> Square:
         from oop_chess.square import Square
-        match self:
-            case CastlingRight.WHITE_SHORT:
-                return Square("h1")
-            case CastlingRight.WHITE_LONG:
-                return Square("a1")
-            case CastlingRight.BLACK_SHORT:
-                return Square("h8")
-            case CastlingRight.BLACK_LONG:
-                return Square("a8")
-            case CastlingRight.NONE:
-                return Square(None)
+        if self == CastlingRight.WHITE_SHORT: return Square("h1")
+        if self == CastlingRight.WHITE_LONG: return Square("a1")
+        if self == CastlingRight.BLACK_SHORT: return Square("h8")
+        if self == CastlingRight.BLACK_LONG: return Square("a8")
+        if self == CastlingRight.NONE: return Square(None)
+        
+        val = self.value
+        col = ord(val.lower()) - ord('a')
+        row = 7 if val.isupper() else 0
+        return Square(row, col)
 
     @property
     def expected_king_square(self) -> Square:
         from oop_chess.square import Square
-        match self:
-            case CastlingRight.WHITE_SHORT | CastlingRight.WHITE_LONG:
-                return Square("e1")
-            case CastlingRight.BLACK_SHORT | CastlingRight.BLACK_LONG:
-                return Square("e8")
-            case CastlingRight.NONE:
-                return Square(None)
+        if self.value.isupper():
+            return Square("e1")
+        if self.value.islower():
+            return Square("e8")
+        return Square(None)
 
     @property
     def color(self) -> Color:
-        match self:
-            case CastlingRight.WHITE_SHORT | CastlingRight.WHITE_LONG:
-                return Color.WHITE
-            case CastlingRight.BLACK_SHORT | CastlingRight.BLACK_LONG:
-                return Color.BLACK
-            case CastlingRight.NONE:
-                raise ValueError("CastlingRight.NONE has no associated color")
+        if self == CastlingRight.NONE:
+            raise ValueError("CastlingRight.NONE has no associated color")
+        return Color.WHITE if self.value.isupper() else Color.BLACK
 
     @classmethod
     def short(cls, color: Color) -> CastlingRight:
-        """Return short castling right by color"""
-        if color == Color.WHITE:
-            return cls.WHITE_SHORT
-        return cls.BLACK_SHORT
+        return cls.WHITE_SHORT if color == Color.WHITE else cls.BLACK_SHORT
 
     @classmethod
     def long(cls, color: Color) -> CastlingRight:
-        """Return long castling right by color"""
-        if color == Color.WHITE:
-            return cls.WHITE_LONG
-        return cls.BLACK_LONG
+        return cls.WHITE_LONG if color == Color.WHITE else cls.BLACK_LONG
 
     @classmethod
     def from_fen(cls, fen_castling_string: str) -> tuple[CastlingRight, ...]:
         if not fen_castling_string or fen_castling_string == "-":
             return tuple()
-        return tuple(cls(char) for char in fen_castling_string)
+        rights = []
+        for char in fen_castling_string:
+            try: rights.append(cls(char))
+            except ValueError: pass
+        return tuple(rights)
 
 
 class Direction(Enum):

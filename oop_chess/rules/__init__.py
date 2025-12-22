@@ -7,3 +7,4 @@ from .crazyhouse import CrazyhouseRules
 from .atomic import AtomicRules
 from .horde import HordeRules
 from .racing_kings import RacingKingsRules
+from .chess960 import Chess960Rules
