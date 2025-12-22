@@ -14,7 +14,7 @@ class Base(DeclarativeBase):
 
 class GameModel(Base):
     __tablename__ = "games"
-    
+
     id: Mapped[str] = mapped_column(String, primary_key=True)
     variant: Mapped[str] = mapped_column(String)
     fen: Mapped[str] = mapped_column(String)

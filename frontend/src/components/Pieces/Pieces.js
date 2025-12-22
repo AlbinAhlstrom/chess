@@ -209,22 +209,13 @@ export function Pieces({ onFenChange, variant = "standard" }) {
 
     const initializeGame = async (fenToLoad = null, variantToLoad = null, tc = null) => {
         const timeControl = tc || (isTimeControlEnabled ? { starting_time: startingTime, increment: increment } : null);
-        const { game_id: newGameId, fen: initialFen } = await createGame(variantToLoad || variant, fenToLoad, timeControl);
-        setFen(initialFen);
-        setGameId(newGameId);
-        setMoveHistory([]);
-        setLegalMoves([]);
-        setSelectedSquare(null);
-        setInCheck(false);
-        setFlashKingSquare(null);
-        setTimers(null);
-        setTurn('w');
-        if (highlightRef.current) highlightRef.current.style.display = 'none';
-        
-        gameStartSound.current.play().catch(e => console.error("Error playing game start sound:", e));
-
-        navigate(`/game/${newGameId}`, { replace: true });
-        connectWebSocket(newGameId);
+        try {
+            const { game_id: newGameId } = await createGame(variantToLoad || variant, fenToLoad, timeControl);
+            gameStartSound.current.play().catch(e => console.error("Error playing game start sound:", e));
+            navigate(`/game/${newGameId}`, { replace: true });
+        } catch (error) {
+            console.error("Failed to create new game:", error);
+        }
     };
 
     const loadExistingGame = async (id) => {
