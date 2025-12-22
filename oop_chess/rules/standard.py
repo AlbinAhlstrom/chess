@@ -237,8 +237,9 @@ class StandardRules(Rules):
 
                 if p_type == King:
                     row = 7 if turn == Color.WHITE else 0
-                    yield Move(sq, Square(row, 6))
-                    yield Move(sq, Square(row, 2))
+                    if sq == Square(row, 4):
+                        yield Move(sq, Square(row, 6))
+                        yield Move(sq, Square(row, 2))
                 
                 temp_mask &= temp_mask - 1
 
@@ -335,7 +336,7 @@ class StandardRules(Rules):
 
         rook_piece = self.state.board.get_piece(rook_start_square)
         if not (rook_piece and isinstance(rook_piece, Rook) and rook_piece.color == piece.color):
-            raise AttributeError("No rook found on expected square")
+            return MoveLegalityReason.NO_CASTLING_RIGHT
 
         for sq in squares_to_check_occupancy:
             if self.state.board.get_piece(sq) is not None:

@@ -78,7 +78,7 @@ class HordeRules(StandardRules):
                 return self.GameOverReason.STALEMATE
 
         res = super().get_game_over_reason()
-        if res == GameOverReason.ONGOING:
+        if str(res.value) == str(GameOverReason.ONGOING.value):
             return self.GameOverReason.ONGOING
             
         try:

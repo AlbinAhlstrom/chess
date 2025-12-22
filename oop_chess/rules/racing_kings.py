@@ -63,11 +63,10 @@ class RacingKingsRules(StandardRules):
                 return self.GameOverReason.KING_TO_EIGHTH_RANK
 
         # Standard rules (repetition, 50-move, stalemate)
-        # We must map the result to OUR GameOverReason if super() returns something
         res = super().get_game_over_reason()
 
-        # If super says ONGOING, we return OUR ONGOING
-        if res == GameOverReason.ONGOING:
+        # Compare values to avoid Enum class mismatch issues
+        if str(res.value) == str(GameOverReason.ONGOING.value):
             return self.GameOverReason.ONGOING
 
         # Map other reasons (STALEMATE, REPETITION, etc.)
