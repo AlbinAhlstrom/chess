@@ -2,10 +2,8 @@
 const getApiBase = () => {
     if (process.env.REACT_APP_API_URL) return process.env.REACT_APP_API_URL;
     
-    // In production, default to the known API subdomain.
     const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
     if (isProd) {
-        // You can change this to your actual production API URL
         return `https://api.v-chess.com/api`;
     }
     return `http://localhost:8000/api`;
@@ -23,7 +21,6 @@ export const getWsBase = () => {
 };
 
 const API_BASE = getApiBase();
-const AUTH_BASE = API_BASE.replace('/api', '/auth');
 
 export const getAllLegalMoves = async (gameId) => {
     const res = await fetch(`${API_BASE}/moves/all_legal`, {
@@ -74,8 +71,11 @@ export const getMe = async () => {
 };
 
 export const getAuthLinks = () => {
+    // Explicitly use the API subdomain for auth routes
+    const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+    const base = isProd ? "https://api.v-chess.com/auth" : "http://localhost:8000/auth";
     return {
-        loginLink: `${AUTH_BASE}/login`,
-        logoutLink: `${AUTH_BASE}/logout`
+        loginLink: `${base}/login`,
+        logoutLink: `${base}/logout`
     };
 };
