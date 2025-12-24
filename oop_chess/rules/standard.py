@@ -217,23 +217,32 @@ class StandardRules(Rules):
                     if is_start_rank:
                         direction = piece.direction
                         one_step = sq.get_step(direction)
-                        two_step = one_step.get_step(direction) if one_step else None
-                        if two_step:
+                        two_step = one_step.get_step(direction) if one_step and not one_step.is_none_square else None
+                        if two_step and not two_step.is_none_square:
                             yield Move(sq, two_step)
 
-                    # Promotions
-                    target_squares = []
-                    if turn == Color.WHITE and sq.row == 1:
-                        target_squares.append(sq.get_step(Direction.UP))
-                        target_squares.extend([sq.get_step(Direction.UP_LEFT), sq.get_step(Direction.UP_RIGHT)])
-                    elif turn == Color.BLACK and sq.row == 6:
-                        target_squares.append(sq.get_step(Direction.DOWN))
-                        target_squares.extend([sq.get_step(Direction.DOWN_LEFT), sq.get_step(Direction.DOWN_RIGHT)])
+                    # Promotions and normal pawn moves
+                    is_pre_promotion_rank = (sq.row == 1 if turn == Color.WHITE else sq.row == 6)
+                    
+                    if is_pre_promotion_rank:
+                        target_squares = []
+                        if turn == Color.WHITE:
+                            target_squares.append(sq.get_step(Direction.UP))
+                            target_squares.extend([sq.get_step(Direction.UP_LEFT), sq.get_step(Direction.UP_RIGHT)])
+                        else:
+                            target_squares.append(sq.get_step(Direction.DOWN))
+                            target_squares.extend([sq.get_step(Direction.DOWN_LEFT), sq.get_step(Direction.DOWN_RIGHT)])
 
-                    for target_sq in target_squares:
-                        if target_sq and target_sq.is_promotion_row(turn):
-                            for promo_piece_type in [Queen, Rook, Bishop, Knight]:
-                                yield Move(sq, target_sq, promo_piece_type(turn))
+                        for target_sq in target_squares:
+                            if target_sq and not target_sq.is_none_square and target_sq.is_promotion_row(turn):
+                                for promo_piece_type in [Queen, Rook, Bishop, Knight]:
+                                    yield Move(sq, target_sq, promo_piece_type(turn))
+                    else:
+                        # Standard moves already handled by piece.theoretical_moves(sq)
+                        # but that includes diagonal squares. Standard pawn logic needs targets.
+                        # Wait, StandardRules uses pieces theoretical_moves.
+                        # For Pawn, theoretical_moves returns UP, UP_LEFT, UP_RIGHT (if white).
+                        pass
 
                 if p_type == King:
                     row = 7 if turn == Color.WHITE else 0
