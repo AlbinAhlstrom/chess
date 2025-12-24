@@ -606,6 +606,40 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                     await websocket.send_text(json.dumps({"type": "error", "message": str(e)}))
                     continue
 
+            elif message["type"] == "resign":
+                if user_id in [white_player_id, black_player_id]:
+                    game.is_over_by_timeout = True # Mark as over
+                    # Determine winner
+                    if user_id == white_player_id:
+                        game.winner = Color.BLACK.value
+                    else:
+                        game.winner = Color.WHITE.value
+                    
+                    await save_game_to_db(game_id)
+                    await manager.broadcast(game_id, json.dumps({
+                        "type": "game_state",
+                        "fen": game.state.fen,
+                        "turn": game.state.turn.value,
+                        "is_over": True,
+                        "winner": game.winner,
+                        "status": "resign"
+                    }))
+
+            elif message["type"] == "draw_offer":
+                if user_id in [white_player_id, black_player_id]:
+                    # Broadcast offer to both (so UI can show 'Draw Offered')
+                    await manager.broadcast(game_id, json.dumps({
+                        "type": "draw_offered",
+                        "by_user_id": user_id
+                    }))
+
+            elif message["type"] == "takeback_offer":
+                if user_id in [white_player_id, black_player_id]:
+                    await manager.broadcast(game_id, json.dumps({
+                        "type": "takeback_offered",
+                        "by_user_id": user_id
+                    }))
+
             winner_color = game.rules.get_winner()
             is_over = game.rules.is_game_over()
 

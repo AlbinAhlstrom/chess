@@ -45,6 +45,18 @@ const MORE_ICON = (
     </svg>
 );
 
+const DRAW_ICON = (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" style={{ width: 'var(--button-icon-size)', height: 'var(--button-icon-size)' }}>
+        <path d="M256 48C141.1 48 48 141.1 48 256s93.1 208 208 208 208-93.1 208-208S370.9 48 256 48zm0 384c-97.1 0-176-78.9-176-176S158.9 80 256 80s176 78.9 176 176-78.9 176-176 176zm-48-176c0-26.5 21.5-48 48-48s48 21.5 48 48-21.5 48-48 48-48-21.5-48-48z"/>
+    </svg>
+);
+
+const RESIGN_ICON = (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" style={{ width: 'var(--button-icon-size)', height: 'var(--button-icon-size)' }}>
+        <path d="M440.5 34.2c-16.5-13.1-40.4-10.4-53.7 6.1L216 256l-84.8-106.1c-13.3-16.6-37.2-19.2-53.7-6.1-16.5 13.1-19.2 37.1-6.1 53.7L162.1 312l-90.7 113.4c-13.1 16.5-10.4 40.4 6.1 53.7 16.5 13.1 40.4 10.4 53.7-6.1L216 368l84.8 106.1c13.3 16.6 37.2 19.2 53.7 6.1 16.5-13.1 19.2-37.1 6.1-53.7L269.9 312l90.7-113.4c13.1-16.5 10.4-40.4-6.1-53.7z"/>
+    </svg>
+);
+
 const VARIANTS = [
     { id: 'standard', title: 'Standard', icon: '♟️' },
     { id: 'antichess', title: 'Antichess', icon: '🚫' },
@@ -585,9 +597,25 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     const handleUndo = (e) => {
         e.stopPropagation();
         if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-            ws.current.send(JSON.stringify({ type: "undo" }));
+            ws.current.send(JSON.stringify({ type: matchmaking ? "takeback_offer" : "undo" }));
         }
         setIsMenuOpen(false);
+    };
+
+    const handleResign = (e) => {
+        e.stopPropagation();
+        if (window.confirm("Are you sure you want to surrender?")) {
+            if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+                ws.current.send(JSON.stringify({ type: "resign" }));
+            }
+        }
+    };
+
+    const handleOfferDraw = (e) => {
+        e.stopPropagation();
+        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+            ws.current.send(JSON.stringify({ type: "draw_offer" }));
+        }
     };
 
     const handleImportClick = (e) => {
@@ -665,27 +693,55 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                 </div>
 
                 <div className="game-controls">
-                    <button 
-                        onClick={handleUndo}
-                        title="Undo"
-                        className="control-button"
-                    >
-                        {UNDO_ICON}
-                    </button>
-                    <button 
-                        onClick={handleReset}
-                        title="Reset Game"
-                        className="control-button"
-                    >
-                        {RESET_ICON}
-                    </button>
-                    <button 
-                        onClick={handleNewGameClick}
-                        title="New Game"
-                        className="control-button"
-                    >
-                        {NEW_GAME_ICON}
-                    </button>
+                    {matchmaking ? (
+                        <>
+                            <button 
+                                onClick={handleUndo}
+                                title="Offer Takeback"
+                                className="control-button"
+                            >
+                                {UNDO_ICON}
+                            </button>
+                            <button 
+                                onClick={handleOfferDraw}
+                                title="Offer Draw"
+                                className="control-button"
+                            >
+                                {DRAW_ICON}
+                            </button>
+                            <button 
+                                onClick={handleResign}
+                                title="Surrender"
+                                className="control-button"
+                            >
+                                {RESIGN_ICON}
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button 
+                                onClick={handleUndo}
+                                title="Undo"
+                                className="control-button"
+                            >
+                                {UNDO_ICON}
+                            </button>
+                            <button 
+                                onClick={handleReset}
+                                title="Reset Game"
+                                className="control-button"
+                            >
+                                {RESET_ICON}
+                            </button>
+                            <button 
+                                onClick={handleNewGameClick}
+                                title="New Game"
+                                className="control-button"
+                            >
+                                {NEW_GAME_ICON}
+                            </button>
+                        </>
+                    )}
                     <button 
                         onClick={handleMenuToggle}
                         title="More"
