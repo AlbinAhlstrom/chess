@@ -110,7 +110,11 @@ html,body, #root {
 
     .App {
         padding: 0;
-        display: block;
+        padding-top: 46px; /* Reduced padding for mobile header */
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
         overflow-x: hidden;
     }
 
@@ -121,11 +125,5 @@ html,body, #root {
 
     .squares {
         border-radius: 0;
-    }
-}
-
-@media (max-width: 450px) {
-    .App {
-        padding-top: 0;
     }
 }
