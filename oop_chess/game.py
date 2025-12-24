@@ -67,8 +67,8 @@ class Game:
 
     def take_turn(self, move: Move):
         """Make a move by finding the corresponding legal move."""
-        if self.is_over_by_timeout:
-             raise IllegalMoveException("Game is over by timeout.")
+        if self.is_over:
+             raise IllegalMoveException("Game is over.")
 
         board_status = self.rules.validate_board_state()
         if board_status != BoardLegalityReason.VALID:
