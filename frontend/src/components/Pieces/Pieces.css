@@ -200,7 +200,11 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 10px; /* Reduced from 20px */
+}
+
+.color-selection-container label {
+    margin-bottom: 5px !important; /* Reduced from 10px */
 }
 
 .variant-select-btn {

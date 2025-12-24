@@ -63,7 +63,7 @@
 .lobby-actions {
     display: flex;
     gap: 15px;
-    margin-top: 20px;
+    margin-top: 13px; /* Reduced from 20px by ~33% */
 }
 
 .create-button, .otb-button {
