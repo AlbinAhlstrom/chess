@@ -14,9 +14,9 @@ function Piece({ piece, file, rank, actualFile, actualRank, onDragStartCallback,
         '--piece-image': `url("/images/pieces/${piece}.png")`
     };
 
-    const handleMouseDown = (e) => {
-        // Prevent default to avoid native drag or text selection
-        e.preventDefault();
+    const startDrag = (e) => {
+        // Prevent default to avoid native drag, text selection, or scrolling on touch
+        if (e.cancelable) e.preventDefault();
 
         // 1. Notify start
         if (onDragStartCallback) {
@@ -26,6 +26,10 @@ function Piece({ piece, file, rank, actualFile, actualRank, onDragStartCallback,
         if (isCapture) {
             return;
         }
+
+        // Get initial coordinates (handle both mouse and touch)
+        const clientX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
 
         // 2. Create custom ghost (fully opaque)
         const rect = e.target.getBoundingClientRect();
@@ -40,8 +44,8 @@ function Piece({ piece, file, rank, actualFile, actualRank, onDragStartCallback,
         ghost.style.width = `${rect.width}px`;
         ghost.style.height = `${rect.height}px`;
         ghost.style.backgroundImage = pieceStyle['--piece-image'];
-        ghost.style.left = `${e.clientX - offsetX}px`;
-        ghost.style.top = `${e.clientY - offsetY}px`;
+        ghost.style.left = `${clientX - offsetX}px`;
+        ghost.style.top = `${clientY - offsetY}px`;
         
         document.body.appendChild(ghost);
         ghostRef.current = ghost;
@@ -53,20 +57,29 @@ function Piece({ piece, file, rank, actualFile, actualRank, onDragStartCallback,
         document.body.style.cursor = "grabbing";
 
         // 5. Define handlers
-        const handleMouseMove = (moveEvent) => {
+        const handleMove = (moveEvent) => {
+            const mClientX = moveEvent.type.startsWith('touch') ? moveEvent.touches[0].clientX : moveEvent.clientX;
+            const mClientY = moveEvent.type.startsWith('touch') ? moveEvent.touches[0].clientY : moveEvent.clientY;
+
             if (ghostRef.current) {
-                ghostRef.current.style.left = `${moveEvent.clientX - offsetX}px`;
-                ghostRef.current.style.top = `${moveEvent.clientY - offsetY}px`;
+                ghostRef.current.style.left = `${mClientX - offsetX}px`;
+                ghostRef.current.style.top = `${mClientY - offsetY}px`;
             }
             if (onDragHoverCallback) {
-                onDragHoverCallback(moveEvent.clientX, moveEvent.clientY);
+                onDragHoverCallback(mClientX, mClientY);
             }
         };
 
-        const handleMouseUp = (upEvent) => {
+        const handleEnd = (endEvent) => {
+            // Get last known coordinates from touch/mouse
+            const endX = endEvent.type.startsWith('touch') ? endEvent.changedTouches[0].clientX : endEvent.clientX;
+            const endY = endEvent.type.startsWith('touch') ? endEvent.changedTouches[0].clientY : endEvent.clientY;
+
             // Cleanup listeners
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
+            document.removeEventListener('mousemove', handleMove);
+            document.removeEventListener('mouseup', handleEnd);
+            document.removeEventListener('touchmove', handleMove);
+            document.removeEventListener('touchend', handleEnd);
 
             // Cleanup ghost
             if (ghostRef.current) {
@@ -83,8 +96,8 @@ function Piece({ piece, file, rank, actualFile, actualRank, onDragStartCallback,
             // Notify drop
             if (onDropCallback) {
                 onDropCallback({
-                    clientX: upEvent.clientX,
-                    clientY: upEvent.clientY,
+                    clientX: endX,
+                    clientY: endY,
                     piece,
                     file: realFile,
                     rank: realRank
@@ -103,15 +116,18 @@ function Piece({ piece, file, rank, actualFile, actualRank, onDragStartCallback,
         };
 
         // Attach global listeners
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
+        document.addEventListener('mousemove', handleMove);
+        document.addEventListener('mouseup', handleEnd);
+        document.addEventListener('touchmove', handleMove, { passive: false });
+        document.addEventListener('touchend', handleEnd);
     };
 
     return (
         <div
             className="piece"
-            style={pieceStyle}
-            onMouseDown={handleMouseDown}
+            style={{...pieceStyle, touchAction: 'none'}}
+            onMouseDown={startDrag}
+            onTouchStart={startDrag}
             onClick={(e) => {
                 if (!isCapture) {
                     e.stopPropagation();
