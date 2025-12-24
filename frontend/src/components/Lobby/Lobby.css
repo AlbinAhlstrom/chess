@@ -86,3 +86,13 @@
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+.cancel-seek-btn {
+    background-color: #d32f2f !important;
+    color: white !important;
+    border-color: #b71c1c !important;
+}
+
+.cancel-seek-btn:hover {
+    background-color: #e53935 !important;
+}

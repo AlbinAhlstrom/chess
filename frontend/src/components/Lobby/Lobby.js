@@ -68,6 +68,15 @@ function Lobby() {
         }
     };
 
+    const cancelSeek = (seekId) => {
+        if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+            socketRef.current.send(JSON.stringify({
+                type: "cancel_seek",
+                seek_id: seekId
+            }));
+        }
+    };
+
     return (
         <div className="lobby-container">
             <h1>Game Lobby</h1>
@@ -110,12 +119,21 @@ function Lobby() {
                                     <td>{seek.variant}</td>
                                     <td>{seek.time_control.limit / 60}+{seek.time_control.increment}</td>
                                     <td>
-                                        <button 
-                                            onClick={() => joinSeek(seek.id)}
-                                            disabled={user && seek.user_id === user.id}
-                                        >
-                                            Join
-                                        </button>
+                                        {user && seek.user_id === user.id ? (
+                                            <button 
+                                                onClick={() => cancelSeek(seek.id)}
+                                                className="cancel-seek-btn"
+                                            >
+                                                Cancel
+                                            </button>
+                                        ) : (
+                                            <button 
+                                                onClick={() => joinSeek(seek.id)}
+                                                disabled={!user}
+                                            >
+                                                Join
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))}
