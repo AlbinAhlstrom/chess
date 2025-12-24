@@ -247,6 +247,9 @@ seeks: dict[str, dict] = {}
 @app.websocket("/ws/lobby")
 async def lobby_websocket(websocket: WebSocket):
     await manager.connect_lobby(websocket)
+    user_session = websocket.session.get("user")
+    current_user_id = user_session.get("id") if user_session else None
+
     try:
         # Send initial seek list
         await websocket.send_text(json.dumps({
@@ -261,9 +264,19 @@ async def lobby_websocket(websocket: WebSocket):
             if message["type"] == "create_seek":
                 seek_id = str(uuid4())
                 user = message.get("user")
+                
+                # Verify the creator matches the session
+                if current_user_id and user and user.get("id") != current_user_id:
+                     # spoofing attempt or inconsistent state
+                     print(f"WARNING: User {current_user_id} tried to create seek as {user.get('id')}")
+                     # Force use of session ID
+                     seek_user_id = current_user_id
+                else:
+                     seek_user_id = user.get("id") if user else None
+
                 seek_data = {
                     "id": seek_id,
-                    "user_id": user.get("id") if user else None,
+                    "user_id": seek_user_id,
                     "user_name": user.get("name") if user else "Anonymous",
                     "variant": message.get("variant", "standard"),
                     "time_control": message.get("time_control"),
@@ -278,11 +291,16 @@ async def lobby_websocket(websocket: WebSocket):
             elif message["type"] == "cancel_seek":
                 seek_id = message.get("seek_id")
                 if seek_id in seeks:
-                    del seeks[seek_id]
-                    await manager.broadcast_lobby(json.dumps({
-                        "type": "seek_removed",
-                        "seek_id": seek_id
-                    }))
+                    seek = seeks[seek_id]
+                    # Validate ownership
+                    if seek["user_id"] == current_user_id:
+                        del seeks[seek_id]
+                        await manager.broadcast_lobby(json.dumps({
+                            "type": "seek_removed",
+                            "seek_id": seek_id
+                        }))
+                    else:
+                        print(f"WARNING: User {current_user_id} attempted to cancel seek {seek_id} owned by {seek['user_id']}")
 
             elif message["type"] == "join_seek":
                 try:
