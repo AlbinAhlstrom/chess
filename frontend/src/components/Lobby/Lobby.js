@@ -53,6 +53,7 @@ function Lobby() {
         socket.onmessage = (event) => {
             const data = JSON.parse(event.data);
             if (data.type === "seeks") {
+                console.log("Initial seeks received:", data.seeks);
                 setSeeks(data.seeks);
             } else if (data.type === "seek_created") {
                 setSeeks(prev => [...prev, data.seek]);
