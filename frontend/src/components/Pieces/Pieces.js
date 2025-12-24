@@ -127,6 +127,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     // Effect to handle board flipping and player names once both user and game data are available
     useEffect(() => {
         if (matchmaking && user && (whitePlayerId || blackPlayerId)) {
+            console.log(`Setting up matchmaking game. UserID: ${user.id}, White: ${whitePlayerId}, Black: ${blackPlayerId}`);
             if (user.id === blackPlayerId) {
                 setFlippedCombined(true);
                 setPlayerName(user.name);
@@ -212,9 +213,16 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                     console.log("Timeout detected!");
                     gameEndSound.current.play().catch(e => console.error("Error playing game end sound:", e));
                 }
+                if (message.status === "timeout") {
+                    console.log("Timeout detected!");
+                    gameEndSound.current.play().catch(e => console.error("Error playing game end sound:", e));
+                }
             } else if (message.type === "takeback_offered") {
+                console.log("Received takeback_offered:", message);
+                console.log(`My User ID: ${user?.id}, Offered by: ${message.by_user_id}`);
                 setTakebackOffer({ by_user_id: message.by_user_id });
             } else if (message.type === "takeback_cleared") {
+                console.log("Received takeback_cleared");
                 setTakebackOffer(null);
             } else if (message.type === "error") {
                 console.error("WebSocket error:", message.message);
