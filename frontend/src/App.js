@@ -3,6 +3,7 @@ import Board from './components/Board/Board.js';
 import { Pieces } from './components/Pieces/Pieces.js';
 import { useCallback, useState, useEffect } from 'react';
 import Lobby from './components/Lobby/Lobby.js';
+import Profile from './components/Profile/Profile.js';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { getMe, getAuthLinks } from './api.js';
 
@@ -42,7 +43,9 @@ function Header() {
       <div className="auth-section">
         {user ? (
           <div className="user-profile">
-            <img src={user.picture} alt={user.name} className="header-avatar" title={user.name} />
+            <Link to="/profile">
+              <img src={user.picture} alt={user.name} className="header-avatar" title={user.name} />
+            </Link>
             <a className="header-auth-link" href={logoutLink}>Logout</a>
           </div>
         ) : (
@@ -92,6 +95,7 @@ function App() {
         <Route path="/racingkings" element={<GameBoard variant="racingkings" />} />
         <Route path="/threecheck" element={<GameBoard variant="threecheck" />} />
         <Route path="/game/:gameId" element={<GameBoard />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </BrowserRouter>
   );

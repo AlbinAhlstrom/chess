@@ -107,6 +107,11 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     const [user, setUser] = useState(null);
     const [isFlipped, setIsFlippedLocal] = useState(false);
 
+    const getAutoPromotePreference = () => {
+        const saved = localStorage.getItem('autoPromoteToQueen');
+        return saved !== null ? JSON.parse(saved) : true;
+    };
+
     const setFlippedCombined = (val) => {
         setIsFlippedLocal(val);
         if (setFlipped) setFlipped(val);
@@ -414,6 +419,20 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
             return;
         }
 
+        // If auto-promote is OFF, check for promotion to show dialog
+        if (!getAutoPromotePreference()) {
+            const actualPiece = position[rank][file];
+            const isPawn = actualPiece?.toLowerCase() === 'p';
+            const isWhite = actualPiece === 'P';
+            const isPromotionRow = isWhite ? toRank === 0 : toRank === 7;
+            
+            if (isPawn && isPromotionRow) {
+                setPromotionMove({ from: fromSquare, to: toSquare });
+                setPromotionDialogOpen(true);
+                return;
+            }
+        }
+
         try {
             const moveUci = `${fromSquare}${toSquare}`;
             if (ws.current && ws.current.readyState === WebSocket.OPEN) {
@@ -506,10 +525,26 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
             });
 
             if (movesToTarget.length > 0) {
-                // Just send the base move (length 4), backend handles auto-promotion
-                const moveUci = movesToTarget[0].slice(0, 4);
-                if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-                    ws.current.send(JSON.stringify({ type: "move", uci: moveUci }));
+                // Check if we should show promotion dialog
+                let shouldShowDialog = false;
+                
+                if (!getAutoPromotePreference()) {
+                    const { file: fromFile, rank: fromRank } = algebraicToCoords(selectedSquare);
+                    const startPiece = position[fromRank][fromFile];
+                    const isPawn = startPiece?.toLowerCase() === 'p';
+                    const isWhite = startPiece === 'P';
+                    const isPromotionRow = isWhite ? rank === 0 : rank === 7;
+                    if (isPawn && isPromotionRow) shouldShowDialog = true;
+                }
+
+                if (shouldShowDialog || movesToTarget.length > 1 || movesToTarget[0].length === 5) {
+                    setPromotionMove({ from: selectedSquare, to: clickedSquare });
+                    setPromotionDialogOpen(true);
+                } else {
+                    const moveUci = movesToTarget[0].slice(0, 4);
+                    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+                        ws.current.send(JSON.stringify({ type: "move", uci: moveUci }));
+                    }
                 }
             } else {
                 if (clickedSquare === selectedSquare) {
