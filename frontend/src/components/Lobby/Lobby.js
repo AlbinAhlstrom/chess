@@ -4,8 +4,25 @@ import { getWsBase, getMe } from '../../api';
 import './Lobby.css';
 
 const VARIANTS = [
-    "standard", "antichess", "atomic", "chess960", 
-    "crazyhouse", "horde", "kingofthehill", "racingkings", "threecheck"
+    { id: 'standard', title: 'Standard', icon: '♟️' },
+    { id: 'antichess', title: 'Antichess', icon: '🚫' },
+    { id: 'atomic', title: 'Atomic', icon: '⚛️' },
+    { id: 'chess960', title: 'Chess960', icon: '🎲' },
+    { id: 'crazyhouse', title: 'Crazyhouse', icon: '🏰' },
+    { id: 'horde', title: 'Horde', icon: '🧟' },
+    { id: 'kingofthehill', title: 'King of the Hill', icon: '⛰️' },
+    { id: 'racingkings', title: 'Racing Kings', icon: '🏎️' },
+    { id: 'threecheck', title: 'Three Check', icon: '3️⃣' },
+];
+
+const STARTING_TIME_VALUES = [
+    0.25, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 
+    25, 30, 35, 40, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180
+];
+
+const INCREMENT_VALUES = [
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+    25, 30, 35, 40, 45, 60, 90, 120, 150, 180
 ];
 
 function Lobby() {
@@ -13,8 +30,12 @@ function Lobby() {
     const [user, setUser] = useState(null);
     const [selectedVariant, setSelectedVariant] = useState("standard");
     const [selectedColor, setSelectedColor] = useState("random");
-    const [timeLimit, setTimeLimit] = useState(10);
-    const [increment, setIncrement] = useState(5);
+    
+    // Match Pieces.js state structure
+    const [isTimeControlEnabled, setIsTimeControlEnabled] = useState(true);
+    const [startingTime, setStartingTime] = useState(10);
+    const [increment, setIncrement] = useState(2);
+    
     const socketRef = useRef(null);
     const navigate = useNavigate();
 
@@ -47,17 +68,16 @@ function Lobby() {
 
     const createSeek = () => {
         if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-                    socketRef.current.send(JSON.stringify({
-                        type: "create_seek",
-                        variant: selectedVariant,
-                        color: selectedColor,
-                        time_control: {
-                            limit: timeLimit * 60,
-                            increment: increment
-                        },
-                        user: user
-                    }));
-            
+            socketRef.current.send(JSON.stringify({
+                type: "create_seek",
+                variant: selectedVariant,
+                color: selectedColor,
+                time_control: isTimeControlEnabled ? {
+                    limit: startingTime * 60,
+                    increment: increment
+                } : null,
+                user: user
+            }));
         }
     };
 
@@ -86,13 +106,21 @@ function Lobby() {
             
             <div className="create-seek-panel">
                 <h2>Create a Game</h2>
-                <div className="form-group">
-                    <label>Variant:</label>
-                    <select value={selectedVariant} onChange={(e) => setSelectedVariant(e.target.value)}>
-                        {VARIANTS.map(v => <option key={v} value={v}>{v}</option>)}
-                    </select>
+                
+                <div className="variants-grid">
+                    {VARIANTS.map(v => (
+                        <button
+                            key={v.id}
+                            className={`variant-select-btn ${selectedVariant === v.id ? 'active' : ''}`}
+                            onClick={() => setSelectedVariant(v.id)}
+                        >
+                            <span className="variant-icon">{v.icon}</span>
+                            <span>{v.title}</span>
+                        </button>
+                    ))}
                 </div>
-                <div className="form-group">
+
+                <div className="form-group color-select-group">
                     <label>Your Color:</label>
                     <select value={selectedColor} onChange={(e) => setSelectedColor(e.target.value)}>
                         <option value="random">Random</option>
@@ -100,14 +128,57 @@ function Lobby() {
                         <option value="black">Black</option>
                     </select>
                 </div>
-                <div className="form-group">
-                    <label>Time Limit (min):</label>
-                    <input type="number" value={timeLimit} onChange={(e) => setTimeLimit(parseInt(e.target.value))} />
+
+                <div className="time-control-settings">
+                    <div className="setting-row">
+                        <label className="switch-container">
+                            <span>Time Control</span>
+                            <input 
+                                type="checkbox" 
+                                checked={isTimeControlEnabled} 
+                                onChange={(e) => setIsTimeControlEnabled(e.target.checked)} 
+                            />
+                            <span className="slider round"></span>
+                        </label>
+                    </div>
+                    
+                    {isTimeControlEnabled && (
+                        <>
+                            <div className="setting-row slider-setting">
+                                <div className="slider-label">
+                                    <span>Starting Time</span>
+                                    <span>
+                                        {startingTime === 0.25 ? '1/4' : 
+                                         startingTime === 0.5 ? '1/2' : 
+                                         startingTime === 1.5 ? '1 1/2' : 
+                                         startingTime} min
+                                    </span>
+                                </div>
+                                <input 
+                                    type="range" 
+                                    min="0" 
+                                    max={STARTING_TIME_VALUES.length - 1} 
+                                    value={STARTING_TIME_VALUES.indexOf(startingTime)} 
+                                    onChange={(e) => setStartingTime(STARTING_TIME_VALUES[parseInt(e.target.value)])} 
+                                />
+                            </div>
+                            <div className="setting-row slider-setting">
+                                <div className="slider-label">
+                                    <span>Increment</span>
+                                    <span>{increment} sec</span>
+                                </div>
+                                <input 
+                                    type="range" 
+                                    min="0" 
+                                    max={INCREMENT_VALUES.length - 1} 
+                                    value={INCREMENT_VALUES.indexOf(increment)} 
+                                    onChange={(e) => setIncrement(INCREMENT_VALUES[parseInt(e.target.value)])} 
+                                />
+                            </div>
+                        </>
+                    )}
                 </div>
-                <div className="form-group">
-                    <label>Increment (sec):</label>
-                    <input type="number" value={increment} onChange={(e) => setIncrement(parseInt(e.target.value))} />
-                </div>
+
                 <button onClick={createSeek} className="create-button">Create Seek</button>
             </div>
 
@@ -128,7 +199,7 @@ function Lobby() {
                                 <tr key={seek.id}>
                                     <td>{seek.user_name}</td>
                                     <td>{seek.variant}</td>
-                                    <td>{seek.time_control.limit / 60}+{seek.time_control.increment}</td>
+                                    <td>{seek.time_control ? `${seek.time_control.limit / 60}+${seek.time_control.increment}` : 'Unlimited'}</td>
                                     <td>
                                         {user && String(seek.user_id) === String(user.id) ? (
                                             <button 
