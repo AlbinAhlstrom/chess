@@ -284,9 +284,11 @@ async def lobby_websocket(websocket: WebSocket):
                     }))
 
             elif message["type"] == "join_seek":
+                print(f"DEBUG: Received join_seek for {message.get('seek_id')} from {message.get('user')}")
                 seek_id = message.get("seek_id")
                 joining_user = message.get("user")
                 if seek_id in seeks:
+                    print(f"DEBUG: Found seek {seek_id}, creating game...")
                     seek = seeks.pop(seek_id)
                     
                     # Create a new game

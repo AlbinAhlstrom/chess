@@ -59,12 +59,16 @@ function Lobby() {
     };
 
     const joinSeek = (seekId) => {
+        console.log("Attempting to join seek:", seekId);
         if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+            console.log("Socket open, sending join_seek payload...");
             socketRef.current.send(JSON.stringify({
                 type: "join_seek",
                 seek_id: seekId,
                 user: user
             }));
+        } else {
+            console.error("Socket not ready or closed.", socketRef.current?.readyState);
         }
     };
 
