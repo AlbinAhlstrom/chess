@@ -4,7 +4,7 @@ import { Pieces } from './components/Pieces/Pieces.js';
 import { useCallback, useState, useEffect } from 'react';
 import Lobby from './components/Lobby/Lobby.js';
 import Profile from './components/Profile/Profile.js';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useParams } from 'react-router-dom';
 import { getMe, getAuthLinks } from './api.js';
 
 function Header() {
@@ -37,8 +37,8 @@ function Header() {
   return (
     <header className="main-header">
       <nav className="header-nav">
-        <Link to="/" className="header-logo">v-chess</Link>
-        <Link to="/lobby" className="header-link">Lobby</Link>
+        <Link to="/create-game" className="header-logo">v-chess</Link>
+        <Link to="/create-game" className="header-link">Create Game</Link>
       </nav>
       <div className="auth-section">
         {user ? (
@@ -56,7 +56,9 @@ function Header() {
   );
 }
 
-function GameBoard({ variant, matchmaking = false }) {
+function GameBoard({ variant: propVariant, matchmaking = false }) {
+  const { variant: urlVariant } = useParams();
+  const variant = urlVariant || propVariant || "standard";
   const [flipped, setFlipped] = useState(false);
   
   const handleFenChange = useCallback((newFen) => {
@@ -87,18 +89,11 @@ function App() {
     <BrowserRouter>
       <Header />
       <Routes>
-        <Route path="/" element={<GameBoard variant="standard" />} />
-        <Route path="/lobby" element={<Lobby />} />
+        <Route path="/" element={<Lobby />} />
+        <Route path="/create-game" element={<Lobby />} />
+        <Route path="/otb" element={<GameBoard variant="standard" />} />
+        <Route path="/otb/:variant" element={<GameBoard />} />
         <Route path="/matchmaking-game/:gameId" element={<GameBoard matchmaking={true} />} />
-        <Route path="/standard" element={<GameBoard variant="standard" />} />
-        <Route path="/antichess" element={<GameBoard variant="antichess" />} />
-        <Route path="/atomic" element={<GameBoard variant="atomic" />} />
-        <Route path="/chess960" element={<GameBoard variant="chess960" />} />
-        <Route path="/crazyhouse" element={<GameBoard variant="crazyhouse" />} />
-        <Route path="/horde" element={<GameBoard variant="horde" />} />
-        <Route path="/kingofthehill" element={<GameBoard variant="kingofthehill" />} />
-        <Route path="/racingkings" element={<GameBoard variant="racingkings" />} />
-        <Route path="/threecheck" element={<GameBoard variant="threecheck" />} />
         <Route path="/game/:gameId" element={<GameBoard />} />
         <Route path="/profile" element={<Profile />} />
       </Routes>
