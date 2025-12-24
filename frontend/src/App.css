@@ -48,6 +48,12 @@ html,body, #root {
     color: white;
 }
 
+@media (max-width: 650px) {
+    .header-link {
+        display: none;
+    }
+}
+
 .auth-section {
     display: flex;
     align-items: center;
