@@ -18,7 +18,11 @@ pkill uvicorn || echo "No uvicorn process was running."
 echo "Updating dependencies..."
 venv/bin/pip install -r requirements.txt
 
-# 5. Start the server
+# 5. Run Database Migrations
+echo "Running database migrations..."
+venv/bin/python3 migrate_db.py
+
+# 6. Start the server
 echo "Starting new server..."
 nohup venv/bin/uvicorn backend.main:app --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
 
