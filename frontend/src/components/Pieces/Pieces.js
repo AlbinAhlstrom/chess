@@ -482,7 +482,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     };
 
     const handlePieceDragStart = async ({ file, rank, piece, isCapture }) => {
-        if (!gameId) return;
+        if (!gameId || isGameOver) return;
         
         const pieceColor = piece === piece.toUpperCase() ? 'w' : 'b';
         if (!canMovePiece(pieceColor)) return;
@@ -517,7 +517,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     };
 
     const handleSquareClick = async (e) => {
-        if (!gameId || !fen) return;
+        if (!gameId || !fen || isGameOver) return;
 
         const { file, rank, algebraic: clickedSquare } = calculateSquare(e);
 
@@ -958,7 +958,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                 })
             )}
 
-            {legalMoves.map((moveUci, index) => {
+            {!isGameOver && legalMoves.map((moveUci, index) => {
                 const targetSquare = moveUci.slice(2, 4);
                 const { file, rank } = algebraicToCoords(targetSquare);
                 let displayFile = isFlipped ? 7 - file : file;
