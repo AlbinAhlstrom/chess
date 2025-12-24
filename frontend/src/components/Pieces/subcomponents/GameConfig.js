@@ -43,18 +43,18 @@ function GameConfig({
                             <span>White</span>
                         </button>
                         <button
-                            className={`variant-select-btn ${selectedColor === 'random' ? 'active' : ''}`}
-                            onClick={() => setSelectedColor('random')}
-                        >
-                            <span className="variant-icon">❓</span>
-                            <span>Random</span>
-                        </button>
-                        <button
                             className={`variant-select-btn ${selectedColor === 'black' ? 'active' : ''}`}
                             onClick={() => setSelectedColor('black')}
                         >
                             <span className="variant-icon">⚫</span>
                             <span>Black</span>
+                        </button>
+                        <button
+                            className={`variant-select-btn ${selectedColor === 'random' ? 'active' : ''}`}
+                            onClick={() => setSelectedColor('random')}
+                        >
+                            <span className="variant-icon">❓</span>
+                            <span>Random</span>
                         </button>
                     </div>
                 </div>
