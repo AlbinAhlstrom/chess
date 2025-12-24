@@ -63,9 +63,14 @@ function GameBoard({ variant, matchmaking = false }) {
     // FEN state tracking removed from App
   }, []);
 
+  const showCoordinates = (() => {
+    const saved = localStorage.getItem('showBoardCoordinates');
+    return saved !== null ? JSON.parse(saved) : false;
+  })();
+
   return (
     <div className="App">
-      <Board flipped={flipped}>
+      <Board flipped={flipped} showCoordinates={showCoordinates}>
         <Pieces 
           onFenChange={handleFenChange} 
           variant={variant} 
