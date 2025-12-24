@@ -154,7 +154,7 @@ class Game:
 
     @property
     def is_over(self) -> bool:
-        return self.rules.is_game_over() or self.is_over_by_timeout or self.game_over_reason_override is not None
+        return self.rules.is_game_over() or self.is_over_by_timeout or self.game_over_reason_override is not None or self.winner_override is not None
 
     @property
     def is_draw(self) -> bool:

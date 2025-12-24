@@ -626,10 +626,8 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
 
     const handleResign = (e) => {
         e.stopPropagation();
-        if (window.confirm("Are you sure you want to surrender?")) {
-            if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-                ws.current.send(JSON.stringify({ type: "resign" }));
-            }
+        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+            ws.current.send(JSON.stringify({ type: "resign" }));
         }
     };
 

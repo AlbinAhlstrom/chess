@@ -730,9 +730,9 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                 "type": "game_state",
                 "fen": game.state.fen,
                 "turn": game.state.turn.value,
-                "is_over": is_over or status == "timeout",
+                "is_over": game.is_over or status == "timeout",
                 "in_check": game.rules.is_check(),
-                "winner": winner_color.value if winner_color else (game.state.turn.opposite.value if status == "timeout" else None),
+                "winner": game.winner if game.winner else (game.state.turn.opposite.value if status == "timeout" else None),
                 "move_history": game.move_history,
                 "clocks": {c.value: t for c, t in current_clocks.items()} if current_clocks else None,
                 "status": status
