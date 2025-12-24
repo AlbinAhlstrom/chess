@@ -122,6 +122,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     const [opponentName, setOpponentName] = useState("Anonymous Opponent");
     const [whitePlayerId, setWhitePlayerId] = useState(null);
     const [blackPlayerId, setBlackPlayerId] = useState(null);
+    const [takebackOffer, setTakebackOffer] = useState(null); // { by_user_id: number }
 
     // Effect to handle board flipping and player names once both user and game data are available
     useEffect(() => {
@@ -207,10 +208,14 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                 } else if (message.status === "game_over") {
                     console.log("Game over detected!");
                     gameEndSound.current.play().catch(e => console.error("Error playing game end sound:", e));
-                } else if (message.status === "timeout") {
+                if (message.status === "timeout") {
                     console.log("Timeout detected!");
                     gameEndSound.current.play().catch(e => console.error("Error playing game end sound:", e));
                 }
+            } else if (message.type === "takeback_offered") {
+                setTakebackOffer({ by_user_id: message.by_user_id });
+            } else if (message.type === "takeback_cleared") {
+                setTakebackOffer(null);
             } else if (message.type === "error") {
                 console.error("WebSocket error:", message.message);
                 if (message.message.toLowerCase().includes("check") && lastNotifiedFen.current) {
@@ -597,8 +602,13 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
 
     const handleUndo = (e) => {
         e.stopPropagation();
+        console.log("handleUndo triggered. Matchmaking:", matchmaking);
         if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-            ws.current.send(JSON.stringify({ type: matchmaking ? "takeback_offer" : "undo" }));
+            const type = matchmaking ? "takeback_offer" : "undo";
+            console.log(`Sending WebSocket message: type=${type}`);
+            ws.current.send(JSON.stringify({ type }));
+        } else {
+            console.error("WebSocket not open. ReadyState:", ws.current?.readyState);
         }
         setIsMenuOpen(false);
     };
@@ -616,6 +626,20 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
         e.stopPropagation();
         if (ws.current && ws.current.readyState === WebSocket.OPEN) {
             ws.current.send(JSON.stringify({ type: "draw_offer" }));
+        }
+    };
+
+    const handleAcceptTakeback = (e) => {
+        e.stopPropagation();
+        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+            ws.current.send(JSON.stringify({ type: "takeback_accept" }));
+        }
+    };
+
+    const handleDeclineTakeback = (e) => {
+        e.stopPropagation();
+        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+            ws.current.send(JSON.stringify({ type: "takeback_decline" }));
         }
     };
 
@@ -672,6 +696,9 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
             
             <div className="player-name-display opponent-name">
                 <span className="name-text">{isFlipped ? playerName : opponentName}</span>
+                {takebackOffer && user && takebackOffer.by_user_id !== user.id && (
+                    <span className="takeback-prompt">Accept takeback?</span>
+                )}
                 {timers && <span className={`clock-display ${turn === (isFlipped ? 'w' : 'b') ? 'active' : ''}`}>{formatTime(timers[isFlipped ? 'w' : 'b'])}</span>}
             </div>
 
@@ -696,13 +723,37 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                 <div className="game-controls">
                     {matchmaking ? (
                         <>
-                            <button 
-                                onClick={handleUndo}
-                                title="Offer Takeback"
-                                className="control-button"
-                            >
-                                {UNDO_ICON}
-                            </button>
+                            {takebackOffer && user && takebackOffer.by_user_id !== user.id ? (
+                                <div className="takeback-actions">
+                                    <button 
+                                        onClick={handleAcceptTakeback}
+                                        title="Accept Takeback"
+                                        className="control-button accept-btn"
+                                    >
+                                        <svg viewBox="0 0 448 512" fill="currentColor" style={{ width: 'var(--button-icon-size)', height: 'var(--button-icon-size)' }}>
+                                            <path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/>
+                                        </svg>
+                                    </button>
+                                    <button 
+                                        onClick={handleDeclineTakeback}
+                                        title="Decline Takeback"
+                                        className="control-button decline-btn"
+                                    >
+                                        <svg viewBox="0 0 384 512" fill="currentColor" style={{ width: 'var(--button-icon-size)', height: 'var(--button-icon-size)' }}>
+                                            <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            ) : (
+                                <button 
+                                    onClick={handleUndo}
+                                    title={takebackOffer ? "Takeback Offered..." : "Offer Takeback"}
+                                    className={`control-button ${takebackOffer ? 'waiting' : ''}`}
+                                    disabled={!!takebackOffer}
+                                >
+                                    {UNDO_ICON}
+                                </button>
+                            )}
                             <button 
                                 onClick={handleOfferDraw}
                                 title="Offer Draw"
