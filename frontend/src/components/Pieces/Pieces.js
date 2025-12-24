@@ -53,8 +53,6 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     const ws = useRef(null);
     const [isPromotionDialogOpen, setPromotionDialogOpen] = useState(false);
     const [isImportDialogOpen, setImportDialogOpen] = useState(false);
-    const [isNewGameDialogOpen, setNewGameDialogOpen] = useState(false);
-    const [newGameSelectedVariant, setNewGameSelectedVariant] = useState(variant);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [promotionMove, setPromotionMove] = useState(null);
     const lastNotifiedFen = useRef(null);
@@ -592,8 +590,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
 
     const handleNewGameClick = (e) => {
         e.stopPropagation();
-        setNewGameSelectedVariant(variant); // Default to current variant
-        setNewGameDialogOpen(true);
+        navigate('/create-game');
         setIsMenuOpen(false);
     };
 
@@ -741,82 +738,23 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     
 
                 <GameSidebar 
-
                     matchmaking={matchmaking}
-
                     moveHistory={moveHistory}
-
                     handleUndo={handleUndo}
-
                     handleReset={handleReset}
-
                     handleNewGameClick={handleNewGameClick}
-
                     handleMenuToggle={handleMenuToggle}
-
                     handleResign={handleResign}
-
                     handleOfferDraw={handleOfferDraw}
-
                     handleAcceptTakeback={handleAcceptTakeback}
-
                     handleDeclineTakeback={handleDeclineTakeback}
-
                     isMenuOpen={isMenuOpen}
-
                     copyFenToClipboard={copyFenToClipboard}
-
                     handleImportClick={handleImportClick}
-
                     takebackOffer={takebackOffer}
-
                     user={user}
-
                     isGameOver={isGameOver}
-
                 />
-
-    
-
-                {isNewGameDialogOpen && (
-
-                    <NewGameDialog 
-
-                        setNewGameDialogOpen={setNewGameDialogOpen}
-
-                        opponentName={opponentName}
-
-                        setOpponentName={setOpponentName}
-
-                        VARIANTS={VARIANTS}
-
-                        newGameSelectedVariant={newGameSelectedVariant}
-
-                        handleVariantSelect={handleVariantSelect}
-
-                        isTimeControlEnabled={isTimeControlEnabled}
-
-                        setIsTimeControlEnabled={setIsTimeControlEnabled}
-
-                        startingTime={startingTime}
-
-                        setStartingTime={setStartingTime}
-
-                        STARTING_TIME_VALUES={STARTING_TIME_VALUES}
-
-                        increment={increment}
-
-                        setIncrement={setIncrement}
-
-                        INCREMENT_VALUES={INCREMENT_VALUES}
-
-                        handleStartNewGame={handleStartNewGame}
-
-                    />
-
-                )}
-
-    
 
                 {isPromotionDialogOpen && <PromotionDialog onPromote={handlePromotion} onCancel={handleCancelPromotion} color={promotionColor} />}
 
