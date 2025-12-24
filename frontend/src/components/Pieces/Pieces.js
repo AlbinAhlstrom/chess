@@ -594,19 +594,6 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
         setIsMenuOpen(false);
     };
 
-    const handleVariantSelect = (variantId) => {
-        setNewGameSelectedVariant(variantId);
-    };
-
-    const handleStartNewGame = () => {
-        setNewGameDialogOpen(false);
-        if (newGameSelectedVariant === variant) {
-            initializeGame();
-        } else {
-            navigate(newGameSelectedVariant === 'standard' ? '/otb' : `/otb/${newGameSelectedVariant}`);
-        }
-    };
-
     const handleReset = (e) => {
         e.stopPropagation();
         initializeGame();
