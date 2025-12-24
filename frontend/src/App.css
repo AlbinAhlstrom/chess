@@ -101,6 +101,8 @@ html,body, #root {
     background: var(--bg-color);
     padding: 20px;
     box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 @media (max-width: 850px) {

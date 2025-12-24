@@ -1,5 +1,7 @@
 .board {
     position: relative;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .coordinates {
@@ -65,7 +67,8 @@
 }
 
 .square {
-
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .square--light {
