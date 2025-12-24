@@ -1,8 +1,12 @@
 import React, { useRef } from 'react';
 import './Pieces.css';
 
-function Piece({ piece, file, rank, onDragStartCallback, onDragEndCallback, onDropCallback, onDragHoverCallback, isCapture }) {
+function Piece({ piece, file, rank, actualFile, actualRank, onDragStartCallback, onDragEndCallback, onDropCallback, onDragHoverCallback, isCapture }) {
     const ghostRef = useRef(null);
+    
+    // Fallback to display coords if actual coords not provided
+    const realFile = actualFile !== undefined ? actualFile : file;
+    const realRank = actualRank !== undefined ? actualRank : rank;
 
     const pieceStyle = {
         left: `calc(${file} * var(--square-size))`,
@@ -16,7 +20,7 @@ function Piece({ piece, file, rank, onDragStartCallback, onDragEndCallback, onDr
 
         // 1. Notify start
         if (onDragStartCallback) {
-            onDragStartCallback({ file, rank, piece, isCapture });
+            onDragStartCallback({ file: realFile, rank: realRank, piece, isCapture });
         }
 
         if (isCapture) {
@@ -82,8 +86,8 @@ function Piece({ piece, file, rank, onDragStartCallback, onDragEndCallback, onDr
                     clientX: upEvent.clientX,
                     clientY: upEvent.clientY,
                     piece,
-                    file,
-                    rank
+                    file: realFile,
+                    rank: realRank
                 });
             }
 

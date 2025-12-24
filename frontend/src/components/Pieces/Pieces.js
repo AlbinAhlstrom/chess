@@ -829,6 +829,8 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                             key={`p-${rankIndex}-${fileIndex}`}
                             rank={displayRank}
                             file={displayFile}
+                            actualFile={fileIndex}
+                            actualRank={rankIndex}
                             piece={pieceType}
                             onDragStartCallback={handlePieceDragStart}
                             onDragEndCallback={handlePieceDragEnd}
