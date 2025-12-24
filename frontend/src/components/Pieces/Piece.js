@@ -137,4 +137,4 @@ function Piece({ piece, file, rank, actualFile, actualRank, onDragStartCallback,
     );
 }
 
-export default Piece;
+export default React.memo(Piece);

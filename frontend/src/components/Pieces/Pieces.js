@@ -6,7 +6,7 @@ import PromotionDialog from '../PromotionDialog/PromotionDialog.js';
 import ImportDialog from '../ImportDialog/ImportDialog.js';
 import { fenToPosition, coordsToAlgebraic, algebraicToCoords } from '../../helpers.js'
 import { createGame, getLegalMoves, getAllLegalMoves, getGame, getMe, login, logout, getWsBase } from '../../api.js'
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom';
 
 // Subcomponents
@@ -37,6 +37,11 @@ const INCREMENT_VALUES = [
     25, 30, 35, 40, 45, 60, 90, 120, 150, 180
 ];
 
+const getAutoPromotePreference = () => {
+    const saved = localStorage.getItem('autoPromoteToQueen');
+    return saved !== null ? JSON.parse(saved) : true;
+};
+
 export function Pieces({ onFenChange, variant = "standard", matchmaking = false, setFlipped }) {
     const { gameId: urlGameId } = useParams();
     const ref = useRef()
@@ -62,11 +67,6 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
 
     const [user, setUser] = useState(null);
     const [isFlipped, setIsFlippedLocal] = useState(false);
-
-    const getAutoPromotePreference = () => {
-        const saved = localStorage.getItem('autoPromoteToQueen');
-        return saved !== null ? JSON.parse(saved) : true;
-    };
 
     const setFlippedCombined = (val) => {
         setIsFlippedLocal(val);
@@ -316,9 +316,9 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
         }
     }, [fen, onFenChange, inCheck, gameId]);
 
-    const position = fen ? fenToPosition(fen) : [];
+    const position = useMemo(() => fen ? fenToPosition(fen) : [], [fen]);
 
-    const calculateSquare = e => {
+    const calculateSquare = useCallback(e => {
         const {width,left,top} = ref.current.getBoundingClientRect()
         const size = width / 8
         let file = Math.floor((e.clientX - left) / size)
@@ -330,9 +330,9 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
         }
         
         return { file, rank, algebraic: coordsToAlgebraic(file, rank) };
-    }
+    }, [isFlipped]);
 
-    const handlePieceDragHover = (clientX, clientY) => {
+    const handlePieceDragHover = useCallback((clientX, clientY) => {
         if (!highlightRef.current) return;
         
         if (!clientX || !clientY) {
@@ -357,7 +357,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
         } else {
             highlightRef.current.style.display = 'none';
         }
-    }
+    }, [calculateSquare, isFlipped]);
 
     const renderPiece = (pieceType, fileIndex, rankIndex) => {
         let displayFile = isFlipped ? 7 - fileIndex : fileIndex;
@@ -400,7 +400,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
         />;
     };
 
-    const handleManualDrop = ({ clientX, clientY, piece, file, rank }) => {
+    const handleManualDrop = useCallback(({ clientX, clientY, piece, file, rank }) => {
         if (highlightRef.current) highlightRef.current.style.display = 'none';
         
         // Mock event object for calculateSquare
@@ -439,9 +439,9 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
         } catch (error) {
             console.error("Failed to make move:", error);
         }
-    }
+    }, [calculateSquare, position]);
 
-    const canMovePiece = (pieceColor) => {
+    const canMovePiece = useCallback((pieceColor) => {
         if (!matchmaking) return true; // Over the board: anyone can move
         if (!user) return false; // Matchmaking requires login
         
@@ -450,7 +450,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
         } else {
             return user.id === blackPlayerId;
         }
-    };
+    }, [matchmaking, user, whitePlayerId, blackPlayerId]);
 
     const handlePromotion = (promotionPiece) => {
         if (promotionMove) {
@@ -469,7 +469,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
         setPromotionMove(null);
     };
 
-    const handlePieceDragStart = async ({ file, rank, piece, isCapture }) => {
+    const handlePieceDragStart = useCallback(async ({ file, rank, piece, isCapture }) => {
         if (!gameId || isGameOver) return;
         
         const pieceColor = piece === piece.toUpperCase() ? 'w' : 'b';
@@ -498,13 +498,13 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
         } catch (error) {
             console.error("Failed to fetch legal moves:", error);
         }
-    };
+    }, [gameId, isGameOver, canMovePiece, selectedSquare]);
 
-    const handlePieceDragEnd = () => {
+    const handlePieceDragEnd = useCallback(() => {
         
-    };
+    }, []);
 
-    const handleSquareClick = async (e) => {
+    const handleSquareClick = useCallback(async (e) => {
         if (!gameId || !fen || isGameOver) return;
 
         const { file, rank, algebraic: clickedSquare } = calculateSquare(e);
@@ -586,7 +586,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                 }
             }
         }
-    };
+    }, [gameId, fen, isGameOver, calculateSquare, position, selectedSquare, legalMoves, canMovePiece]);
 
     const handleNewGameClick = (e) => {
         e.stopPropagation();
