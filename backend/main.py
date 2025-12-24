@@ -505,6 +505,20 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
     try:
         game = await get_game(game_id)
 
+        # Fetch player assignments to validate moves
+        white_player_id = None
+        black_player_id = None
+        async with async_session() as session:
+            stmt = select(GameModel).where(GameModel.id == game_id)
+            result = await session.execute(stmt)
+            model = result.scalar_one_or_none()
+            if model:
+                white_player_id = model.white_player_id
+                black_player_id = model.black_player_id
+
+        user = websocket.session.get("user")
+        user_id = user.get("id") if user else None
+
         winner_color = game.rules.get_winner()
         is_over = game.rules.is_game_over()
 
@@ -525,6 +539,16 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
             message = json.loads(data)
 
             if message["type"] == "move":
+                # Validate turn ownership
+                if game.state.turn == Color.WHITE and white_player_id is not None:
+                    if user_id != white_player_id:
+                        await websocket.send_text(json.dumps({"type": "error", "message": "Not your turn!"}))
+                        continue
+                elif game.state.turn == Color.BLACK and black_player_id is not None:
+                    if user_id != black_player_id:
+                        await websocket.send_text(json.dumps({"type": "error", "message": "Not your turn!"}))
+                        continue
+
                 move_uci = message["uci"]
                 try:
                     move = Move(move_uci, player_to_move=game.state.turn)
