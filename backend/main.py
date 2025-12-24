@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import json
 import asyncio
+import traceback
 
 from oop_chess.game import Game, IllegalMoveException
 from oop_chess.move import Move
@@ -283,48 +284,6 @@ async def lobby_websocket(websocket: WebSocket):
                         "seek_id": seek_id
                     }))
 
-import traceback
-
-# ... imports ...
-
-@app.websocket("/ws/lobby")
-async def lobby_websocket(websocket: WebSocket):
-    await manager.connect_lobby(websocket)
-    try:
-        # ... (send initial seeks)
-
-        while True:
-            data = await websocket.receive_text()
-            message = json.loads(data)
-
-            if message["type"] == "create_seek":
-                # ... (existing create logic)
-                seek_id = str(uuid4())
-                user = message.get("user")
-                seek_data = {
-                    "id": seek_id,
-                    "user_id": user.get("id") if user else None,
-                    "user_name": user.get("name") if user else "Anonymous",
-                    "variant": message.get("variant", "standard"),
-                    "time_control": message.get("time_control"),
-                    "created_at": asyncio.get_event_loop().time()
-                }
-                seeks[seek_id] = seek_data
-                await manager.broadcast_lobby(json.dumps({
-                    "type": "seek_created",
-                    "seek": seek_data
-                }))
-
-            elif message["type"] == "cancel_seek":
-                # ... (existing cancel logic)
-                seek_id = message.get("seek_id")
-                if seek_id in seeks:
-                    del seeks[seek_id]
-                    await manager.broadcast_lobby(json.dumps({
-                        "type": "seek_removed",
-                        "seek_id": seek_id
-                    }))
-
             elif message["type"] == "join_seek":
                 print(f"DEBUG: Received join_seek for {message.get('seek_id')} from {message.get('user')}", flush=True)
                 try:
@@ -369,8 +328,6 @@ async def lobby_websocket(websocket: WebSocket):
                 except Exception as e:
                     print(f"CRITICAL ERROR in join_seek: {e}", flush=True)
                     traceback.print_exc()
-
-    except WebSocketDisconnect:
 
     except WebSocketDisconnect:
         manager.disconnect_lobby(websocket)
