@@ -127,7 +127,6 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     // Effect to handle board flipping and player names once both user and game data are available
     useEffect(() => {
         if (matchmaking && user && (whitePlayerId || blackPlayerId)) {
-            console.log(`Setting up matchmaking game. UserID: ${user.id}, White: ${whitePlayerId}, Black: ${blackPlayerId}`);
             if (user.id === blackPlayerId) {
                 setFlippedCombined(true);
                 setPlayerName(user.name);
@@ -189,9 +188,6 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
         ws.current.onmessage = (event) => {
             const message = JSON.parse(event.data);
             if (message.type === "game_state") {
-                if (message.debug_players) {
-                    console.log("DEBUG PLAYERS:", message.debug_players);
-                }
                 setFen(message.fen);
                 setInCheck(message.in_check);
                 setMoveHistory(message.move_history || []);
@@ -203,29 +199,12 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                 setLegalMoves([]);
                 if (highlightRef.current) highlightRef.current.style.display = 'none';
 
-                if (message.status === "checkmate") {
-                    console.log("Checkmate detected!");
-                    gameEndSound.current.play().catch(e => console.error("Error playing game end sound:", e));
-                } else if (message.status === "draw") {
-                    console.log("Draw detected!");
-                    gameEndSound.current.play().catch(e => console.error("Error playing game end sound:", e));
-                } else if (message.status === "game_over") {
-                    console.log("Game over detected!");
-                    gameEndSound.current.play().catch(e => console.error("Error playing game end sound:", e));
-                } else if (message.status === "timeout") {
-                    console.log("Timeout detected!");
-                    gameEndSound.current.play().catch(e => console.error("Error playing game end sound:", e));
-                }
-                if (message.status === "timeout") {
-                    console.log("Timeout detected!");
+                if (message.status === "checkmate" || message.status === "draw" || message.status === "game_over" || message.status === "timeout") {
                     gameEndSound.current.play().catch(e => console.error("Error playing game end sound:", e));
                 }
             } else if (message.type === "takeback_offered") {
-                console.log("Received takeback_offered:", message);
-                console.log(`My User ID: ${user?.id}, Offered by: ${message.by_user_id}`);
                 setTakebackOffer({ by_user_id: message.by_user_id });
             } else if (message.type === "takeback_cleared") {
-                console.log("Received takeback_cleared");
                 setTakebackOffer(null);
             } else if (message.type === "error") {
                 console.error("WebSocket error:", message.message);
@@ -255,7 +234,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
             }
         };
 
-        ws.current.onclose = () => console.log("WebSocket disconnected");
+        ws.current.onclose = () => {};
         ws.current.onerror = (error) => console.error("WebSocket error:", error);
     };
 
@@ -366,7 +345,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
             if (gameId) {
                 getAllLegalMoves(gameId).then(response => {
                     if (response.status === "success") {
-                        console.log("All Legal Moves for current turn:", response.moves);
+                        // All Legal Moves logic could go here
                     }
                 }).catch(error => {
                     console.error("Failed to fetch all legal moves:", error);
@@ -613,10 +592,8 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
 
     const handleUndo = (e) => {
         e.stopPropagation();
-        console.log("handleUndo triggered. Matchmaking:", matchmaking);
         if (ws.current && ws.current.readyState === WebSocket.OPEN) {
             const type = matchmaking ? "takeback_offer" : "undo";
-            console.log(`Sending WebSocket message: type=${type}`);
             ws.current.send(JSON.stringify({ type }));
         } else {
             console.error("WebSocket not open. ReadyState:", ws.current?.readyState);

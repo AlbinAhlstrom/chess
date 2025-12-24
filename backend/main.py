@@ -647,16 +647,12 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                     }))
 
             elif message["type"] == "takeback_offer":
-                print(f"DEBUG: Received takeback_offer from UserID: {user_id} for Game: {game_id}", flush=True)
                 if user_id in [white_player_id, black_player_id]:
                     pending_takebacks[game_id] = user_id
-                    print(f"DEBUG: Broadcasting takeback_offered by {user_id}", flush=True)
                     await manager.broadcast(game_id, json.dumps({
                         "type": "takeback_offered",
                         "by_user_id": user_id
                     }))
-                else:
-                    print(f"DEBUG: takeback_offer rejected. User {user_id} not in game players.", flush=True)
 
             elif message["type"] == "takeback_accept":
                 if user_id in [white_player_id, black_player_id]:
