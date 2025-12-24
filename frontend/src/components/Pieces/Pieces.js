@@ -110,6 +110,19 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     const [whitePlayerId, setWhitePlayerId] = useState(null);
     const [blackPlayerId, setBlackPlayerId] = useState(null);
 
+    // Effect to handle board flipping and player names once both user and game data are available
+    useEffect(() => {
+        if (matchmaking && user && (whitePlayerId || blackPlayerId)) {
+            if (user.id === blackPlayerId) {
+                setFlippedCombined(true);
+                setPlayerName(user.name);
+            } else if (user.id === whitePlayerId) {
+                setFlippedCombined(false);
+                setPlayerName(user.name);
+            }
+        }
+    }, [user, matchmaking, whitePlayerId, blackPlayerId]);
+
     // Game Clocks State
     const [timers, setTimers] = useState(null); // {w: seconds, b: seconds}
     const [turn, setTurn] = useState('w');
@@ -242,17 +255,6 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                 
                 if (data.white_player_id) setWhitePlayerId(data.white_player_id);
                 if (data.black_player_id) setBlackPlayerId(data.black_player_id);
-
-                // Handle matchmaking player assignment and board flipping
-                if (matchmaking && user) {
-                    if (user.id === data.black_player_id) {
-                        setFlippedCombined(true);
-                        setPlayerName(user.name);
-                    } else if (user.id === data.white_player_id) {
-                        setFlippedCombined(false);
-                        setPlayerName(user.name);
-                    }
-                }
 
                 connectWebSocket(id);
             }
