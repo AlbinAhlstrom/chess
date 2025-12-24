@@ -407,7 +407,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
         
         // Mock event object for calculateSquare
         const mockEvent = { clientX, clientY };
-        const { algebraic: toSquare } = calculateSquare(mockEvent);
+        const { rank: toRank, algebraic: toSquare } = calculateSquare(mockEvent);
         
         const fromSquare = coordsToAlgebraic(file, rank);
 
