@@ -6,6 +6,9 @@
     color: #bababa;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    touch-action: pan-y;
+    user-select: auto;
+    -webkit-user-select: auto;
 }
 
 .create-seek-panel {
@@ -13,6 +16,7 @@
     padding: 20px;
     border-radius: 4px;
     margin-bottom: 30px;
+    touch-action: pan-y;
 }
 
 .form-group {

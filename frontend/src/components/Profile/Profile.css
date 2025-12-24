@@ -4,6 +4,9 @@
     padding: 20px;
     color: #bababa;
     font-family: var(--main-font-family);
+    touch-action: pan-y;
+    user-select: auto;
+    -webkit-user-select: auto;
 }
 
 .profile-card {

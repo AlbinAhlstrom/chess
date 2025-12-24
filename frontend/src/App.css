@@ -103,6 +103,7 @@ html,body, #root {
     box-sizing: border-box;
     user-select: none;
     -webkit-user-select: none;
+    touch-action: manipulation;
 }
 
 @media (max-width: 850px) {
