@@ -12,6 +12,7 @@ function Lobby() {
     const [seeks, setSeeks] = useState([]);
     const [user, setUser] = useState(null);
     const [selectedVariant, setSelectedVariant] = useState("standard");
+    const [selectedColor, setSelectedColor] = useState("random");
     const [timeLimit, setTimeLimit] = useState(10);
     const [increment, setIncrement] = useState(5);
     const socketRef = useRef(null);
@@ -46,15 +47,17 @@ function Lobby() {
 
     const createSeek = () => {
         if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-            socketRef.current.send(JSON.stringify({
-                type: "create_seek",
-                variant: selectedVariant,
-                time_control: {
-                    limit: timeLimit * 60,
-                    increment: increment
-                },
-                user: user
-            }));
+                    socketRef.current.send(JSON.stringify({
+                        type: "create_seek",
+                        variant: selectedVariant,
+                        color: selectedColor,
+                        time_control: {
+                            limit: timeLimit * 60,
+                            increment: increment
+                        },
+                        user: user
+                    }));
+            
         }
     };
 
@@ -87,6 +90,14 @@ function Lobby() {
                     <label>Variant:</label>
                     <select value={selectedVariant} onChange={(e) => setSelectedVariant(e.target.value)}>
                         {VARIANTS.map(v => <option key={v} value={v}>{v}</option>)}
+                    </select>
+                </div>
+                <div className="form-group">
+                    <label>Your Color:</label>
+                    <select value={selectedColor} onChange={(e) => setSelectedColor(e.target.value)}>
+                        <option value="random">Random</option>
+                        <option value="white">White</option>
+                        <option value="black">Black</option>
                     </select>
                 </div>
                 <div className="form-group">

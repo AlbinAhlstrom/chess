@@ -6,6 +6,7 @@ from pydantic import BaseModel
 import json
 import asyncio
 import traceback
+import random
 
 from oop_chess.game import Game, IllegalMoveException
 from oop_chess.move import Move
@@ -241,10 +242,16 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 # Seek storage: seek_id -> seek_data
+
 seeks: dict[str, dict] = {}
 
 
+
+
+
 @app.websocket("/ws/lobby")
+
+
 async def lobby_websocket(websocket: WebSocket):
     await manager.connect_lobby(websocket)
     user_session = websocket.session.get("user")
@@ -268,9 +275,7 @@ async def lobby_websocket(websocket: WebSocket):
                 
                 # Verify the creator matches the session
                 if current_user_id and user and user.get("id") != current_user_id:
-                     # spoofing attempt or inconsistent state
                      print(f"WARNING: User {current_user_id} tried to create seek as {user.get('id')}")
-                     # Force use of session ID
                      seek_user_id = current_user_id
                 else:
                      seek_user_id = user.get("id") if user else None
@@ -280,6 +285,7 @@ async def lobby_websocket(websocket: WebSocket):
                     "user_id": seek_user_id,
                     "user_name": user.get("name") if user else "Anonymous",
                     "variant": message.get("variant", "standard"),
+                    "color": message.get("color", "random"),
                     "time_control": message.get("time_control"),
                     "created_at": asyncio.get_event_loop().time()
                 }
@@ -307,6 +313,8 @@ async def lobby_websocket(websocket: WebSocket):
                 try:
                     seek_id = message.get("seek_id")
                     joining_user = message.get("user")
+                    joining_user_id = joining_user.get("id") if joining_user else None
+
                     if seek_id in seeks:
                         seek = seeks.pop(seek_id)
                         
@@ -316,11 +324,25 @@ async def lobby_websocket(websocket: WebSocket):
                         rules_cls = RULES_MAP.get(variant.lower(), StandardRules)
                         rules = rules_cls()
                         
-                        # For now: Seeker is White, Joiner is Black
                         game = Game(rules=rules, time_control=seek["time_control"])
                         games[game_id] = game
                         game_variants[game_id] = variant
                         
+                        # Handle color assignment
+                        preferred_color = seek.get("color", "random")
+                        seeker_id = seek["user_id"]
+                        joiner_id = joining_user_id
+
+                        if preferred_color == "white":
+                            white_id, black_id = seeker_id, joiner_id
+                        elif preferred_color == "black":
+                            white_id, black_id = joiner_id, seeker_id
+                        else: # random
+                            if random.choice([True, False]):
+                                white_id, black_id = seeker_id, joiner_id
+                            else:
+                                white_id, black_id = joiner_id, seeker_id
+
                         # Assign players in DB
                         async with async_session() as session:
                             async with session.begin():
@@ -330,8 +352,8 @@ async def lobby_websocket(websocket: WebSocket):
                                     fen=game.state.fen,
                                     move_history=json.dumps(game.move_history),
                                     time_control=json.dumps(game.time_control) if game.time_control else None,
-                                    white_player_id=seek["user_id"],
-                                    black_player_id=joining_user.get("id") if joining_user else None,
+                                    white_player_id=white_id,
+                                    black_player_id=black_id,
                                     is_over=False
                                 )
                                 session.add(model)
