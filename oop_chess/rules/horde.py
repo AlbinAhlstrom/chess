@@ -99,14 +99,19 @@ class HordeRules(StandardRules):
 
         # Horde specific: White pawns on rank 1 can also move 2 steps
         if self.state.turn == Color.WHITE:
-            for sq, piece in self.state.board.board.items():
-                if isinstance(piece, Pawn) and piece.color == Color.WHITE:
-                    if sq.row == 7: # Rank 1
-                        direction = piece.direction
-                        one_step = sq.get_step(direction)
-                        two_step = one_step.get_step(direction) if one_step else None
-                        if two_step:
-                            yield Move(sq, two_step)
+            bb = self.state.board.bitboard
+            mask = bb.pieces[Color.WHITE][Pawn] & 0xFF00000000000000 # Row 7 (Rank 1)
+            while mask:
+                sq_idx = (mask & -mask).bit_length() - 1
+                sq = Square(divmod(sq_idx, 8))
+                
+                # Manual double push for Rank 1
+                one_step = sq.get_step(Direction.UP)
+                two_step = one_step.get_step(Direction.UP) if one_step and not one_step.is_none_square else None
+                if two_step and not two_step.is_none_square:
+                    yield Move(sq, two_step)
+                
+                mask &= mask - 1
 
     def move_pseudo_legality_reason(self, move: Move) -> MoveLegalityReason:
         piece = self.state.board.get_piece(move.start)
