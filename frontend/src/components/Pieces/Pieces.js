@@ -67,7 +67,7 @@ const INCREMENT_VALUES = [
     25, 30, 35, 40, 45, 60, 90, 120, 150, 180
 ];
 
-export function Pieces({ onFenChange, variant = "standard" }) {
+export function Pieces({ onFenChange, variant = "standard", matchmaking = false, setFlipped }) {
     const { gameId: urlGameId } = useParams();
     const ref = useRef()
     const highlightRef = useRef(null);
@@ -92,6 +92,12 @@ export function Pieces({ onFenChange, variant = "standard" }) {
     const navigate = useNavigate();
 
     const [user, setUser] = useState(null);
+    const [isFlipped, setIsFlippedLocal] = useState(false);
+
+    const setFlippedCombined = (val) => {
+        setIsFlippedLocal(val);
+        if (setFlipped) setFlipped(val);
+    };
 
     // Time Control State
     const [isTimeControlEnabled, setIsTimeControlEnabled] = useState(true);
@@ -231,7 +237,18 @@ export function Pieces({ onFenChange, variant = "standard" }) {
                 setWinner(data.winner);
                 setIsGameOver(data.is_over);
                 setTurn(data.turn);
-                // WebSocket will push the full state including clocks on connect
+
+                // Handle matchmaking player assignment and board flipping
+                if (matchmaking && user) {
+                    if (user.id === data.black_player_id) {
+                        setFlippedCombined(true);
+                        setPlayerName(user.name);
+                    } else if (user.id === data.white_player_id) {
+                        setFlippedCombined(false);
+                        setPlayerName(user.name);
+                    }
+                }
+
                 connectWebSocket(id);
             }
         } catch (error) {
@@ -327,8 +344,14 @@ export function Pieces({ onFenChange, variant = "standard" }) {
     const calculateSquare = e => {
         const {width,left,top} = ref.current.getBoundingClientRect()
         const size = width / 8
-        const file = Math.floor((e.clientX - left) / size)
-        const rank = Math.floor((e.clientY - top) / size)
+        let file = Math.floor((e.clientX - left) / size)
+        let rank = Math.floor((e.clientY - top) / size)
+        
+        if (isFlipped) {
+            file = 7 - file;
+            rank = 7 - rank;
+        }
+        
         return { file, rank, algebraic: coordsToAlgebraic(file, rank) };
     }
 
@@ -343,8 +366,12 @@ export function Pieces({ onFenChange, variant = "standard" }) {
         
         if (file >= 0 && file <= 7 && rank >= 0 && rank <= 7) {
             highlightRef.current.style.display = 'block';
-            highlightRef.current.style.left = `calc(${file} * var(--square-size))`;
-            highlightRef.current.style.top = `calc(${rank} * var(--square-size))`;
+            
+            let displayFile = isFlipped ? 7 - file : file;
+            let displayRank = isFlipped ? 7 - rank : rank;
+
+            highlightRef.current.style.left = `calc(${displayFile} * var(--square-size))`;
+            highlightRef.current.style.top = `calc(${displayRank} * var(--square-size))`;
             
             const isDark = (file + rank) % 2 !== 0;
             highlightRef.current.style.border = isDark 
@@ -583,8 +610,8 @@ export function Pieces({ onFenChange, variant = "standard" }) {
             >
             
             <div className="player-name-display opponent-name">
-                <span className="name-text">{opponentName}</span>
-                {timers && <span className={`clock-display ${turn === 'b' ? 'active' : ''}`}>{formatTime(timers.b)}</span>}
+                <span className="name-text">{isFlipped ? playerName : opponentName}</span>
+                {timers && <span className={`clock-display ${turn === (isFlipped ? 'w' : 'b') ? 'active' : ''}`}>{formatTime(timers[isFlipped ? 'w' : 'b'])}</span>}
             </div>
 
             <div className="game-sidebar" onClick={e => e.stopPropagation()}>
@@ -749,36 +776,43 @@ export function Pieces({ onFenChange, variant = "standard" }) {
 
             {selectedSquare && (() => {
                 const { file, rank } = algebraicToCoords(selectedSquare);
+                let displayFile = isFlipped ? 7 - file : file;
+                let displayRank = isFlipped ? 7 - rank : rank;
                 const isDark = (file + rank) % 2 !== 0; // Chessboard pattern
                 return <HighlightSquare
-                    file={file}
-                    rank={rank}
+                    file={displayFile}
+                    rank={displayRank}
                     isDark={isDark}
                 />;
             })()}
 
             {position.map((rankArray, rankIndex) =>
-                rankArray.map((pieceType, fileIndex) =>
-                    pieceType
-                        ? <Piece
+                rankArray.map((pieceType, fileIndex) => {
+                    if (!pieceType) return null;
+                    
+                    let displayFile = isFlipped ? 7 - fileIndex : fileIndex;
+                    let displayRank = isFlipped ? 7 - rankIndex : rankIndex;
+
+                    return <Piece
                             key={`p-${rankIndex}-${fileIndex}`}
-                            rank={rankIndex}
-                            file={fileIndex}
+                            rank={displayRank}
+                            file={displayFile}
                             piece={pieceType}
                             onDragStartCallback={handlePieceDragStart}
                             onDragEndCallback={handlePieceDragEnd}
                             onDropCallback={handleManualDrop}
                             onDragHoverCallback={handlePieceDragHover}
                             isCapture={isCaptureMove(fileIndex, rankIndex)}
-                          />
-                        : null
-                )
+                          />;
+                })
             )}
 
             {legalMoves.map((moveUci, index) => {
                 const targetSquare = moveUci.slice(2, 4);
                 const { file, rank } = algebraicToCoords(targetSquare);
-                return <LegalMoveDot key={index} file={file} rank={rank} />;
+                let displayFile = isFlipped ? 7 - file : file;
+                let displayRank = isFlipped ? 7 - rank : rank;
+                return <LegalMoveDot key={index} file={displayFile} rank={displayRank} />;
             })}
 
             {isGameOver && (() => {
@@ -802,28 +836,32 @@ export function Pieces({ onFenChange, variant = "standard" }) {
                     return winner === color ? '#4CAF50' : '#F44336';
                 };
 
-                const renderIndicator = (sq, color) => (
-                    <div style={{
-                        position: 'absolute',
-                        left: `calc(${sq.file} * var(--square-size) + var(--square-size) / 2 - 15px)`,
-                        top: `calc(${sq.rank} * var(--square-size) + var(--square-size) / 2 - 15px)`,
-                        width: '30px',
-                        height: '30px',
-                        borderRadius: '50%',
-                        backgroundColor: getStatusColor(color),
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        zIndex: 1000,
-                        boxShadow: '0 2px 5px rgba(0,0,0,0.5)'
-                    }}>
-                        <img 
-                            src={`/images/pieces/${color === 'w' ? 'K' : 'k'}.png`} 
-                            style={{ width: '20px', height: '20px', filter: 'brightness(0) invert(1)' }} 
-                            alt="" 
-                        />
-                    </div>
-                );
+                const renderIndicator = (sq, color) => {
+                    let displayFile = isFlipped ? 7 - sq.file : sq.file;
+                    let displayRank = isFlipped ? 7 - sq.rank : sq.rank;
+                    return (
+                        <div style={{
+                            position: 'absolute',
+                            left: `calc(${displayFile} * var(--square-size) + var(--square-size) / 2 - 15px)`,
+                            top: `calc(${displayRank} * var(--square-size) + var(--square-size) / 2 - 15px)`,
+                            width: '30px',
+                            height: '30px',
+                            borderRadius: '50%',
+                            backgroundColor: getStatusColor(color),
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            zIndex: 1000,
+                            boxShadow: '0 2px 5px rgba(0,0,0,0.5)'
+                        }}>
+                            <img 
+                                src={`/images/pieces/${color === 'w' ? 'K' : 'k'}.png`} 
+                                style={{ width: '20px', height: '20px', filter: 'brightness(0) invert(1)' }} 
+                                alt="" 
+                            />
+                        </div>
+                    );
+                };
 
                 return (
                     <>
@@ -834,8 +872,8 @@ export function Pieces({ onFenChange, variant = "standard" }) {
             })()}
 
             <div className="player-name-display player-name">
-                <span className="name-text">{playerName}</span>
-                {timers && <span className={`clock-display ${turn === 'w' ? 'active' : ''}`}>{formatTime(timers.w)}</span>}
+                <span className="name-text">{isFlipped ? opponentName : playerName}</span>
+                {timers && <span className={`clock-display ${turn === (isFlipped ? 'b' : 'w') ? 'active' : ''}`}>{formatTime(timers[isFlipped ? 'b' : 'w'])}</span>}
             </div>
         </div>
     );

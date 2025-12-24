@@ -2,10 +2,49 @@
     position: relative;
 }
 
+.coordinates {
+    position: absolute;
+    display: flex;
+    font-size: 14px;
+    font-weight: 700;
+    color: #888;
+    pointer-events: none;
+    user-select: none;
+    font-family: var(--main-font-family);
+}
+
+.coordinates--ranks {
+    flex-direction: column;
+    height: calc(8 * var(--square-size));
+    left: -20px;
+    top: 0;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.coordinates--files {
+    width: calc(8 * var(--square-size));
+    bottom: -25px;
+    left: 0;
+    justify-content: space-around;
+}
+
 @media (max-width: 650px) {
     .board {
         margin-top: 40px;
         margin-bottom: 40px;
+    }
+
+    .coordinates--ranks {
+        left: 5px;
+        color: rgba(255, 255, 255, 0.5);
+        z-index: 5;
+    }
+
+    .coordinates--files {
+        bottom: 5px;
+        color: rgba(255, 255, 255, 0.5);
+        z-index: 5;
     }
 }
 

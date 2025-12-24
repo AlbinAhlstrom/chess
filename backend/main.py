@@ -204,6 +204,7 @@ async def startup_event():
 class ConnectionManager:
     def __init__(self):
         self.active_connections: dict[str, list[WebSocket]] = {}
+        self.lobby_connections: list[WebSocket] = []
 
     async def connect(self, websocket: WebSocket, game_id: str):
         await websocket.accept()
@@ -220,8 +221,111 @@ class ConnectionManager:
             for connection in self.active_connections[game_id]:
                 await connection.send_text(message)
 
+    async def connect_lobby(self, websocket: WebSocket):
+        await websocket.accept()
+        self.lobby_connections.append(websocket)
+
+    def disconnect_lobby(self, websocket: WebSocket):
+        if websocket in self.lobby_connections:
+            self.lobby_connections.remove(websocket)
+
+    async def broadcast_lobby(self, message: str):
+        for connection in self.lobby_connections:
+            try:
+                await connection.send_text(message)
+            except Exception:
+                continue
+
 
 manager = ConnectionManager()
+
+# Seek storage: seek_id -> seek_data
+seeks: dict[str, dict] = {}
+
+
+@app.websocket("/ws/lobby")
+async def lobby_websocket(websocket: WebSocket):
+    await manager.connect_lobby(websocket)
+    try:
+        # Send initial seek list
+        await websocket.send_text(json.dumps({
+            "type": "seeks",
+            "seeks": list(seeks.values())
+        }))
+
+        while True:
+            data = await websocket.receive_text()
+            message = json.loads(data)
+
+            if message["type"] == "create_seek":
+                seek_id = str(uuid4())
+                user = message.get("user")
+                seek_data = {
+                    "id": seek_id,
+                    "user_id": user.get("id") if user else None,
+                    "user_name": user.get("name") if user else "Anonymous",
+                    "variant": message.get("variant", "standard"),
+                    "time_control": message.get("time_control"),
+                    "created_at": asyncio.get_event_loop().time()
+                }
+                seeks[seek_id] = seek_data
+                await manager.broadcast_lobby(json.dumps({
+                    "type": "seek_created",
+                    "seek": seek_data
+                }))
+
+            elif message["type"] == "cancel_seek":
+                seek_id = message.get("seek_id")
+                if seek_id in seeks:
+                    del seeks[seek_id]
+                    await manager.broadcast_lobby(json.dumps({
+                        "type": "seek_removed",
+                        "seek_id": seek_id
+                    }))
+
+            elif message["type"] == "join_seek":
+                seek_id = message.get("seek_id")
+                joining_user = message.get("user")
+                if seek_id in seeks:
+                    seek = seeks.pop(seek_id)
+                    
+                    # Create a new game
+                    game_id = str(uuid4())
+                    variant = seek["variant"]
+                    rules_cls = RULES_MAP.get(variant.lower(), StandardRules)
+                    rules = rules_cls()
+                    
+                    # For now: Seeker is White, Joiner is Black
+                    game = Game(rules=rules, time_control=seek["time_control"])
+                    games[game_id] = game
+                    game_variants[game_id] = variant
+                    
+                    # Assign players in DB
+                    async with async_session() as session:
+                        async with session.begin():
+                            model = GameModel(
+                                id=game_id,
+                                variant=variant,
+                                fen=game.state.fen,
+                                move_history=json.dumps(game.move_history),
+                                time_control=json.dumps(game.time_control) if game.time_control else None,
+                                white_player_id=seek["user_id"],
+                                black_player_id=joining_user.get("id") if joining_user else None,
+                                is_over=False
+                            )
+                            session.add(model)
+
+                    await manager.broadcast_lobby(json.dumps({
+                        "type": "seek_accepted",
+                        "seek_id": seek_id,
+                        "game_id": game_id
+                    }))
+
+    except WebSocketDisconnect:
+        manager.disconnect_lobby(websocket)
+    except Exception as e:
+        print(f"Lobby WebSocket error: {e}")
+        manager.disconnect_lobby(websocket)
 
 
 async def get_game(game_id: str) -> Game:
@@ -365,6 +469,15 @@ async def new_game(req: NewGameRequest):
 @app.get("/api/game/{game_id}")
 async def get_game_state(game_id: str):
     game = await get_game(game_id)
+    
+    async with async_session() as session:
+        stmt = select(GameModel).where(GameModel.id == game_id)
+        result = await session.execute(stmt)
+        model = result.scalar_one_or_none()
+        
+        white_player_id = model.white_player_id if model else None
+        black_player_id = model.black_player_id if model else None
+
     return {
         "game_id": game_id,
         "fen": game.state.fen,
@@ -372,7 +485,9 @@ async def get_game_state(game_id: str):
         "is_over": game.is_over,
         "move_history": game.move_history,
         "winner": game.winner,
-        "variant": game_variants.get(game_id)
+        "variant": game_variants.get(game_id),
+        "white_player_id": white_player_id,
+        "black_player_id": black_player_id
     }
 
 

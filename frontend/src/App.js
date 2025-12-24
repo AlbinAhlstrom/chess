@@ -2,7 +2,8 @@ import './App.css';
 import Board from './components/Board/Board.js';
 import { Pieces } from './components/Pieces/Pieces.js';
 import { useCallback, useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Lobby from './components/Lobby/Lobby.js';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { getMe, getAuthLinks } from './api.js';
 
 function Header() {
@@ -34,6 +35,10 @@ function Header() {
 
   return (
     <header className="main-header">
+      <nav className="header-nav">
+        <Link to="/" className="header-logo">v-chess</Link>
+        <Link to="/lobby" className="header-link">Lobby</Link>
+      </nav>
       <div className="auth-section">
         {user ? (
           <div className="user-profile">
@@ -48,15 +53,22 @@ function Header() {
   );
 }
 
-function GameBoard({ variant }) {
+function GameBoard({ variant, matchmaking = false }) {
+  const [flipped, setFlipped] = useState(false);
+  
   const handleFenChange = useCallback((newFen) => {
-    // FEN state tracking removed from App as it's no longer displayed here
+    // FEN state tracking removed from App
   }, []);
 
   return (
     <div className="App">
-      <Board>
-        <Pieces onFenChange={handleFenChange} variant={variant} />
+      <Board flipped={flipped}>
+        <Pieces 
+          onFenChange={handleFenChange} 
+          variant={variant} 
+          matchmaking={matchmaking}
+          setFlipped={setFlipped}
+        />
       </Board>
     </div>
   );
@@ -68,6 +80,8 @@ function App() {
       <Header />
       <Routes>
         <Route path="/" element={<GameBoard variant="standard" />} />
+        <Route path="/lobby" element={<Lobby />} />
+        <Route path="/matchmaking-game/:gameId" element={<GameBoard matchmaking={true} />} />
         <Route path="/standard" element={<GameBoard variant="standard" />} />
         <Route path="/antichess" element={<GameBoard variant="antichess" />} />
         <Route path="/atomic" element={<GameBoard variant="atomic" />} />

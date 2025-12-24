@@ -1,0 +1,88 @@
+.lobby-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #262421;
+    color: #bababa;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.create-seek-panel {
+    background: #2d2b28;
+    padding: 20px;
+    border-radius: 4px;
+    margin-bottom: 30px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.form-group label {
+    width: 150px;
+    font-weight: bold;
+}
+
+.form-group select, .form-group input {
+    background: #3c3934;
+    border: 1px solid #403d39;
+    color: white;
+    padding: 8px;
+    border-radius: 4px;
+    flex-grow: 1;
+}
+
+.create-button {
+    background: #95bb4a;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    font-size: 1.1em;
+}
+
+.create-button:hover {
+    background: #a9cc5d;
+}
+
+.seeks-list table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.seeks-list th, .seeks-list td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #3c3934;
+}
+
+.seeks-list th {
+    color: #8b8987;
+    text-transform: uppercase;
+    font-size: 0.9em;
+}
+
+.seeks-list button {
+    background: #3c3934;
+    color: #bababa;
+    border: 1px solid #403d39;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.seeks-list button:hover:not(:disabled) {
+    background: #45423e;
+    color: white;
+}
+
+.seeks-list button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
