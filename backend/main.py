@@ -444,13 +444,15 @@ async def auth(request: Request):
                 else:
                     user.name = user_info['name']
                     user.picture = user_info.get('picture')
+                    await session.flush()
 
                 request.session['user'] = {
-                    "id": user.id,
-                    "name": user.name,
-                    "email": user.email,
+                    "id": int(user.id), # Force correct ID
+                    "name": str(user.name),
+                    "email": str(user.email),
                     "picture": user.picture
                 }
+                print(f"AUTH SUCCESS: Set session for {user.name} (ID: {user.id})", flush=True)
 
     # Redirect to frontend
     frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
