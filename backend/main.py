@@ -245,11 +245,17 @@ manager = ConnectionManager()
 
 seeks: dict[str, dict] = {}
 
+# game_id -> user_id who offered
+
+pending_takebacks: dict[str, int] = {}
+
 
 
 
 
 @app.websocket("/ws/lobby")
+
+
 
 
 async def lobby_websocket(websocket: WebSocket):
@@ -594,6 +600,13 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                     move = Move(move_uci, player_to_move=game.state.turn)
                     game.take_turn(move)
                     await save_game_to_db(game_id)
+                    
+                    # Clear any pending takeback offers on a new move
+                    if game_id in pending_takebacks:
+                        del pending_takebacks[game_id]
+                    await manager.broadcast(game_id, json.dumps({
+                        "type": "takeback_cleared"
+                    }))
                 except (ValueError, IllegalMoveException) as e:
                     await websocket.send_text(json.dumps({"type": "error", "message": str(e)}))
                     continue
@@ -635,9 +648,59 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
 
             elif message["type"] == "takeback_offer":
                 if user_id in [white_player_id, black_player_id]:
+                    pending_takebacks[game_id] = user_id
                     await manager.broadcast(game_id, json.dumps({
                         "type": "takeback_offered",
                         "by_user_id": user_id
+                    }))
+
+            elif message["type"] == "takeback_accept":
+                if user_id in [white_player_id, black_player_id]:
+                    try:
+                        offering_user_id = pending_takebacks.get(game_id)
+                        if offering_user_id is None:
+                            # Fallback to single undo if somehow missing
+                            game.undo_move()
+                        else:
+                            offering_color = Color.WHITE if offering_user_id == white_player_id else Color.BLACK
+                            
+                            # Revert to state BEFORE the offering user's last move.
+                            # If it's the offering user's turn, undo 2 moves (opponent's + own).
+                            # If it's NOT their turn, undo 1 move (own last move).
+                            num_undo = 2 if game.state.turn == offering_color else 1
+                            
+                            for _ in range(num_undo):
+                                if game.history:
+                                    game.undo_move()
+                            
+                            if game_id in pending_takebacks:
+                                del pending_takebacks[game_id]
+
+                        await save_game_to_db(game_id)
+                        # Broadcast state update + clear offer
+                        await manager.broadcast(game_id, json.dumps({
+                            "type": "takeback_cleared"
+                        }))
+                        # Standard state broadcast to refresh board
+                        winner_color = game.rules.get_winner()
+                        await manager.broadcast(game_id, json.dumps({
+                            "type": "game_state",
+                            "fen": game.state.fen,
+                            "turn": game.state.turn.value,
+                            "is_over": game.rules.is_game_over(),
+                            "in_check": game.rules.is_check(),
+                            "winner": winner_color.value if winner_color else None,
+                            "move_history": game.move_history,
+                            "clocks": {c.value: t for c, t in game.clocks.items()} if game.clocks else None,
+                            "status": "takeback_accepted"
+                        }))
+                    except ValueError as e:
+                        await websocket.send_text(json.dumps({"type": "error", "message": str(e)}))
+
+            elif message["type"] == "takeback_decline":
+                if user_id in [white_player_id, black_player_id]:
+                    await manager.broadcast(game_id, json.dumps({
+                        "type": "takeback_cleared"
                     }))
 
             winner_color = game.rules.get_winner()
