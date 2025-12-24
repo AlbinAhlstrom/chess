@@ -621,7 +621,7 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
 
             elif message["type"] == "resign":
                 if user_id in [white_player_id, black_player_id]:
-                    game.is_over_by_timeout = True # Mark as over
+                    game.game_over_reason_override = GameOverReason.SURRENDER
                     # Determine winner
                     if user_id == white_player_id:
                         game.winner = Color.BLACK.value

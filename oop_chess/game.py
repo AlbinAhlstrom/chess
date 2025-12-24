@@ -42,6 +42,8 @@ class Game:
         self.clocks = None
         self.last_move_at = None
         self.is_over_by_timeout = False
+        self.winner_override = None
+        self.game_over_reason_override = None
         
         if self.time_control:
             if 'limit' in self.time_control:
@@ -152,7 +154,7 @@ class Game:
 
     @property
     def is_over(self) -> bool:
-        return self.rules.is_game_over() or self.is_over_by_timeout
+        return self.rules.is_game_over() or self.is_over_by_timeout or self.game_over_reason_override is not None
 
     @property
     def is_draw(self) -> bool:
@@ -164,10 +166,14 @@ class Game:
 
     @property
     def game_over_reason(self) -> GameOverReason:
+        if self.game_over_reason_override:
+            return self.game_over_reason_override
         return self.rules.get_game_over_reason()
 
     @property
     def winner(self) -> Optional[str]:
+        if self.winner_override:
+            return self.winner_override
         color = self.rules.get_winner()
         return color.value if color else None
 
