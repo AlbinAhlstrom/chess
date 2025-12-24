@@ -624,9 +624,9 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                     game.game_over_reason_override = GameOverReason.SURRENDER
                     # Determine winner
                     if user_id == white_player_id:
-                        game.winner = Color.BLACK.value
+                        game.winner_override = Color.BLACK.value
                     else:
-                        game.winner = Color.WHITE.value
+                        game.winner_override = Color.WHITE.value
                     
                     await save_game_to_db(game_id)
                     await manager.broadcast(game_id, json.dumps({
