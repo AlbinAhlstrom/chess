@@ -29,7 +29,7 @@ function Lobby() {
     const [seeks, setSeeks] = useState([]);
     const [user, setUser] = useState(null);
     const [selectedVariant, setSelectedVariant] = useState("standard");
-    const [selectedColor, setSelectedColor] = useState("random");
+    const [selectedColor, setSelectedColor] = useState("white");
     
     // Match Pieces.js state structure
     const [isTimeControlEnabled, setIsTimeControlEnabled] = useState(true);
@@ -102,10 +102,10 @@ function Lobby() {
 
     return (
         <div className="lobby-container">
-            <h1>Game Lobby</h1>
+            <h1>Create Game</h1>
             
             <div className="create-seek-panel">
-                <h2>Create a Game</h2>
+                <h2>Variant</h2>
                 
                 <div className="variants-grid">
                     {VARIANTS.map(v => (
