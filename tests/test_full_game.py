@@ -37,8 +37,7 @@ def parse_pgn_game(game_string: str) -> PGNGame:
 
 
 all_games: list[PGNGame] = []
-with open("/home/albin/projects/oop_chess/tests/example_games.pgn", "r") as f:
-    pgn_content = f.read()
+    with open("/home/albin/projects/v_chess/tests/example_games.pgn", "r") as f:    pgn_content = f.read()
 
 game_strings = re.split(r'\n\n(?=\[Event)', pgn_content.strip())
 
