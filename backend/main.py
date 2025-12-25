@@ -149,6 +149,50 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+    print("WARNING: GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not set. Google Login will not work.")
+
+is_prod = os.environ.get("ENV") == "prod"
+app.add_middleware(
+    SessionMiddleware, 
+    secret_key=SECRET_KEY,
+    session_cookie="v_chess_session",
+    same_site="none" if is_prod else "lax",
+    https_only=is_prod
+)
+oauth = OAuth()
+oauth.register(
+    name="google",
+    client_id=GOOGLE_CLIENT_ID,
+    client_secret=GOOGLE_CLIENT_SECRET,
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={
+        "scope": "openid email profile"
+    },
+    authorize_params={
+        "prompt": "select_account"
+    }
+)
+
+origins = [
+    "https://v-chess.com",
+    "https://www.v-chess.com",
+    "https://api.v-chess.com",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_origin_regex=r"https://.*\.vercel\.app|https://.*\.v-chess\.com",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 class ConnectionManager:
     def __init__(self):
         self.active_connections: dict[str, list[WebSocket]] = {}
