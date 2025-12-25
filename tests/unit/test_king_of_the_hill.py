@@ -51,15 +51,18 @@ def test_koth_king_d4():
     assert game.game_over_reason == GameOverReason.KING_ON_HILL
 
 def test_koth_king_d5():
-    fen = "8/8/8/8/3K4/8/8/k7 w - - 0 1"
+    # Start at d6 (Row 2, Col 3), which is NOT a hill square
+    # Hill squares: d4, d5, e4, e5 (Rows 4,3)
+    fen = "8/8/3K4/8/8/8/8/k7 w - - 0 1"
     game = Game(fen, rules=KingOfTheHillRules())
-    game.take_turn(Move("d4d5"))
+    game.take_turn(Move("d6d5"))
     assert game.is_over
     assert game.game_over_reason == GameOverReason.KING_ON_HILL
 
 def test_koth_king_e5():
-    fen = "8/8/8/8/4K3/8/8/k7 w - - 0 1"
+    # Start at e6 (Row 2, Col 4), which is NOT a hill square
+    fen = "8/8/4K3/8/8/8/8/k7 w - - 0 1"
     game = Game(fen, rules=KingOfTheHillRules())
-    game.take_turn(Move("e4e5"))
+    game.take_turn(Move("e6e5"))
     assert game.is_over
     assert game.game_over_reason == GameOverReason.KING_ON_HILL

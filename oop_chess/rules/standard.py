@@ -22,9 +22,6 @@ class StandardRules(Rules):
     def has_check(self) -> bool:
         return True
 
-    def get_legal_moves(self) -> list[Move]:
-        return [move for move in self.get_theoretical_moves() if self.is_legal(move)]
-
     def get_winner(self) -> Color | None:
         reason = self.get_game_over_reason()
         if reason == GameOverReason.CHECKMATE:
@@ -60,8 +57,13 @@ class StandardRules(Rules):
         if pseudo_reason != MoveLegalityReason.LEGAL:
             return pseudo_reason
 
-        if self.king_left_in_check(move):
-            return MoveLegalityReason.KING_LEFT_IN_CHECK
+        # Only check if king left in check if the variant has check 
+        # AND the current player has a king on the board.
+        if self.has_check:
+            has_king = any(isinstance(p, King) and p.color == self.state.turn 
+                           for p in self.state.board.board.values())
+            if has_king and self.king_left_in_check(move):
+                return MoveLegalityReason.KING_LEFT_IN_CHECK
 
         return MoveLegalityReason.LEGAL
 

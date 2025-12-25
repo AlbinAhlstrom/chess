@@ -41,3 +41,14 @@ def test_horde_pawn_rank1_double_push():
     
     from oop_chess.square import Square
     assert isinstance(game.state.board.get_piece(Square("a3")), Pawn)
+
+def test_horde_get_legal_moves_white():
+    """Verify white can get legal moves in Horde (no NameError)."""
+    fen = "k7/8/8/8/8/8/8/P7 w - - 0 1"
+    game = Game(fen, rules=HordeRules())
+    moves = game.rules.get_legal_moves()
+    assert len(moves) > 0
+    # a1-a2 and a1-a3 should be legal
+    uci_moves = [m.uci for m in moves]
+    assert "a1a2" in uci_moves
+    assert "a1a3" in uci_moves

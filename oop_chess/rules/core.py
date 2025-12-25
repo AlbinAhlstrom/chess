@@ -38,9 +38,15 @@ class Rules(ABC):
         from oop_chess.game_state import GameState
         return GameState.STARTING_FEN
 
-    @abstractmethod
     def get_legal_moves(self) -> list[Move]:
         """Returns all legal moves in the current state."""
+        return [move for move in self.get_theoretical_moves() if self.is_legal(move)]
+
+    @abstractmethod
+    def get_theoretical_moves(self) -> list[Move]:
+        """Returns all moves that are theoretically possible on an empty board,
+        ignoring check and other legality constraints.
+        """
         ...
 
     def has_legal_moves(self) -> bool:
