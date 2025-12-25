@@ -17,6 +17,7 @@ pkill uvicorn || echo "No uvicorn process was running."
 # 4. Ensure dependencies are up to date
 echo "Updating dependencies..."
 venv/bin/pip install -r requirements.txt
+venv/bin/pip install -e .
 
 # 5. Clear old databases (Fixes corrupted float IDs)
 echo "Clearing old databases for a clean start..."

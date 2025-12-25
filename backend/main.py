@@ -26,7 +26,7 @@ import os
 from starlette.middleware.sessions import SessionMiddleware
 from authlib.integrations.starlette_client import OAuth, OAuthError
 from fastapi import Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, HTMLResponse
 from dotenv import load_dotenv, find_dotenv
 
 load_dotenv(find_dotenv())
@@ -271,21 +271,32 @@ async def login(request: Request):
 
 @app.get("/auth/auth")
 async def auth(request: Request):
-    token = await oauth.google.authorize_access_token(request)
+    try:
+        token = await oauth.google.authorize_access_token(request)
+    except OAuthError as error:
+        print(f"OAuth Error: {error.error}")
+        return HTMLResponse(f'<h1>OAuth Error</h1><pre>{error.error}</pre>')
+    
     user_info = token.get("userinfo")
     if user_info:
-        async with async_session() as session:
-            async with session.begin():
-                stmt = select(User).where(User.google_id == user_info["sub"])
-                result = await session.execute(stmt)
-                user = result.scalar_one_or_none()
-                if not user:
-                    user = User(google_id=user_info["sub"], email=user_info["email"], name=user_info["name"], picture=user_info.get("picture"))
-                    session.add(user)
-                else:
-                    user.name, user.picture = user_info["name"], user_info.get("picture")
-                await session.flush()
-                request.session["user"] = {"id": str(user.google_id), "db_id": int(user.id), "name": str(user.name), "email": str(user.email), "picture": user.picture}
+        try:
+            async with async_session() as session:
+                async with session.begin():
+                    stmt = select(User).where(User.google_id == user_info["sub"])
+                    result = await session.execute(stmt)
+                    user = result.scalar_one_or_none()
+                    if not user:
+                        user = User(google_id=user_info["sub"], email=user_info["email"], name=user_info["name"], picture=user_info.get("picture"))
+                        session.add(user)
+                    else:
+                        user.name, user.picture = user_info["name"], user_info.get("picture")
+                    await session.flush()
+                    request.session["user"] = {"id": str(user.google_id), "db_id": int(user.id), "name": str(user.name), "email": str(user.email), "picture": user.picture}
+        except Exception as e:
+            print("Error saving user to DB:")
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail="Database error during authentication")
+            
     return RedirectResponse(url=os.environ.get("FRONTEND_URL", "http://localhost:3000"))
 
 @app.get("/auth/logout")
