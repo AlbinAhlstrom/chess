@@ -465,7 +465,9 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     }, [calculateSquare, position]);
 
     const canMovePiece = useCallback((pieceColor) => {
-        if (!matchmaking) return true; // Over the board: anyone can move
+        // In OTB or against Computer, allow all selections (backend enforces actual move legality)
+        if (!matchmaking || whitePlayerId === "computer" || blackPlayerId === "computer") return true;
+        
         if (!user || !user.id) return false; // Matchmaking requires login
         
         if (pieceColor === 'w') {
@@ -602,7 +604,8 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     const handleUndo = (e) => {
         e.stopPropagation();
         if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-            const type = matchmaking ? "takeback_offer" : "undo";
+            const isComputerGame = whitePlayerId === "computer" || blackPlayerId === "computer";
+            const type = (matchmaking && !isComputerGame) ? "takeback_offer" : "undo";
             ws.current.send(JSON.stringify({ type }));
         } else {
             console.error("WebSocket not open. ReadyState:", ws.current?.readyState);
