@@ -311,17 +311,9 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
             lastNotifiedFen.current = fen;
             
             // Log all legal moves when turn switches
-            if (gameId) {
-                getAllLegalMoves(gameId).then(response => {
-                    if (response.status === "success") {
-                        setAllPossibleMoves(response.moves);
-                    }
-                }).catch(error => {
-                    console.error("Failed to fetch all legal moves:", error);
-                });
-            }
+            fetchLegalMoves(gameId);
         }
-    }, [fen, onFenChange, inCheck, gameId]);
+    }, [fen, onFenChange, inCheck, gameId, fetchLegalMoves]);
 
     const position = useMemo(() => fen ? fenToPosition(fen) : [], [fen]);
 
@@ -463,12 +455,12 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
 
     const canMovePiece = useCallback((pieceColor) => {
         if (!matchmaking) return true; // Over the board: anyone can move
-        if (!user) return false; // Matchmaking requires login
+        if (!user || !user.id) return false; // Matchmaking requires login
         
         if (pieceColor === 'w') {
-            return user.id === whitePlayerId;
+            return String(user.id) === String(whitePlayerId);
         } else {
-            return user.id === blackPlayerId;
+            return String(user.id) === String(blackPlayerId);
         }
     }, [matchmaking, user, whitePlayerId, blackPlayerId]);
 
@@ -488,6 +480,24 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
         setPromotionDialogOpen(false);
         setPromotionMove(null);
     };
+
+    const fetchLegalMoves = useCallback((id) => {
+        if (!id) return;
+        getAllLegalMoves(id).then(response => {
+            if (response.status === "success") {
+                setAllPossibleMoves(response.moves);
+            }
+        }).catch(error => {
+            console.error("Failed to fetch all legal moves:", error);
+        });
+    }, []);
+
+    useEffect(() => {
+        // Fetch moves immediately when gameId is set (for initial load)
+        if (gameId) {
+            fetchLegalMoves(gameId);
+        }
+    }, [gameId, fetchLegalMoves]);
 
     const handlePieceDragStart = useCallback(async ({ file, rank, piece }) => {
         if (!gameId || isGameOver) return;
