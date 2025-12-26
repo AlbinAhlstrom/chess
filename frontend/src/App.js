@@ -4,6 +4,7 @@ import { Pieces } from './components/Pieces/Pieces.js';
 import { useCallback, useState, useEffect } from 'react';
 import Lobby from './components/Lobby/Lobby.js';
 import Profile from './components/Profile/Profile.js';
+import About from './components/About/About.js';
 import { BrowserRouter, Routes, Route, Link, useParams, Navigate } from 'react-router-dom';
 import { getMe, getAuthLinks } from './api.js';
 
@@ -39,6 +40,7 @@ function Header() {
       <nav className="header-nav">
         <Link to="/create-game" className="header-logo">V-Chess</Link>
         <Link to="/create-game" className="header-link">Create Game</Link>
+        <Link to="/about" className="header-link">About</Link>
       </nav>
       <div className="auth-section">
         {user ? (
@@ -84,19 +86,36 @@ function GameBoard({ variant: propVariant, matchmaking = false }) {
   );
 }
 
+function Footer() {
+  return (
+    <footer className="main-footer">
+      <a href="https://discord.gg/wGCBs5Qr" target="_blank" rel="noopener noreferrer" className="footer-link">Discord</a>
+      <a href="https://forms.gle/your-feedback-form" target="_blank" rel="noopener noreferrer" className="footer-link">Feedback</a>
+      <Link to="/about" className="footer-link">About</Link>
+      <span>© 2025 V-Chess</span>
+    </footer>
+  );
+}
+
 function App() {
   return (
     <BrowserRouter>
-      <Header />
-      <Routes>
-        <Route path="/" element={<Navigate to="/create-game" replace />} />
-        <Route path="/create-game" element={<Lobby />} />
-        <Route path="/otb" element={<GameBoard variant="standard" />} />
-        <Route path="/otb/:variant" element={<GameBoard />} />
-        <Route path="/matchmaking-game/:gameId" element={<GameBoard matchmaking={true} />} />
-        <Route path="/game/:gameId" element={<GameBoard />} />
-        <Route path="/profile" element={<Profile />} />
-      </Routes>
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <Header />
+        <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <Routes>
+            <Route path="/" element={<Navigate to="/create-game" replace />} />
+            <Route path="/create-game" element={<Lobby />} />
+            <Route path="/otb" element={<GameBoard variant="standard" />} />
+            <Route path="/otb/:variant" element={<GameBoard />} />
+            <Route path="/matchmaking-game/:gameId" element={<GameBoard matchmaking={true} />} />
+            <Route path="/game/:gameId" element={<GameBoard />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/about" element={<About />} />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
     </BrowserRouter>
   );
 }
