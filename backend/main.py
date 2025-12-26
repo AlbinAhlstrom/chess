@@ -376,7 +376,36 @@ async def logout(request: Request):
     return RedirectResponse(url=os.environ.get("FRONTEND_URL", "http://localhost:3000"))
 
 @app.get("/api/me")
-async def me(request: Request): return {"user": request.session.get("user")}
+async def me(request: Request):
+    user_session = request.session.get("user")
+    if user_session:
+        # Check if user exists in DB, if not, recreate them (resurrection)
+        # This handles the case where DB is wiped but session persists
+        try:
+            async with async_session() as session:
+                async with session.begin():
+                    # user_session["id"] is the google_id (string)
+                    google_id = user_session.get("id")
+                    if google_id:
+                        stmt = select(User).where(User.google_id == google_id)
+                        result = await session.execute(stmt)
+                        db_user = result.scalar_one_or_none()
+                        
+                        if not db_user:
+                            print(f"Resurrecting user {google_id} from session data...")
+                            new_user = User(
+                                google_id=google_id,
+                                email=user_session.get("email", ""),
+                                name=user_session.get("name", "Unknown"),
+                                picture=user_session.get("picture")
+                            )
+                            session.add(new_user)
+                            # Note: db_id in session might be stale now, but google_id is constant
+        except Exception as e:
+            print(f"Error checking/resurrecting user in /api/me: {e}")
+            traceback.print_exc()
+
+    return {"user": user_session}
 
 @app.get("/api/ratings/{user_id}")
 async def get_user_ratings(user_id: str):
