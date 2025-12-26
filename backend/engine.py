@@ -126,17 +126,21 @@ class UCIEngine:
                 await self.send_command(f"go movetime {movetime}")
 
                 best_move = None
-                while True:
-                    line = await self.read_line()
-                    if not line:
-                        break
-                    if line.startswith("bestmove"):
-                        parts = line.split()
-                        if len(parts) >= 2:
-                            best_move = parts[1]
-                            if best_move == "(none)":
-                                best_move = None
-                        break
+                try:
+                    # Give it slightly more than the movetime to respond
+                    while True:
+                        line = await asyncio.wait_for(self.read_line(), timeout=time_limit + 2.0)
+                        if not line:
+                            break
+                        if line.startswith("bestmove"):
+                            parts = line.split()
+                            if len(parts) >= 2:
+                                best_move = parts[1]
+                                if best_move == "(none)":
+                                    best_move = None
+                            break
+                except asyncio.TimeoutError:
+                    print("[ENGINE] Timeout waiting for bestmove!")
                 
                 print(f"[ENGINE] Found best move: {best_move}")
                 return best_move
@@ -146,7 +150,7 @@ class UCIEngine:
                 return None
 
 # Singleton instance or factory could be used
-ENGINE_PATH = os.path.join(os.path.dirname(__file__), "engines", "fairy-stockfish")
+ENGINE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "engines", "fairy-stockfish"))
 
 class EngineManager:
     """Manages a single engine instance shared or dedicated."""

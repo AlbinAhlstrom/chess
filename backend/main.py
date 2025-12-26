@@ -558,7 +558,7 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
     user_session = websocket.scope.get("session", {}).get("user")
     user_id = str(user_session.get("id")) if user_session else None
     
-    print(f"[WS] Connection for {game_id}. user_id={user_id}, white={white_id}, black={black_id}")
+    print(f"[WS] Connection for {game_id}. user_id={user_id}, model_white={white_id}, model_black={black_id}")
 
     # Broadcast initial state
     await manager.broadcast(game_id, json.dumps({
@@ -574,9 +574,10 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
 
     # If it's computer's turn, trigger it
     if not game.is_over:
-        if (game.state.turn == Color.WHITE and white_id == "computer") or \
-           (game.state.turn == Color.BLACK and black_id == "computer"):
-            print(f"[WS] AI's turn! white={white_id}, black={black_id}, turn={game.state.turn}")
+        is_ai_turn = (game.state.turn == Color.WHITE and white_id == "computer") or \
+                     (game.state.turn == Color.BLACK and black_id == "computer")
+        if is_ai_turn:
+            print(f"[WS] AI's turn! Starting AI task.")
             asyncio.create_task(trigger_ai_move(game_id, game))
 
     try:
@@ -584,25 +585,30 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
             data = await websocket.receive_text()
             message = json.loads(data)
             if message["type"] == "move":
-                print(f"[WS] Move received: {message.get('uci')}")
-                # Check if it's the player's turn or if they are allowed to move
+                # Refresh IDs from DB in case they changed (though they shouldn't)
+                async with async_session() as session:
+                    model = (await session.execute(select(GameModel).where(GameModel.id == game_id))).scalar_one_or_none()
+                    white_id, black_id = (model.white_player_id, model.black_player_id) if model else (None, None)
+
+                print(f"[WS] Move received: {message.get('uci')}. Turn: {game.state.turn}. White: {white_id}, Black: {black_id}, User: {user_id}")
+                
                 is_white_turn = game.state.turn == Color.WHITE
                 is_black_turn = game.state.turn == Color.BLACK
                 
-                # If it's AI's turn, nobody else can move
+                # STRICT AI TURN CHECK
                 if (is_white_turn and white_id == "computer") or (is_black_turn and black_id == "computer"):
-                    print(f"[WS] Rejected human move: It is AI's turn.")
+                    print(f"[WS] REJECTED: It is computer's turn.")
+                    # Re-trigger AI just in case it stalled
+                    asyncio.create_task(trigger_ai_move(game_id, game))
                     continue
                 
-                # If matchmaking (players assigned), enforce user_id matches
-                if is_white_turn:
-                    if white_id and white_id != "computer" and user_id != white_id:
-                        print(f"[WS] Rejected human move: user {user_id} is not white {white_id}")
-                        continue
-                else:
-                    if black_id and black_id != "computer" and user_id != black_id:
-                        print(f"[WS] Rejected human move: user {user_id} is not black {black_id}")
-                        continue
+                # Matchmaking checks
+                if is_white_turn and white_id and white_id != "computer" and user_id != white_id:
+                    print(f"[WS] REJECTED: User {user_id} is not White {white_id}")
+                    continue
+                if is_black_turn and black_id and black_id != "computer" and user_id != black_id:
+                    print(f"[WS] REJECTED: User {user_id} is not Black {black_id}")
+                    continue
 
                 move_uci = message["uci"]
                 try:
@@ -610,11 +616,9 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                     piece = game.state.board.get_piece(start_sq)
                     if piece and piece.fen.lower() == "p" and len(move_uci) == 4 and end_sq.is_promotion_row(piece.color): move_uci += "q"
                     
-                    print(f"[WS] Applying human move: {move_uci}")
                     game.take_turn(Move(move_uci, player_to_move=game.state.turn))
                     rating_diffs = await save_game_to_db(game_id)
                     
-                    # Broadcast human move
                     await manager.broadcast(game_id, json.dumps({
                         "type": "game_state", 
                         "fen": game.state.fen, 
@@ -627,15 +631,14 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                         "rating_diffs": rating_diffs
                     }))
 
-                    # Trigger AI move if it's AI's turn
+                    # Trigger AI move
                     if not game.is_over:
                         if (game.state.turn == Color.WHITE and white_id == "computer") or \
                            (game.state.turn == Color.BLACK and black_id == "computer"):
-                            print(f"[WS] Human move complete. Triggering AI.")
                             asyncio.create_task(trigger_ai_move(game_id, game))
 
                 except Exception as e: 
-                    print(f"[WS] Error processing move: {e}")
+                    print(f"[WS] Move error: {e}")
                     await websocket.send_text(json.dumps({"type": "error", "message": str(e)}))
             elif message["type"] == "resign":
                 if user_id in [white_id, black_id] or (not white_id and not black_id): # Allow anyone in anonymous games
@@ -652,11 +655,6 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                         "clocks": {c.value: t for c, t in game.get_current_clocks().items()} if game.clocks else None, 
                         "rating_diffs": rating_diffs
                     }))
-    except WebSocketDisconnect: manager.disconnect(websocket, game_id)
-    except Exception as e:
-        print(f"[WS] CRITICAL ERROR in websocket loop: {e}")
-        traceback.print_exc()
-        manager.disconnect(websocket, game_id)
     except WebSocketDisconnect: manager.disconnect(websocket, game_id)
     except Exception as e:
         print(f"[WS] CRITICAL ERROR in websocket loop: {e}")

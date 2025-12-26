@@ -22,9 +22,7 @@ export const getWsBase = () => {
         return `wss://api.v-chess.com/ws`;
     }
 
-    // Force localhost if on loopback to ensure consistency
-    const host = (hostname === '127.0.0.1') ? 'localhost' : hostname;
-    return `ws://${host}:8000/ws`;
+    return `ws://${hostname}:8000/ws`;
 };
 
 const API_BASE = getApiBase();
