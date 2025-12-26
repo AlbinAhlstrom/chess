@@ -160,6 +160,8 @@ if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
     print("WARNING: GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not set. Google Login will not work.")
 
 is_prod = os.environ.get("ENV") == "prod"
+print(f"Starting server in {'PRODUCTION' if is_prod else 'DEVELOPMENT'} mode")
+
 app.add_middleware(
     SessionMiddleware, 
     secret_key=SECRET_KEY,
@@ -336,8 +338,13 @@ class NewGameRequest(BaseModel):
 
 @app.get("/auth/login")
 async def login(request: Request):
-    redirect_uri = REDIRECT_URI or str(request.url_for("auth"))
-    if is_prod: redirect_uri = redirect_uri.replace("http://", "https://")
+    dynamic_uri = str(request.url_for("auth"))
+    redirect_uri = REDIRECT_URI or dynamic_uri
+    
+    if is_prod: 
+        redirect_uri = redirect_uri.replace("http://", "https://")
+    
+    print(f"[AUTH] Login attempt. is_prod={is_prod}, ENV_REDIRECT={REDIRECT_URI}, DYNAMIC={dynamic_uri}, FINAL={redirect_uri}")
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 @app.get("/auth/auth")
