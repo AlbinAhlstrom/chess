@@ -481,6 +481,33 @@ async def get_user_profile(user_id: str, request: Request):
             "overall": overall
         }
 
+@app.get("/api/leaderboard/{variant}")
+async def get_leaderboard(variant: str):
+    async with async_session() as session:
+        # Get top 50 players for the variant
+        # Join Rating with User to get names and pictures
+        stmt = (
+            select(Rating, User)
+            .join(User, Rating.user_id == User.google_id)
+            .where(Rating.variant == variant.lower())
+            .order_by(Rating.rating.desc())
+            .limit(50)
+        )
+        result = await session.execute(stmt)
+        rows = result.all()
+        
+        leaderboard = []
+        for rating_obj, user_obj in rows:
+            leaderboard.append({
+                "user_id": user_obj.google_id,
+                "name": user_obj.name,
+                "picture": user_obj.picture,
+                "rating": int(rating_obj.rating),
+                "rd": int(rating_obj.rd)
+            })
+            
+        return {"variant": variant, "leaderboard": leaderboard}
+
 class LegalMovesRequest(BaseModel):
     game_id: str
     square: str

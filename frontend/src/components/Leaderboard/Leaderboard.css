@@ -1,0 +1,147 @@
+.leaderboard-container {
+    max-width: 800px;
+    margin: 80px auto;
+    padding: 20px;
+    color: #bababa;
+}
+
+.leaderboard-card {
+    background: #262421;
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.leaderboard-card h1 {
+    margin-top: 0;
+    color: white;
+    font-size: 1.8rem;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.variant-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #3c3934;
+}
+
+.variant-tab {
+    background: #2d2b28;
+    border: 1px solid #3c3934;
+    color: #8b8987;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.variant-tab:hover {
+    background: #3c3934;
+    color: white;
+}
+
+.variant-tab.active {
+    background: #4CAF50;
+    color: white;
+    border-color: #4CAF50;
+}
+
+.leaderboard-table-container {
+    overflow-x: auto;
+}
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.leaderboard-table th {
+    text-align: left;
+    padding: 12px;
+    color: #8b8987;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    border-bottom: 1px solid #3c3934;
+}
+
+.leader-row {
+    border-bottom: 1px solid #2d2b28;
+    transition: background-color 0.1s;
+}
+
+.leader-row:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.leaderboard-table td {
+    padding: 12px;
+    vertical-align: middle;
+}
+
+.rank-col {
+    width: 50px;
+    font-weight: bold;
+    color: #666;
+}
+
+.player-col .player-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: white;
+    font-weight: 500;
+}
+
+.player-col .player-link:hover .player-name {
+    text-decoration: underline;
+    color: #4CAF50;
+}
+
+.mini-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    background: #333;
+}
+
+.rating-col {
+    text-align: right;
+}
+
+.rating-value {
+    font-weight: bold;
+    color: white;
+    font-size: 1.1rem;
+    margin-right: 8px;
+}
+
+.rd-value {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.no-data, .loading-state {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+@media (max-width: 600px) {
+    .variant-tab {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+    
+    .leaderboard-card {
+        padding: 15px;
+    }
+}

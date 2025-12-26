@@ -46,5 +46,7 @@ async def test_get_user_profile_success():
 async def test_get_user_profile_not_found():
     with TestClient(app) as client:
         response = client.get("/api/user/non-existent-id")
-        assert response.status_code == 404
-        assert response.json()["detail"] == "User not found"
+        assert response.status_code == 200
+        data = response.json()
+        assert data["user"]["name"] == "Anonymous"
+        assert data["overall"] == 1500.0

@@ -7,6 +7,7 @@ import Profile from './components/Profile/Profile.js';
 import About from './components/About/About.js';
 import LandingPage from './components/LandingPage/LandingPage.js';
 import Settings from './components/Settings/Settings.js';
+import Leaderboard from './components/Leaderboard/Leaderboard.js';
 import { BrowserRouter, Routes, Route, Link, useParams, Navigate } from 'react-router-dom';
 import { getMe, getAuthLinks } from './api.js';
 
@@ -32,6 +33,7 @@ function Header({ user }) {
       <nav className="header-nav">
         <Link to="/" className="header-logo">V-Chess</Link>
         <Link to="/create-game" className="header-link">Create Game</Link>
+        <Link to="/leaderboards" className="header-link">Leaderboards</Link>
         <Link to="/about" className="header-link">About</Link>
       </nav>
       <div className="auth-section">
@@ -147,6 +149,8 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:userId" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/leaderboards" element={<Leaderboard />} />
+            <Route path="/leaderboards/:variant" element={<Leaderboard />} />
             <Route path="/about" element={<About />} />
           </Routes>
         </main>
