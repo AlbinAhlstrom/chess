@@ -5,36 +5,13 @@ import { useCallback, useState, useEffect } from 'react';
 import Lobby from './components/Lobby/Lobby.js';
 import Profile from './components/Profile/Profile.js';
 import About from './components/About/About.js';
+import LandingPage from './components/LandingPage/LandingPage.js';
 import { BrowserRouter, Routes, Route, Link, useParams, Navigate } from 'react-router-dom';
 import { getMe, getAuthLinks } from './api.js';
 
-function Header() {
-  const [user, setUser] = useState(null);
+function Header({ user }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { loginLink, logoutLink } = getAuthLinks();
-
-  const fetchUser = useCallback(() => {
-    getMe().then(data => {
-      if (data.user) {
-        setUser(data.user);
-      } else {
-        setUser(null);
-      }
-    }).catch(e => {
-      console.error("Failed to fetch user:", e);
-      setUser(null);
-    });
-  }, []);
-
-  useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
-
-  // Refresh user when tab is focused (e.g. returning from login redirect)
-  useEffect(() => {
-    window.addEventListener('focus', fetchUser);
-    return () => window.removeEventListener('focus', fetchUser);
-  }, [fetchUser]);
 
   const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
 
@@ -52,7 +29,7 @@ function Header() {
   return (
     <header className="main-header">
       <nav className="header-nav">
-        <Link to="/create-game" className="header-logo">V-Chess</Link>
+        <Link to="/" className="header-logo">V-Chess</Link>
         <Link to="/create-game" className="header-link">Create Game</Link>
         <Link to="/about" className="header-link">About</Link>
       </nav>
@@ -118,19 +95,45 @@ function Footer() {
       <a href="https://discord.gg/wGCBs5Qr" target="_blank" rel="noopener noreferrer" className="footer-link">Discord</a>
       <a href="https://forms.gle/your-feedback-form" target="_blank" rel="noopener noreferrer" className="footer-link">Feedback</a>
       <Link to="/about" className="footer-link">About</Link>
-      <span>© 2025 V-Chess</span>
     </footer>
   );
 }
 
 function App() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchUser = useCallback(() => {
+    getMe().then(data => {
+      setUser(data.user || null);
+      setLoading(false);
+    }).catch(e => {
+      console.error("Failed to fetch user:", e);
+      setUser(null);
+      setLoading(false);
+    });
+  }, []);
+
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
+
+  useEffect(() => {
+    window.addEventListener('focus', fetchUser);
+    return () => window.removeEventListener('focus', fetchUser);
+  }, [fetchUser]);
+
+  if (loading) {
+    return <div className="loading-screen">Loading...</div>;
+  }
+
   return (
     <BrowserRouter>
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        <Header />
+        <Header user={user} />
         <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <Routes>
-            <Route path="/" element={<Navigate to="/create-game" replace />} />
+            <Route path="/" element={user ? <Navigate to="/create-game" replace /> : <LandingPage />} />
             <Route path="/create-game" element={<Lobby />} />
             <Route path="/otb" element={<GameBoard variant="standard" />} />
             <Route path="/otb/:variant" element={<GameBoard />} />
