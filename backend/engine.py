@@ -58,6 +58,7 @@ class UCIEngine:
     async def send_command(self, command: str):
         if self.process and self.process.stdin:
             logger.info(f"Engine << {command}")
+            print(f"Engine << {command}") # Added for console visibility
             self.process.stdin.write(f"{command}\n".encode())
             await self.process.stdin.drain()
 
@@ -67,6 +68,7 @@ class UCIEngine:
             decoded = line.decode().strip()
             if decoded:
                 logger.info(f"Engine >> {decoded}")
+                print(f"Engine >> {decoded}") # Added for console visibility
             return decoded
         return ""
 
@@ -82,39 +84,46 @@ class UCIEngine:
 
     async def go(self, fen: str, moves: list[str] = None, time_limit: float = 1.0, variant: str = "standard") -> Optional[str]:
         async with self.lock:
-            # Set variant if needed
-            fairy_variant = VARIANT_MAP.get(variant, "chess")
-            await self.set_option("UCI_Variant", fairy_variant)
-            
-            await self.is_ready()
+            try:
+                # Set variant if needed
+                fairy_variant = VARIANT_MAP.get(variant, "chess")
+                await self.set_option("UCI_Variant", fairy_variant)
+                
+                await self.is_ready()
 
-            # Setup position
-            if fen == "startpos":
-                cmd = "position startpos"
-            else:
-                cmd = f"position fen {fen}"
-            
-            if moves:
-                cmd += f" moves {' '.join(moves)}"
-            await self.send_command(cmd)
-            
-            # Start search
-            # movetime is in milliseconds
-            movetime = int(time_limit * 1000)
-            await self.send_command(f"go movetime {movetime}")
+                # Setup position
+                if fen == "startpos":
+                    cmd = "position startpos"
+                else:
+                    cmd = f"position fen {fen}"
+                
+                if moves:
+                    cmd += f" moves {' '.join(moves)}"
+                await self.send_command(cmd)
+                
+                await self.is_ready()
 
-            best_move = None
-            while True:
-                line = await self.read_line()
-                if line.startswith("bestmove"):
-                    parts = line.split()
-                    if len(parts) >= 2:
-                        best_move = parts[1]
-                        if best_move == "(none)":
-                            best_move = None
-                    break
-            
-            return best_move
+                # Start search
+                # movetime is in milliseconds
+                movetime = int(time_limit * 1000)
+                await self.send_command(f"go movetime {movetime}")
+
+                best_move = None
+                while True:
+                    line = await self.read_line()
+                    if line.startswith("bestmove"):
+                        parts = line.split()
+                        if len(parts) >= 2:
+                            best_move = parts[1]
+                            if best_move == "(none)":
+                                best_move = None
+                        break
+                
+                return best_move
+            except Exception as e:
+                logger.error(f"Engine error during 'go': {e}")
+                print(f"Engine error during 'go': {e}")
+                return None
 
 # Singleton instance or factory could be used
 ENGINE_PATH = os.path.join(os.path.dirname(__file__), "engines", "fairy-stockfish")
@@ -127,6 +136,7 @@ class EngineManager:
 
     async def ensure_started(self):
         if not self.started:
+            print(f"Starting engine at {ENGINE_PATH}")
             await self.engine.start()
             self.started = True
 

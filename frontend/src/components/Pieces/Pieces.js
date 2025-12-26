@@ -100,10 +100,16 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
 
     // Effect to handle board flipping and player names once both user and game data are available
     useEffect(() => {
-        if (matchmaking && user && (whitePlayerId || blackPlayerId)) {
-            if (user.id === blackPlayerId) {
+        if (matchmaking && (whitePlayerId || blackPlayerId)) {
+            if (user && user.id === blackPlayerId) {
                 setFlippedCombined(true);
-            } else if (user.id === whitePlayerId) {
+            } else if (user && user.id === whitePlayerId) {
+                setFlippedCombined(false);
+            } else if (whitePlayerId === "computer") {
+                // If I'm playing against computer as black (computer is white)
+                setFlippedCombined(true);
+            } else if (blackPlayerId === "computer") {
+                // If I'm playing against computer as white (computer is black)
                 setFlippedCombined(false);
             }
         }

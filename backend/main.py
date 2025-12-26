@@ -514,9 +514,11 @@ async def trigger_ai_move(game_id: str, game: Game):
     if game.is_over:
         return
 
+    print(f"[AI] Triggering AI move for game {game_id}")
     variant = game_variants.get(game_id, "standard")
     # best_move is UCI string
     best_move_uci = await engine_manager.get_best_move(game.state.fen, variant=variant)
+    print(f"[AI] Engine returned best move: {best_move_uci}")
     
     if best_move_uci:
         try:
@@ -528,7 +530,7 @@ async def trigger_ai_move(game_id: str, game: Game):
                 "turn": game.state.turn.value, 
                 "is_over": game.is_over, 
                 "in_check": game.rules.is_check(), 
-                "winner": game.winner, 
+                "winner": game.winner.value if isinstance(game.winner, Color) else game.winner, 
                 "move_history": game.move_history, 
                 "clocks": {c.value: t for c, t in game.get_current_clocks().items()} if game.clocks else None, 
                 "rating_diffs": rating_diffs
@@ -545,8 +547,11 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
         model = (await session.execute(select(GameModel).where(GameModel.id == game_id))).scalar_one_or_none()
         white_id, black_id = (model.white_player_id, model.black_player_id) if model else (None, None)
     
-    user_id = str(websocket.scope.get("session", {}).get("user", {}).get("id"))
+    user_session = websocket.scope.get("session", {}).get("user")
+    user_id = str(user_session.get("id")) if user_session else None
     
+    print(f"[WS] Connect game_id={game_id}, user_id={user_id}, white_id={white_id}, black_id={black_id}")
+
     # Broadcast initial state
     await manager.broadcast(game_id, json.dumps({
         "type": "game_state", 
@@ -554,7 +559,7 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
         "turn": game.state.turn.value, 
         "is_over": game.is_over, 
         "in_check": game.rules.is_check(), 
-        "winner": game.winner, 
+        "winner": game.winner.value if isinstance(game.winner, Color) else game.winner, 
         "move_history": game.move_history, 
         "clocks": {c.value: t for c, t in game.clocks.items()} if game.clocks else None
     }))
@@ -570,14 +575,25 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
             data = await websocket.receive_text()
             message = json.loads(data)
             if message["type"] == "move":
-                if (game.state.turn == Color.WHITE and white_id and white_id != "computer" and user_id != white_id) or \
-                   (game.state.turn == Color.BLACK and black_id and black_id != "computer" and user_id != black_id): 
+                # Check if it's the player's turn or if they are allowed to move
+                is_white_turn = game.state.turn == Color.WHITE
+                is_black_turn = game.state.turn == Color.BLACK
+                
+                # If it's AI's turn, nobody else can move
+                if (is_white_turn and white_id == "computer") or (is_black_turn and black_id == "computer"):
+                    print(f"[WS] Blocked move attempt during computer turn")
                     continue
                 
-                # Also check if it's computer's turn to prevent user moving for computer
-                if (game.state.turn == Color.WHITE and white_id == "computer") or \
-                   (game.state.turn == Color.BLACK and black_id == "computer"):
-                    continue
+                # If matchmaking (players assigned), enforce user_id matches
+                # But allow if either player_id is None (anonymous vs computer or OTB-like)
+                if is_white_turn:
+                    if white_id and white_id != "computer" and user_id != white_id:
+                        print(f"[WS] Blocked move: user {user_id} is not white {white_id}")
+                        continue
+                else:
+                    if black_id and black_id != "computer" and user_id != black_id:
+                        print(f"[WS] Blocked move: user {user_id} is not black {black_id}")
+                        continue
 
                 move_uci = message["uci"]
                 try:
@@ -594,7 +610,7 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                         "turn": game.state.turn.value, 
                         "is_over": game.is_over, 
                         "in_check": game.rules.is_check(), 
-                        "winner": game.winner, 
+                        "winner": game.winner.value if isinstance(game.winner, Color) else game.winner, 
                         "move_history": game.move_history, 
                         "clocks": {c.value: t for c, t in game.get_current_clocks().items()} if game.clocks else None, 
                         "rating_diffs": rating_diffs
@@ -609,7 +625,7 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                 except Exception as e: 
                     await websocket.send_text(json.dumps({"type": "error", "message": str(e)}))
             elif message["type"] == "resign":
-                if user_id in [white_id, black_id]:
+                if user_id in [white_id, black_id] or (not white_id and not black_id): # Allow anyone in anonymous games
                     game.game_over_reason_override, game.winner_override = GameOverReason.SURRENDER, (Color.BLACK.value if user_id == white_id else Color.WHITE.value)
                     rating_diffs = await save_game_to_db(game_id)
                     await manager.broadcast(game_id, json.dumps({
@@ -618,7 +634,7 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                         "turn": game.state.turn.value, 
                         "is_over": game.is_over, 
                         "in_check": game.rules.is_check(), 
-                        "winner": game.winner, 
+                        "winner": game.winner.value if isinstance(game.winner, Color) else game.winner, 
                         "move_history": game.move_history, 
                         "clocks": {c.value: t for c, t in game.get_current_clocks().items()} if game.clocks else None, 
                         "rating_diffs": rating_diffs
