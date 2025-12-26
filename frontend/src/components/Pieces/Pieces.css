@@ -289,17 +289,40 @@
     font-weight: 600;
     color: #aaa;
     box-sizing: border-box;
+    white-space: nowrap;
 }
 
 .player-info {
     display: flex;
     align-items: center;
     gap: 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.name-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .rating-text {
     font-weight: 400;
     color: #888;
+}
+
+@media (max-width: 650px) {
+    .player-name-display {
+        font-size: 12px;
+        padding: 0 5px; /* Reduce padding on mobile */
+    }
+    
+    .rating-text {
+        font-size: 11px;
+    }
+
+    .player-info {
+        gap: 3px;
+    }
 }
 
 .clock-display {
