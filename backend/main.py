@@ -167,8 +167,8 @@ app.add_middleware(
     SessionMiddleware, 
     secret_key=SECRET_KEY,
     session_cookie="v_chess_session",
-    same_site="none" if is_prod else "lax",
-    https_only=is_prod
+    same_site="lax", # Always use lax for local development stability
+    https_only=False # Allow http for local dev
 )
 oauth = OAuth()
 oauth.register(
