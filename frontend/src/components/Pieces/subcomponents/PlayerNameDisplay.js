@@ -29,15 +29,7 @@ function PlayerNameDisplay({
                 <span className="name-text">{playerName}</span>
                 {rating && <span className="rating-text"> ({rating})</span>}
                 {ratingDiff !== null && ratingDiff !== undefined && (
-                    <span style={{
-                        marginLeft: '8px',
-                        backgroundColor: ratingDiff >= 0 ? '#4CAF50' : '#F44336',
-                        color: 'white',
-                        padding: '1px 5px',
-                        borderRadius: '3px',
-                        fontSize: '0.9em',
-                        fontWeight: 'bold'
-                    }}>
+                    <span className={`rating-diff ${ratingDiff >= 0 ? 'positive' : 'negative'}`}>
                         {ratingDiff > 0 ? `+${ratingDiff}` : ratingDiff}
                     </span>
                 )}

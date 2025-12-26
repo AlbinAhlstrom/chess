@@ -310,6 +310,23 @@
     color: #888;
 }
 
+.rating-diff {
+    margin-left: 8px;
+    color: white;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+.rating-diff.positive {
+    background-color: #4CAF50;
+}
+
+.rating-diff.negative {
+    background-color: #F44336;
+}
+
 @media (max-width: 650px) {
     .player-name-display {
         font-size: 12px;
@@ -318,6 +335,12 @@
     
     .rating-text {
         font-size: 11px;
+    }
+
+    .rating-diff {
+        margin-left: 4px; /* Reduce margin on mobile */
+        padding: 0 3px;
+        font-size: 0.85em;
     }
 
     .player-info {
