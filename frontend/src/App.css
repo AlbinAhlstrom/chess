@@ -52,6 +52,10 @@ html,body, #root {
     .header-link {
         font-size: 0.9rem;
     }
+
+    .header-link-create {
+        display: none;
+    }
 }
 
 .auth-section {

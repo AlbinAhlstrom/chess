@@ -32,7 +32,7 @@ function Header({ user }) {
     <header className="main-header">
       <nav className="header-nav">
         <Link to="/" className="header-logo">V-Chess</Link>
-        <Link to="/create-game" className="header-link">Create Game</Link>
+        <Link to="/create-game" className="header-link header-link-create">Create Game</Link>
         <Link to="/leaderboards" className="header-link">Leaderboards</Link>
         <Link to="/about" className="header-link">About</Link>
       </nav>
