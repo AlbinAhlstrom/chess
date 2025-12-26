@@ -19,9 +19,9 @@ echo "Updating dependencies..."
 venv/bin/pip install -r requirements.txt
 venv/bin/pip install -e .
 
-# 5. Clear old databases (Fixes corrupted float IDs)
-echo "Clearing old databases for a clean start..."
-rm -f chess.db backend/chess.db
+# 5. Database Persistence
+echo "Ensuring database persistence..."
+# Old database clearing removed to maintain user data and history.
 
 # 6. Run Database Migrations
 echo "Running database migrations..."
