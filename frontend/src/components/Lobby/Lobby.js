@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getWsBase, getMe } from '../../api';
+import { getWsBase, getMe, createGame } from '../../api';
 import './Lobby.css';
 import '../Pieces/Pieces.css'; // Reuse dialog/config styles
 import GameConfig from '../Pieces/subcomponents/GameConfig';
@@ -109,6 +109,23 @@ function Lobby() {
         }
     };
 
+    const playVsComputer = async () => {
+        try {
+            const data = await createGame(
+                selectedVariant, 
+                null, 
+                isTimeControlEnabled ? { limit: startingTime * 60, increment: increment } : null,
+                selectedColor,
+                true // isComputer
+            );
+            if (data.game_id) {
+                navigate(`/matchmaking-game/${data.game_id}`);
+            }
+        } catch (err) {
+            console.error("Failed to create computer game:", err);
+        }
+    };
+
     return (
         <div className="lobby-container">
             
@@ -134,6 +151,7 @@ function Lobby() {
 
                 <div className="lobby-actions">
                     <button onClick={createSeek} className="create-button">Create Game Lobby</button>
+                    <button onClick={playVsComputer} className="computer-button">Play vs Computer</button>
                     <button 
                         onClick={() => navigate(selectedVariant === 'standard' ? '/otb' : `/otb/${selectedVariant}`)} 
                         className="otb-button"

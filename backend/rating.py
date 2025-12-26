@@ -72,6 +72,9 @@ async def update_game_ratings(session, game_model, winner_color: str | None):
     
     if not game_model.white_player_id or not game_model.black_player_id:
         return None
+        
+    if game_model.white_player_id == "computer" or game_model.black_player_id == "computer":
+        return None
 
     async def get_rating_obj(user_id, variant):
         stmt = select(Rating).where(Rating.user_id == user_id, Rating.variant == variant)

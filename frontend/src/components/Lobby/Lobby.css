@@ -66,7 +66,7 @@
     margin-top: 13px; /* Reduced from 20px by ~33% */
 }
 
-.create-button, .otb-button {
+.create-button, .otb-button, .computer-button {
     flex: 1;
     color: white;
     border: none;
@@ -80,6 +80,14 @@
 
 .create-button {
     background: #95bb4a;
+}
+
+.computer-button {
+    background: #4a82bb;
+}
+
+.computer-button:hover {
+    background: #5d95cc;
 }
 
 .otb-button {

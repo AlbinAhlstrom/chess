@@ -50,14 +50,16 @@ export const getAllLegalMoves = async (gameId) => {
     return res.json();
 };
 
-export const createGame = async (variant = "standard", fen = null, timeControl = null) => {
+export const createGame = async (variant = "standard", fen = null, timeControl = null, playAs = "white", isComputer = false) => {
     const res = await fetchWithLog(`${API_BASE}/game/new`, { 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
             variant, 
             fen,
-            time_control: timeControl 
+            time_control: timeControl,
+            play_as: playAs,
+            is_computer: isComputer
         }),
         credentials: 'include'
     });
