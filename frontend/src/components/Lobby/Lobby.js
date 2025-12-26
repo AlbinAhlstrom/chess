@@ -186,25 +186,6 @@ function Lobby() {
         <div className="lobby-container">
             
             <div className="create-seek-panel">
-                <h2>Game Mode</h2>
-                <div className="mode-selector variants-grid">
-                    {GAME_MODES.map(mode => (
-                        <button
-                            key={mode.id}
-                            className={`variant-select-btn ${gameMode === mode.id ? 'active' : ''}`}
-                            onClick={() => {
-                                setGameMode(mode.id);
-                                if (isQuickMatching && mode.id !== 'quick') leaveQuickMatch();
-                            }}
-                        >
-                            <span className="variant-icon">{mode.icon}</span>
-                            <span>{mode.title}</span>
-                        </button>
-                    ))}
-                </div>
-
-                <div className="divider" />
-
                 <h2>Variant</h2>
                 
                 <GameConfig 
@@ -221,8 +202,56 @@ function Lobby() {
                     increment={increment}
                     setIncrement={setIncrement}
                     INCREMENT_VALUES={INCREMENT_VALUES}
-                    showColorSelect={gameMode !== 'quick'}
+                    showColorSelect={false} // Handle color selection separately below
                 />
+
+                <div className="divider" />
+
+                <h2>Game Mode</h2>
+                <div className="mode-selector">
+                    {GAME_MODES.map(mode => (
+                        <button
+                            key={mode.id}
+                            className={`variant-select-btn ${gameMode === mode.id ? 'active' : ''}`}
+                            onClick={() => {
+                                setGameMode(mode.id);
+                                if (isQuickMatching && mode.id !== 'quick') leaveQuickMatch();
+                            }}
+                        >
+                            <span className="variant-icon">{mode.icon}</span>
+                            <span>{mode.title}</span>
+                        </button>
+                    ))}
+                </div>
+
+                {gameMode !== 'quick' && (
+                    <div className="color-selection-container">
+                        <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>Play as:</label>
+                        <div className="variants-grid">
+                            <button
+                                className={`variant-select-btn ${selectedColor === 'white' ? 'active' : ''}`}
+                                onClick={() => setSelectedColor('white')}
+                            >
+                                <span className="variant-icon">⚪</span>
+                                <span>White</span>
+                            </button>
+                            <button
+                                className={`variant-select-btn ${selectedColor === 'black' ? 'active' : ''}`}
+                                onClick={() => setSelectedColor('black')}
+                            >
+                                <span className="variant-icon">⚫</span>
+                                <span>Black</span>
+                            </button>
+                            <button
+                                className={`variant-select-btn ${selectedColor === 'random' ? 'active' : ''}`}
+                                onClick={() => setSelectedColor('random')}
+                            >
+                                <span className="variant-icon">❓</span>
+                                <span>Random</span>
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 <div className="lobby-actions">
                     {gameMode === 'quick' && (
@@ -250,65 +279,67 @@ function Lobby() {
                         {isQuickMatching ? (
                             <><span className="spinner"></span> Cancel Matching</>
                         ) : (
-                            <>Play {GAME_MODES.find(m => m.id === gameMode).title}</>
+                            <>{gameMode === 'lobby' ? 'Create Lobby' : `Play ${GAME_MODES.find(m => m.id === gameMode).title}`}</>
                         )}
                     </button>
                 </div>
             </div>
 
-            <div className="seeks-list">
-                <h2>Open Lobbies</h2>
-                {seeks.length === 0 ? <p>No open lobbies found. Create one!</p> : (
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Player</th>
-                                <th>Variant</th>
-                                <th>Time</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {seeks.map(seek => {
-                                const isMySeek = user && String(seek.user_id) === String(user.id);
-                                if (user) {
-                                    console.log(`Lobby Check: MyID=${user.id} (${typeof user.id}) vs SeekOwnerID=${seek.user_id} (${typeof seek.user_id}) -> Match? ${isMySeek}`);
-                                }
-                                return (
-                                <tr key={seek.id}>
-                                    <td>
-                                        <Link to={`/profile/${seek.user_id}`} className="lobby-player-link">
-                                            {seek.user_name}
-                                        </Link>
-                                    </td>
-                                    <td>{seek.variant}</td>
-                                    <td>{seek.time_control ? `${seek.time_control.limit / 60}+${seek.time_control.increment}` : 'Unlimited'}</td>
-                                    <td>
-                                        {isMySeek ? (
-                                            <button 
-                                                onClick={() => cancelSeek(seek.id)}
-                                                className="cancel-seek-btn"
-                                                title="Cancel Lobby"
-                                            >
-                                                <svg viewBox="0 0 384 512" fill="currentColor" style={{ width: '12px', height: '12px' }}>
-                                                    <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/>
-                                                </svg>
-                                            </button>
-                                        ) : (
-                                            <button 
-                                                onClick={() => joinSeek(seek.id)}
-                                                disabled={!user}
-                                            >
-                                                Join
-                                            </button>
-                                        )}
-                                    </td>
+            {gameMode === 'lobby' && (
+                <div className="seeks-list">
+                    <h2>Open Lobbies</h2>
+                    {seeks.length === 0 ? <p>No open lobbies found. Create one!</p> : (
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Player</th>
+                                    <th>Variant</th>
+                                    <th>Time</th>
+                                    <th>Action</th>
                                 </tr>
-                            )})}
-                        </tbody>
-                    </table>
-                )}
-            </div>
+                            </thead>
+                            <tbody>
+                                {seeks.map(seek => {
+                                    const isMySeek = user && String(seek.user_id) === String(user.id);
+                                    if (user) {
+                                        console.log(`Lobby Check: MyID=${user.id} (${typeof user.id}) vs SeekOwnerID=${seek.user_id} (${typeof seek.user_id}) -> Match? ${isMySeek}`);
+                                    }
+                                    return (
+                                    <tr key={seek.id}>
+                                        <td>
+                                            <Link to={`/profile/${seek.user_id}`} className="lobby-player-link">
+                                                {seek.user_name}
+                                            </Link>
+                                        </td>
+                                        <td>{seek.variant}</td>
+                                        <td>{seek.time_control ? `${seek.time_control.limit / 60}+${seek.time_control.increment}` : 'Unlimited'}</td>
+                                        <td>
+                                            {isMySeek ? (
+                                                <button 
+                                                    onClick={() => cancelSeek(seek.id)}
+                                                    className="cancel-seek-btn"
+                                                    title="Cancel Lobby"
+                                                >
+                                                    <svg viewBox="0 0 384 512" fill="currentColor" style={{ width: '12px', height: '12px' }}>
+                                                        <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/>
+                                                    </svg>
+                                                </button>
+                                            ) : (
+                                                <button 
+                                                    onClick={() => joinSeek(seek.id)}
+                                                    disabled={!user}
+                                                >
+                                                    Join
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                )})}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
