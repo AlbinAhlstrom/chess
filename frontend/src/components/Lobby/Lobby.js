@@ -119,7 +119,7 @@ function Lobby() {
                 true // isComputer
             );
             if (data.game_id) {
-                navigate(`/matchmaking-game/${data.game_id}`);
+                navigate(`/computer-game/${data.game_id}`);
             }
         } catch (err) {
             console.error("Failed to create computer game:", err);

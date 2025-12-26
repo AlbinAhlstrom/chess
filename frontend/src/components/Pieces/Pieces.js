@@ -42,10 +42,13 @@ const getAutoPromotePreference = () => {
     return saved !== null ? JSON.parse(saved) : true;
 };
 
-export function Pieces({ onFenChange, variant = "standard", matchmaking = false, setFlipped }) {
+export function Pieces({ onFenChange, variant = "standard", matchmaking = false, computer = false, setFlipped }) {
     const { gameId: urlGameId } = useParams();
     const ref = useRef()
     const highlightRef = useRef(null);
+    // ... rest of state stays same ...
+    // Note: I'll actually just find the function below to change it correctly.
+
     const [fen, setFen] = useState();
     const [gameId, setGameId] = useState(null);
     const [legalMoves, setLegalMoves] = useState([]);
@@ -472,7 +475,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
 
     const canMovePiece = useCallback((pieceColor) => {
         // In OTB or against Computer, allow all selections (backend enforces actual move legality)
-        if (!matchmaking || whitePlayerId === "computer" || blackPlayerId === "computer") return true;
+        if (!matchmaking || computer || whitePlayerId === "computer" || blackPlayerId === "computer") return true;
         
         if (!user || !user.id) return false; // Matchmaking requires login
         
@@ -481,7 +484,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
         } else {
             return String(user.id) === String(blackPlayerId);
         }
-    }, [matchmaking, user, whitePlayerId, blackPlayerId]);
+    }, [matchmaking, computer, user, whitePlayerId, blackPlayerId]);
 
     const handlePromotion = (promotionPiece) => {
         if (promotionMove) {
@@ -610,7 +613,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     const handleUndo = (e) => {
         e.stopPropagation();
         if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-            const isComputerGame = whitePlayerId === "computer" || blackPlayerId === "computer";
+            const isComputerGame = computer || whitePlayerId === "computer" || blackPlayerId === "computer";
             const type = (matchmaking && !isComputerGame) ? "takeback_offer" : "undo";
             ws.current.send(JSON.stringify({ type }));
         } else {

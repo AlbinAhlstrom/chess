@@ -526,10 +526,10 @@ async def trigger_ai_move(game_id: str, game: Game):
         print(f"[AI] Engine returned best move: {best_move_uci}")
         
         if best_move_uci:
-            print(f"[AI] Applying move {best_move_uci} to game {game_id}")
+            print(f"[AI] APPLYING move {best_move_uci} to game {game_id}")
             game.take_turn(Move(best_move_uci, player_to_move=game.state.turn))
             rating_diffs = await save_game_to_db(game_id)
-            print(f"[AI] Move applied successfully. Winner is now: {game.winner}")
+            print(f"[AI] BROADCASTING move {best_move_uci}")
             await manager.broadcast(game_id, json.dumps({
                 "type": "game_state", 
                 "fen": game.state.fen, 
@@ -616,8 +616,10 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                     piece = game.state.board.get_piece(start_sq)
                     if piece and piece.fen.lower() == "p" and len(move_uci) == 4 and end_sq.is_promotion_row(piece.color): move_uci += "q"
                     
+                    print(f"[WS] Applying human move: {move_uci} for game {game_id}")
                     game.take_turn(Move(move_uci, player_to_move=game.state.turn))
                     rating_diffs = await save_game_to_db(game_id)
+                    print(f"[WS] Human move BROADCAST: {move_uci}")
                     
                     await manager.broadcast(game_id, json.dumps({
                         "type": "game_state", 

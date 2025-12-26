@@ -83,7 +83,7 @@ function Header() {
   );
 }
 
-function GameBoard({ variant: propVariant, matchmaking = false }) {
+function GameBoard({ variant: propVariant, matchmaking = false, computer = false }) {
   const { variant: urlVariant } = useParams();
   const variant = urlVariant || propVariant || "standard";
   const [flipped, setFlipped] = useState(false);
@@ -104,6 +104,7 @@ function GameBoard({ variant: propVariant, matchmaking = false }) {
           onFenChange={handleFenChange} 
           variant={variant} 
           matchmaking={matchmaking}
+          computer={computer}
           setFlipped={setFlipped}
         />
       </Board>
@@ -134,6 +135,7 @@ function App() {
             <Route path="/otb" element={<GameBoard variant="standard" />} />
             <Route path="/otb/:variant" element={<GameBoard />} />
             <Route path="/matchmaking-game/:gameId" element={<GameBoard matchmaking={true} />} />
+            <Route path="/computer-game/:gameId" element={<GameBoard matchmaking={true} computer={true} />} />
             <Route path="/game/:gameId" element={<GameBoard />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/about" element={<About />} />
