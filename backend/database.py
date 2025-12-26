@@ -47,6 +47,8 @@ class GameModel(Base):
     winner: Mapped[Optional[str]] = mapped_column(String)
     white_player_id: Mapped[Optional[str]] = mapped_column(String)
     black_player_id: Mapped[Optional[str]] = mapped_column(String)
+    white_rating_diff: Mapped[Optional[int]] = mapped_column(Float) # Using Float for consistency with rating types
+    black_rating_diff: Mapped[Optional[int]] = mapped_column(Float)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 

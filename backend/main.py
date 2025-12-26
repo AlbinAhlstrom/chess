@@ -55,7 +55,7 @@ async def save_game_to_db(game_id: str):
     game = games.get(game_id)
     variant = game_variants.get(game_id)
     if not game or not variant:
-        return
+        return None
 
     async with async_session() as session:
         async with session.begin():
@@ -67,9 +67,13 @@ async def save_game_to_db(game_id: str):
             if game.clocks:
                 clocks_data = json.dumps({k.value: v for k, v in game.clocks.items()})
 
+            rating_diffs = None
             if model:
                 if game.is_over and not model.is_over:
-                    await update_game_ratings(session, model, game.winner)
+                    rating_diffs = await update_game_ratings(session, model, game.winner)
+                    if rating_diffs:
+                        model.white_rating_diff = rating_diffs["white_diff"]
+                        model.black_rating_diff = rating_diffs["black_diff"]
                 
                 model.fen = game.state.fen
                 model.move_history = json.dumps(game.move_history)
@@ -90,6 +94,8 @@ async def save_game_to_db(game_id: str):
                     winner=game.winner
                 )
                 session.add(model)
+            
+            return rating_diffs
 
 async def timeout_monitor():
     print("Timeout monitor started.")
@@ -103,7 +109,7 @@ async def timeout_monitor():
                         if time_left <= 0:
                             game.is_over_by_timeout = True
                             winner = Color.WHITE if color == Color.BLACK else Color.BLACK
-                            await save_game_to_db(game_id)
+                            rating_diffs = await save_game_to_db(game_id)
                             await manager.broadcast(game_id, json.dumps({
                                 "type": "game_state",
                                 "fen": game.state.fen,
@@ -113,7 +119,8 @@ async def timeout_monitor():
                                 "winner": winner.value,
                                 "move_history": game.move_history,
                                 "clocks": {c.value: 0 if c == color else t for c, t in current_clocks.items()},
-                                "status": "timeout"
+                                "status": "timeout",
+                                "rating_diffs": rating_diffs
                             }))
             await asyncio.sleep(0.1)
         except Exception as e:
@@ -409,6 +416,13 @@ async def get_game_state(game_id: str):
         white_player = await get_player_info(session, model.white_player_id if model else None, variant)
         black_player = await get_player_info(session, model.black_player_id if model else None, variant)
 
+        rating_diffs = None
+        if model and model.white_rating_diff is not None:
+            rating_diffs = {
+                "white_diff": int(model.white_rating_diff),
+                "black_diff": int(model.black_rating_diff)
+            }
+
         return {
             "game_id": game_id, 
             "fen": game.state.fen, 
@@ -418,7 +432,8 @@ async def get_game_state(game_id: str):
             "winner": game.winner, 
             "variant": variant, 
             "white_player": white_player,
-            "black_player": black_player
+            "black_player": black_player,
+            "rating_diffs": rating_diffs
         }
 
 @app.websocket("/ws/{game_id}")
@@ -442,13 +457,13 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                     piece = game.state.board.get_piece(start_sq)
                     if piece and piece.fen.lower() == "p" and len(move_uci) == 4 and end_sq.is_promotion_row(piece.color): move_uci += "q"
                     game.take_turn(Move(move_uci, player_to_move=game.state.turn))
-                    await save_game_to_db(game_id)
+                    rating_diffs = await save_game_to_db(game_id)
                 except Exception as e: await websocket.send_text(json.dumps({"type": "error", "message": str(e)}))
             elif message["type"] == "resign":
                 if user_id in [white_id, black_id]:
                     game.game_over_reason_override, game.winner_override = GameOverReason.SURRENDER, (Color.BLACK.value if user_id == white_id else Color.WHITE.value)
-                    await save_game_to_db(game_id)
-            await manager.broadcast(game_id, json.dumps({"type": "game_state", "fen": game.state.fen, "turn": game.state.turn.value, "is_over": game.is_over, "in_check": game.rules.is_check(), "winner": game.winner, "move_history": game.move_history, "clocks": {c.value: t for c, t in game.get_current_clocks().items()} if game.clocks else None}))
+                    rating_diffs = await save_game_to_db(game_id)
+            await manager.broadcast(game_id, json.dumps({"type": "game_state", "fen": game.state.fen, "turn": game.state.turn.value, "is_over": game.is_over, "in_check": game.rules.is_check(), "winner": game.winner, "move_history": game.move_history, "clocks": {c.value: t for c, t in game.get_current_clocks().items()} if game.clocks else None, "rating_diffs": rating_diffs if 'rating_diffs' in locals() else None}))
     except WebSocketDisconnect: manager.disconnect(websocket, game_id)
 
 class GameRequest(BaseModel):

@@ -71,7 +71,7 @@ async def update_game_ratings(session, game_model, winner_color: str | None):
     from .database import Rating
     
     if not game_model.white_player_id or not game_model.black_player_id:
-        return
+        return None
 
     async def get_rating_obj(user_id, variant):
         stmt = select(Rating).where(Rating.user_id == user_id, Rating.variant == variant)
@@ -86,6 +86,9 @@ async def update_game_ratings(session, game_model, winner_color: str | None):
     white_rating_obj = await get_rating_obj(game_model.white_player_id, game_model.variant)
     black_rating_obj = await get_rating_obj(game_model.black_player_id, game_model.variant)
 
+    old_white_rating = white_rating_obj.rating
+    old_black_rating = black_rating_obj.rating
+
     w_p = Glicko2Player(white_rating_obj.rating, white_rating_obj.rd, white_rating_obj.volatility)
     b_p = Glicko2Player(black_rating_obj.rating, black_rating_obj.rd, black_rating_obj.volatility)
 
@@ -98,3 +101,8 @@ async def update_game_ratings(session, game_model, winner_color: str | None):
     black_rating_obj.rating, black_rating_obj.rd, black_rating_obj.volatility = b_p.get_rating(), b_p.get_rd(), b_p.sigma
     
     await session.flush()
+
+    return {
+        "white_diff": int(white_rating_obj.rating - old_white_rating),
+        "black_diff": int(black_rating_obj.rating - old_black_rating)
+    }

@@ -45,6 +45,8 @@ def migrate(db_file):
                     winner TEXT,
                     white_player_id TEXT,
                     black_player_id TEXT,
+                    white_rating_diff FLOAT,
+                    black_rating_diff FLOAT,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
@@ -65,6 +67,14 @@ def migrate(db_file):
             if "black_player_id" not in columns:
                 print(f"Adding black_player_id column to {db_file}...")
                 cursor.execute("ALTER TABLE games ADD COLUMN black_player_id TEXT")
+
+            if "white_rating_diff" not in columns:
+                print(f"Adding white_rating_diff column to {db_file}...")
+                cursor.execute("ALTER TABLE games ADD COLUMN white_rating_diff FLOAT")
+
+            if "black_rating_diff" not in columns:
+                print(f"Adding black_rating_diff column to {db_file}...")
+                cursor.execute("ALTER TABLE games ADD COLUMN black_rating_diff FLOAT")
             
         conn.commit()
         print(f"Migration successful for {db_file}.")

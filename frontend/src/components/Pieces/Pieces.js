@@ -56,6 +56,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     const [moveHistory, setMoveHistory] = useState([]);
     const [winner, setWinner] = useState(null);
     const [isGameOver, setIsGameOver] = useState(false);
+    const [ratingDiffs, setRatingDiffs] = useState(null);
     const ws = useRef(null);
     const [isPromotionDialogOpen, setPromotionDialogOpen] = useState(false);
     const [isImportDialogOpen, setImportDialogOpen] = useState(false);
@@ -155,6 +156,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                 setIsGameOver(message.is_over);
                 setTurn(message.turn);
                 if (message.clocks) setTimers(message.clocks);
+                if (message.rating_diffs) setRatingDiffs(message.rating_diffs);
                 setSelectedSquare(null);
                 setLegalMoves([]);
                 if (highlightRef.current) highlightRef.current.style.display = 'none';
@@ -221,6 +223,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                 setWinner(data.winner);
                 setIsGameOver(data.is_over);
                 setTurn(data.turn);
+                if (data.rating_diffs) setRatingDiffs(data.rating_diffs);
                 
                 if (data.white_player) {
                     setWhitePlayer(data.white_player);
@@ -759,6 +762,8 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                     winner={winner}
 
                     isFlipped={isFlipped}
+
+                    ratingDiffs={ratingDiffs}
 
                 />
 
