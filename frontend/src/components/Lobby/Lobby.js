@@ -27,11 +27,19 @@ const INCREMENT_VALUES = [
     25, 30, 35, 40, 45, 60, 90, 120, 150, 180
 ];
 
+const GAME_MODES = [
+    { id: 'quick', title: 'Quick Match', icon: '⏱️' },
+    { id: 'lobby', title: 'Lobby Game', icon: '🏠' },
+    { id: 'computer', title: 'vs Computer', icon: '🤖' },
+    { id: 'otb', title: 'Local Game', icon: '👥' },
+];
+
 function Lobby() {
     const [seeks, setSeeks] = useState([]);
     const [user, setUser] = useState(null);
     const [selectedVariant, setSelectedVariant] = useState("standard");
-    const [selectedColor, setSelectedColor] = useState("white");
+    const [selectedColor, setSelectedColor] = useState("random");
+    const [gameMode, setGameMode] = useState("quick"); // 'lobby', 'quick', 'otb', 'computer'
     const [isQuickMatching, setIsQuickMatching] = useState(false);
     const [ratingRange, setRatingRange] = useState(200);
     
@@ -161,11 +169,43 @@ function Lobby() {
         }
     };
 
+    const handlePlay = () => {
+        if (gameMode === 'quick') {
+            if (isQuickMatching) leaveQuickMatch();
+            else joinQuickMatch();
+        } else if (gameMode === 'lobby') {
+            createSeek();
+        } else if (gameMode === 'computer') {
+            playVsComputer();
+        } else if (gameMode === 'otb') {
+            navigate(selectedVariant === 'standard' ? '/otb' : `/otb/${selectedVariant}`);
+        }
+    };
+
     return (
         <div className="lobby-container">
             
             <div className="create-seek-panel">
-                <h2>Choose a Variant:</h2>
+                <h2>Game Mode</h2>
+                <div className="mode-selector variants-grid">
+                    {GAME_MODES.map(mode => (
+                        <button
+                            key={mode.id}
+                            className={`variant-select-btn ${gameMode === mode.id ? 'active' : ''}`}
+                            onClick={() => {
+                                setGameMode(mode.id);
+                                if (isQuickMatching && mode.id !== 'quick') leaveQuickMatch();
+                            }}
+                        >
+                            <span className="variant-icon">{mode.icon}</span>
+                            <span>{mode.title}</span>
+                        </button>
+                    ))}
+                </div>
+
+                <div className="divider" />
+
+                <h2>Variant</h2>
                 
                 <GameConfig 
                     VARIANTS={VARIANTS}
@@ -181,43 +221,38 @@ function Lobby() {
                     increment={increment}
                     setIncrement={setIncrement}
                     INCREMENT_VALUES={INCREMENT_VALUES}
-                    showColorSelect={true}
+                    showColorSelect={gameMode !== 'quick'}
                 />
 
                 <div className="lobby-actions">
-                    <div className="quick-match-section">
-                        <div className="range-selector">
-                            <label>Rating Range: ±{ratingRange}</label>
-                            <input 
-                                type="range" 
-                                min="50" 
-                                max="1000" 
-                                step="50" 
-                                value={ratingRange} 
-                                onChange={(e) => setRatingRange(parseInt(e.target.value))}
-                                disabled={isQuickMatching}
-                            />
+                    {gameMode === 'quick' && (
+                        <div className="quick-match-section">
+                            <div className="range-selector">
+                                <label>Rating Range: ±{ratingRange}</label>
+                                <input 
+                                    type="range" 
+                                    min="50" 
+                                    max="1000" 
+                                    step="50" 
+                                    value={ratingRange} 
+                                    onChange={(e) => setRatingRange(parseInt(e.target.value))}
+                                    disabled={isQuickMatching}
+                                />
+                            </div>
                         </div>
+                    )}
+                    
+                    <button 
+                        onClick={handlePlay} 
+                        className={`play-main-button ${isQuickMatching ? 'matching' : ''}`}
+                        disabled={!user && gameMode !== 'otb'}
+                    >
                         {isQuickMatching ? (
-                            <button onClick={leaveQuickMatch} className="quick-match-button matching">
-                                <span className="spinner"></span> Matching... (Cancel)
-                            </button>
+                            <><span className="spinner"></span> Cancel Matching</>
                         ) : (
-                            <button onClick={joinQuickMatch} className="quick-match-button" disabled={!user}>
-                                Quick Match
-                            </button>
+                            <>Play {GAME_MODES.find(m => m.id === gameMode).title}</>
                         )}
-                    </div>
-                    <div className="action-buttons-grid">
-                        <button onClick={createSeek} className="create-button">Create Game Lobby</button>
-                        <button onClick={playVsComputer} className="computer-button">Play vs Computer</button>
-                        <button 
-                            onClick={() => navigate(selectedVariant === 'standard' ? '/otb' : `/otb/${selectedVariant}`)} 
-                            className="otb-button"
-                        >
-                            Play Over the Board
-                        </button>
-                    </div>
+                    </button>
                 </div>
             </div>
 

@@ -67,6 +67,57 @@
     margin-top: 13px;
 }
 
+.divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 20px 0;
+}
+
+.mode-selector {
+    margin-bottom: 20px;
+}
+
+.play-main-button {
+    background: #95bb4a;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 6px;
+    font-weight: 900;
+    cursor: pointer;
+    width: 100%;
+    font-size: 1.4rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 0 4px 0 #73933a;
+}
+
+.play-main-button:hover:not(:disabled) {
+    background: #a9cc5d;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 #73933a;
+}
+
+.play-main-button:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 0 0 #73933a;
+}
+
+.play-main-button.matching {
+    background: #4a82bb;
+    box-shadow: 0 4px 0 #3a6a99;
+}
+
+.play-main-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
 .quick-match-section {
     background: rgba(0, 0, 0, 0.2);
     padding: 15px;
@@ -75,6 +126,8 @@
     flex-direction: column;
     gap: 10px;
     border: 1px solid rgba(255, 255, 255, 0.05);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .range-selector {
@@ -93,34 +146,6 @@
     accent-color: #95bb4a;
 }
 
-.quick-match-button {
-    background: #95bb4a;
-    color: white;
-    border: none;
-    padding: 12px;
-    border-radius: 4px;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 1.1em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}
-
-.quick-match-button:hover:not(:disabled) {
-    background: #a9cc5d;
-}
-
-.quick-match-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.quick-match-button.matching {
-    background: #4a82bb;
-}
-
 .spinner {
     width: 16px;
     height: 16px;
@@ -132,44 +157,6 @@
 
 @keyframes spin {
     to { transform: rotate(360deg); }
-}
-
-.action-buttons-grid {
-    display: flex;
-    gap: 10px;
-}
-
-.create-button, .otb-button, .computer-button {
-    flex: 1;
-    color: white;
-    border: none;
-    padding: 8px 12px; /* Minimal padding */
-    border-radius: 4px;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 14px; /* Same as variant buttons */
-    transition: background 0.2s;
-}
-
-.create-button {
-    background: #95bb4a;
-}
-
-.computer-button {
-    background: #4a82bb;
-}
-
-.computer-button:hover {
-    background: #5d95cc;
-}
-
-.otb-button {
-    background: #373743;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.otb-button:hover {
-    background: #454552;
 }
 
 .seeks-list table {
