@@ -39,8 +39,7 @@ function Header({ user }) {
       <div className="auth-section">
         {user ? (
           <div className="user-profile-dropdown-container" style={{ position: 'relative' }}>
-            <div className="user-profile-trigger" onClick={toggleDropdown} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-              <span className="header-username" style={{ fontWeight: '600', fontSize: '14px' }}>{user.name}</span>
+            <div className="user-profile-trigger" onClick={toggleDropdown} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
               <img src={user.picture} alt={user.name} className="header-avatar" />
             </div>
             
