@@ -782,7 +782,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
 
     
 
-                {selectedSquare && renderHighlight(selectedSquare, null, 'selected')}
+                {selectedSquare && renderHighlight(selectedSquare, 'var(--selection-highlight)', 'selected')}
                 {lastMove && renderHighlight(lastMove.from, 'var(--last-move-highlight)', 'last-from')}
                 {lastMove && renderHighlight(lastMove.to, 'var(--last-move-highlight)', 'last-to')}
 
