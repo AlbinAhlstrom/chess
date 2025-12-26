@@ -224,9 +224,10 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
         const timeControl = tc || (isTimeControlEnabled ? { starting_time: startingTime, increment: increment } : null);
         console.log("Initializing game with TC:", timeControl);
         try {
-            const { game_id: newGameId } = await createGame(variantToLoad || variant, fenToLoad, timeControl);
+            const { game_id: newGameId } = await createGame(variantToLoad || variant, fenToLoad, timeControl, "white", computer);
             gameStartSound.current.play().catch(e => console.error("Error playing game start sound:", e));
-            navigate(`/game/${newGameId}`, { replace: true });
+            const route = computer ? `/computer-game/${newGameId}` : `/game/${newGameId}`;
+            navigate(route, { replace: true });
         } catch (error) {
             console.error("Failed to create new game:", error);
         }

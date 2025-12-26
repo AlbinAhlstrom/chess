@@ -296,11 +296,13 @@ async def lobby_websocket(websocket: WebSocket):
 
 async def get_game(game_id: str) -> Game:
     if game_id not in games:
+        print(f"[DB] Game {game_id} not in memory, checking DB...")
         async with async_session() as session:
             stmt = select(GameModel).where(GameModel.id == game_id)
             result = await session.execute(stmt)
             model = result.scalar_one_or_none()
             if model:
+                print(f"[DB] Found game {game_id} in DB. Restoring...")
                 rules_cls = RULES_MAP.get(model.variant.lower(), StandardRules)
                 rules = rules_cls()
                 time_control = json.loads(model.time_control) if model.time_control else None
@@ -312,7 +314,9 @@ async def get_game(game_id: str) -> Game:
                 game.last_move_at = model.last_move_at
                 games[game_id] = game
                 game_variants[game_id] = model.variant
-            else: raise HTTPException(status_code=404, detail="Game not found")
+            else: 
+                print(f"[DB] Game {game_id} NOT FOUND in DB.")
+                raise HTTPException(status_code=404, detail=f"Game {game_id} not found")
     return games[game_id]
 
 async def get_player_info(session, user_id, variant):
