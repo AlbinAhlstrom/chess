@@ -87,6 +87,17 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     const [blackPlayerId, setBlackPlayerId] = useState(null);
     const [takebackOffer, setTakebackOffer] = useState(null); // { by_user_id: number }
 
+    const fetchLegalMoves = useCallback((id) => {
+        if (!id) return;
+        getAllLegalMoves(id).then(response => {
+            if (response.status === "success") {
+                setAllPossibleMoves(response.moves);
+            }
+        }).catch(error => {
+            console.error("Failed to fetch all legal moves:", error);
+        });
+    }, []);
+
     // Effect to handle board flipping and player names once both user and game data are available
     useEffect(() => {
         if (matchmaking && user && (whitePlayerId || blackPlayerId)) {
@@ -480,17 +491,6 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
         setPromotionDialogOpen(false);
         setPromotionMove(null);
     };
-
-    const fetchLegalMoves = useCallback((id) => {
-        if (!id) return;
-        getAllLegalMoves(id).then(response => {
-            if (response.status === "success") {
-                setAllPossibleMoves(response.moves);
-            }
-        }).catch(error => {
-            console.error("Failed to fetch all legal moves:", error);
-        });
-    }, []);
 
     useEffect(() => {
         // Fetch moves immediately when gameId is set (for initial load)
