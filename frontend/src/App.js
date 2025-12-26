@@ -10,6 +10,7 @@ import { getMe, getAuthLinks } from './api.js';
 
 function Header() {
   const [user, setUser] = useState(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { loginLink, logoutLink } = getAuthLinks();
 
   const fetchUser = useCallback(() => {
@@ -35,6 +36,19 @@ function Header() {
     return () => window.removeEventListener('focus', fetchUser);
   }, [fetchUser]);
 
+  const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const closeDropdown = (e) => {
+        if (isDropdownOpen && !e.target.closest('.user-profile-dropdown-container')) {
+            setIsDropdownOpen(false);
+        }
+    };
+    document.addEventListener('click', closeDropdown);
+    return () => document.removeEventListener('click', closeDropdown);
+  }, [isDropdownOpen]);
+
   return (
     <header className="main-header">
       <nav className="header-nav">
@@ -44,11 +58,22 @@ function Header() {
       </nav>
       <div className="auth-section">
         {user ? (
-          <div className="user-profile">
-            <Link to="/profile">
-              <img src={user.picture} alt={user.name} className="header-avatar" title={user.name} />
-            </Link>
-            <a className="header-auth-link" href={logoutLink}>Logout</a>
+          <div className="user-profile-dropdown-container" style={{ position: 'relative' }}>
+            <div className="user-profile-trigger" onClick={toggleDropdown} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+              <span className="header-username" style={{ fontWeight: '600', fontSize: '14px' }}>{user.name}</span>
+              <img src={user.picture} alt={user.name} className="header-avatar" />
+            </div>
+            
+            {isDropdownOpen && (
+                <div className="profile-dropdown-menu">
+                    <Link to="/profile" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
+                        Profile
+                    </Link>
+                    <a href={logoutLink} className="dropdown-item logout">
+                        Logout
+                    </a>
+                </div>
+            )}
           </div>
         ) : (
           <a className="header-auth-link" href={loginLink}>Login</a>
