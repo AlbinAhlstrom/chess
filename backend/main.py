@@ -433,6 +433,34 @@ async def get_user_ratings(user_id: str):
         
         return {"ratings": rating_list, "overall": overall}
 
+@app.get("/api/user/{user_id}")
+async def get_user_profile(user_id: str):
+    async with async_session() as session:
+        stmt = select(User).where(User.google_id == user_id)
+        result = await session.execute(stmt)
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+            
+        stmt_ratings = select(Rating).where(Rating.user_id == user_id)
+        result_ratings = await session.execute(stmt_ratings)
+        ratings = result_ratings.scalars().all()
+        
+        rating_list = [{"variant": r.variant, "rating": r.rating, "rd": r.rd} for r in ratings]
+        overall = sum(r.rating for r in ratings) / len(ratings) if ratings else 1500.0
+        
+        return {
+            "user": {
+                "id": user.google_id,
+                "name": user.name,
+                "picture": user.picture,
+                "created_at": user.created_at
+            },
+            "ratings": rating_list,
+            "overall": overall
+        }
+
 class LegalMovesRequest(BaseModel):
     game_id: str
     square: str

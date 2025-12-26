@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { getMe, getUserRatings } from '../../api';
+import { useParams } from 'react-router-dom';
+import { getMe, getUserRatings, getUserProfile } from '../../api';
 import './Profile.css';
 
 function Profile() {
+    const { userId: urlUserId } = useParams();
     const [user, setUser] = useState(null);
     const [ratings, setRatings] = useState([]);
     const [overall, setOverall] = useState(1500);
+    const [isOwnProfile, setIsOwnProfile] = useState(false);
+    
     const [autoPromote, setAutoPromote] = useState(() => {
         const saved = localStorage.getItem('autoPromoteToQueen');
         return saved !== null ? JSON.parse(saved) : true;
@@ -16,16 +20,36 @@ function Profile() {
     });
 
     useEffect(() => {
-        getMe().then(data => {
-            if (data.user) {
+        if (urlUserId) {
+            // Viewing a public profile
+            getUserProfile(urlUserId).then(data => {
                 setUser(data.user);
-                getUserRatings(data.user.id).then(rData => {
-                    setRatings(rData.ratings || []);
-                    setOverall(rData.overall || 1500);
-                });
-            }
-        }).catch(console.error);
-    }, []);
+                setRatings(data.ratings);
+                setOverall(data.overall);
+                
+                // Check if this is the logged-in user's profile
+                getMe().then(meData => {
+                    if (meData.user && String(meData.user.id) === String(urlUserId)) {
+                        setIsOwnProfile(true);
+                    } else {
+                        setIsOwnProfile(false);
+                    }
+                }).catch(() => setIsOwnProfile(false));
+            }).catch(console.error);
+        } else {
+            // Viewing own profile
+            getMe().then(data => {
+                if (data.user) {
+                    setUser(data.user);
+                    setIsOwnProfile(true);
+                    getUserRatings(data.user.id).then(rData => {
+                        setRatings(rData.ratings || []);
+                        setOverall(rData.overall || 1500);
+                    });
+                }
+            }).catch(console.error);
+        }
+    }, [urlUserId]);
 
     const handleAutoPromoteToggle = () => {
         const newValue = !autoPromote;
@@ -46,22 +70,28 @@ function Profile() {
     return (
         <div className='profile-container'>
             <div className='profile-card'>
-                <h1>Profile Configuration</h1>
+                <h1>{isOwnProfile ? "Your Profile" : `${user.name}'s Profile`}</h1>
                 
                 <section className='profile-section'>
-                    <h2>Profile Info</h2>
-                    <div className='info-row'>
-                        <span className='label'>Name:</span>
-                        <span className='value'>{user.name}</span>
-                    </div>
-                    <div className='info-row'>
-                        <span className='label'>Email:</span>
-                        <span className='value'>{user.email}</span>
+                    <div className="profile-header">
+                        {user.picture && <img src={user.picture} alt={user.name} className="profile-picture" />}
+                        <div className="profile-identity">
+                            <div className='info-row'>
+                                <span className='label'>Name:</span>
+                                <span className='value'>{user.name}</span>
+                            </div>
+                            {isOwnProfile && (
+                                <div className='info-row'>
+                                    <span className='label'>Email:</span>
+                                    <span className='value'>{user.email}</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </section>
 
                 <section className='profile-section'>
-                    <h2>Ratings</h2>
+                    <h2>Elo Ratings</h2>
                     <div className='overall-rating'>
                         <span className='label'>Overall Ranking:</span>
                         <span className='value'>{Math.round(overall)}</span>
@@ -77,30 +107,32 @@ function Profile() {
                     </div>
                 </section>
 
-                <section className='profile-section'>
-                    <h2>Preferences</h2>
-                    <div className='preference-row'>
-                        <div className='preference-info'>
-                            <span className='label'>Auto Promote to Queen</span>
-                            <p className='description'>Automatically promote pawns to Queen when reaching the last row.</p>
+                {isOwnProfile && (
+                    <section className='profile-section'>
+                        <h2>Preferences</h2>
+                        <div className='preference-row'>
+                            <div className='preference-info'>
+                                <span className='label'>Auto Promote to Queen</span>
+                                <p className='description'>Automatically promote pawns to Queen when reaching the last row.</p>
+                            </div>
+                            <label className='switch'>
+                                <input type='checkbox' checked={autoPromote} onChange={handleAutoPromoteToggle} />
+                                <span className='slider round'></span>
+                            </label>
                         </div>
-                        <label className='switch'>
-                            <input type='checkbox' checked={autoPromote} onChange={handleAutoPromoteToggle} />
-                            <span className='slider round'></span>
-                        </label>
-                    </div>
 
-                    <div className='preference-row'>
-                        <div className='preference-info'>
-                            <span className='label'>Show Board Coordinates</span>
-                            <p className='description'>Display rank (1-8) and file (a-h) labels on the board edges.</p>
+                        <div className='preference-row'>
+                            <div className='preference-info'>
+                                <span className='label'>Show Board Coordinates</span>
+                                <p className='description'>Display rank (1-8) and file (a-h) labels on the board edges.</p>
+                            </div>
+                            <label className='switch'>
+                                <input type='checkbox' checked={showCoordinates} onChange={handleCoordinatesToggle} />
+                                <span className='slider round'></span>
+                            </label>
                         </div>
-                        <label className='switch'>
-                            <input type='checkbox' checked={showCoordinates} onChange={handleCoordinatesToggle} />
-                            <span className='slider round'></span>
-                        </label>
-                    </div>
-                </section>
+                    </section>
+                )}
             </div>
         </div>
     );

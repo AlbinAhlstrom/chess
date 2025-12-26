@@ -97,6 +97,13 @@ export const getUserRatings = async (userId) => {
     return res.json();
 };
 
+export const getUserProfile = async (userId) => {
+    const res = await fetchWithLog(`${API_BASE}/user/${userId}`, {
+        credentials: 'include'
+    });
+    return res.json();
+};
+
 export const getAuthLinks = () => {
     const hostname = window.location.hostname;
     const isProd = hostname === 'v-chess.com' || hostname === 'www.v-chess.com' || hostname.endsWith('.vercel.app');

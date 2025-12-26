@@ -141,6 +141,7 @@ function App() {
             <Route path="/computer-game/:gameId" element={<GameBoard matchmaking={true} computer={true} />} />
             <Route path="/game/:gameId" element={<GameBoard />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/:userId" element={<Profile />} />
             <Route path="/about" element={<About />} />
           </Routes>
         </main>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 function PlayerNameDisplay({ 
     isOpponent, 
@@ -15,6 +16,7 @@ function PlayerNameDisplay({
     
     const playerName = player ? player.name : "Anonymous";
     const rating = player && player.rating ? player.rating : null;
+    const playerId = player ? player.id : null;
 
     // Logic for which timer to show
     const timerKey = isOpponent 
@@ -23,10 +25,21 @@ function PlayerNameDisplay({
     
     const isTimerActive = turn === timerKey;
 
+    const renderName = () => {
+        if (playerId && playerId !== "computer") {
+            return (
+                <Link to={`/profile/${playerId}`} className="name-link">
+                    <span className="name-text">{playerName}</span>
+                </Link>
+            );
+        }
+        return <span className="name-text">{playerName}</span>;
+    };
+
     return (
         <div className={`player-name-display ${displayClass}`}>
             <div className="player-info">
-                <span className="name-text">{playerName}</span>
+                {renderName()}
                 {rating && <span className="rating-text"> ({rating})</span>}
                 {ratingDiff !== null && ratingDiff !== undefined && (
                     <span className={`rating-diff ${ratingDiff >= 0 ? 'positive' : 'negative'}`}>

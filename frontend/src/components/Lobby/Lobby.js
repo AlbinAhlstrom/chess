@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { getWsBase, getMe, createGame } from '../../api';
 import './Lobby.css';
 import '../Pieces/Pieces.css'; // Reuse dialog/config styles
@@ -181,7 +181,11 @@ function Lobby() {
                                 }
                                 return (
                                 <tr key={seek.id}>
-                                    <td>{seek.user_name}</td>
+                                    <td>
+                                        <Link to={`/profile/${seek.user_id}`} className="lobby-player-link">
+                                            {seek.user_name}
+                                        </Link>
+                                    </td>
                                     <td>{seek.variant}</td>
                                     <td>{seek.time_control ? `${seek.time_control.limit / 60}+${seek.time_control.increment}` : 'Unlimited'}</td>
                                     <td>

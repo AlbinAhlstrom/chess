@@ -37,6 +37,24 @@
     margin-bottom: 15px;
 }
 
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+.profile-picture {
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    object-fit: cover;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.profile-identity {
+    flex: 1;
+}
+
 .info-row {
     display: flex;
     margin-bottom: 10px;
