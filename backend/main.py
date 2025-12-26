@@ -310,11 +310,15 @@ async def get_player_info(session, user_id, variant):
         return {"name": "Anonymous", "rating": 1500}
     
     user = (await session.execute(select(User).where(User.google_id == user_id))).scalar_one_or_none()
+    if not user:
+        print(f"WARNING: User with google_id={user_id} not found in DB.")
+        return {"name": "Anonymous", "rating": 1500} # Fallback to Anonymous instead of Unknown for cleaner UI
+        
     rating_obj = (await session.execute(select(Rating).where(Rating.user_id == user_id, Rating.variant == variant))).scalar_one_or_none()
     
     return {
         "id": user_id,
-        "name": user.name if user else "Unknown",
+        "name": user.name,
         "rating": int(rating_obj.rating) if rating_obj else 1500
     }
 
