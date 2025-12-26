@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { getMe, getUserRatings, getUserProfile } from '../../api';
 import './Profile.css';
 
@@ -10,15 +10,6 @@ function Profile() {
     const [overall, setOverall] = useState(1500);
     const [isOwnProfile, setIsOwnProfile] = useState(false);
     
-    const [autoPromote, setAutoPromote] = useState(() => {
-        const saved = localStorage.getItem('autoPromoteToQueen');
-        return saved !== null ? JSON.parse(saved) : true;
-    });
-    const [showCoordinates, setShowCoordinates] = useState(() => {
-        const saved = localStorage.getItem('showBoardCoordinates');
-        return saved !== null ? JSON.parse(saved) : false;
-    });
-
     useEffect(() => {
         if (urlUserId) {
             // Viewing a public profile
@@ -51,18 +42,6 @@ function Profile() {
         }
     }, [urlUserId]);
 
-    const handleAutoPromoteToggle = () => {
-        const newValue = !autoPromote;
-        setAutoPromote(newValue);
-        localStorage.setItem('autoPromoteToQueen', JSON.stringify(newValue));
-    };
-
-    const handleCoordinatesToggle = () => {
-        const newValue = !showCoordinates;
-        setShowCoordinates(newValue);
-        localStorage.setItem('showBoardCoordinates', JSON.stringify(newValue));
-    };
-
     if (!user) {
         return <div className='profile-container'>Loading profile...</div>;
     }
@@ -70,7 +49,14 @@ function Profile() {
     return (
         <div className='profile-container'>
             <div className='profile-card'>
-                <h1>{isOwnProfile ? "Your Profile" : `${user.name}'s Profile`}</h1>
+                <div className="profile-card-header">
+                    <h1>{isOwnProfile ? "Your Profile" : `${user.name}'s Profile`}</h1>
+                    {isOwnProfile && (
+                        <Link to="/settings" className="settings-link-btn">
+                            Edit Settings
+                        </Link>
+                    )}
+                </div>
                 
                 <section className='profile-section'>
                     <div className="profile-header">
@@ -106,33 +92,6 @@ function Profile() {
                         )) : <p>No games played yet.</p>}
                     </div>
                 </section>
-
-                {isOwnProfile && (
-                    <section className='profile-section'>
-                        <h2>Preferences</h2>
-                        <div className='preference-row'>
-                            <div className='preference-info'>
-                                <span className='label'>Auto Promote to Queen</span>
-                                <p className='description'>Automatically promote pawns to Queen when reaching the last row.</p>
-                            </div>
-                            <label className='switch'>
-                                <input type='checkbox' checked={autoPromote} onChange={handleAutoPromoteToggle} />
-                                <span className='slider round'></span>
-                            </label>
-                        </div>
-
-                        <div className='preference-row'>
-                            <div className='preference-info'>
-                                <span className='label'>Show Board Coordinates</span>
-                                <p className='description'>Display rank (1-8) and file (a-h) labels on the board edges.</p>
-                            </div>
-                            <label className='switch'>
-                                <input type='checkbox' checked={showCoordinates} onChange={handleCoordinatesToggle} />
-                                <span className='slider round'></span>
-                            </label>
-                        </div>
-                    </section>
-                )}
             </div>
         </div>
     );

@@ -6,6 +6,7 @@ import Lobby from './components/Lobby/Lobby.js';
 import Profile from './components/Profile/Profile.js';
 import About from './components/About/About.js';
 import LandingPage from './components/LandingPage/LandingPage.js';
+import Settings from './components/Settings/Settings.js';
 import { BrowserRouter, Routes, Route, Link, useParams, Navigate } from 'react-router-dom';
 import { getMe, getAuthLinks } from './api.js';
 
@@ -45,6 +46,9 @@ function Header({ user }) {
                 <div className="profile-dropdown-menu">
                     <Link to="/profile" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
                         Profile
+                    </Link>
+                    <Link to="/settings" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
+                        Settings
                     </Link>
                     <a href={logoutLink} className="dropdown-item logout">
                         Logout
@@ -142,6 +146,7 @@ function App() {
             <Route path="/game/:gameId" element={<GameBoard />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:userId" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="/about" element={<About />} />
           </Routes>
         </main>
