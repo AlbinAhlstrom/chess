@@ -11,7 +11,8 @@ function PlayerNameDisplay({
     user, 
     timers, 
     turn, 
-    formatTime 
+    formatTime,
+    matchmaking
 }) {
     const displayClass = isOpponent ? "opponent-name" : "player-name";
     
@@ -19,6 +20,9 @@ function PlayerNameDisplay({
     const rating = player && player.rating ? player.rating : null;
     const playerId = player ? player.id : null;
     const badgeType = player ? player.supporter_badge : null;
+
+    // Show rating only in matchmaking or if it's a real user (not computer/anonymous in OTB)
+    const shouldShowRating = matchmaking || (playerId && playerId !== "computer");
 
     // Logic for which timer to show
     const timerKey = isOpponent 
@@ -45,7 +49,7 @@ function PlayerNameDisplay({
         <div className={`player-name-display ${displayClass}`}>
             <div className="player-info">
                 {renderName()}
-                {rating && <span className="rating-text"> ({rating})</span>}
+                {shouldShowRating && rating && <span className="rating-text"> ({rating})</span>}
                 {ratingDiff !== null && ratingDiff !== undefined && (
                     <span className={`rating-diff ${ratingDiff >= 0 ? 'positive' : 'negative'}`}>
                         {ratingDiff > 0 ? `+${ratingDiff}` : ratingDiff}

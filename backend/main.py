@@ -319,9 +319,9 @@ async def get_game(game_id: str) -> Game:
                 raise HTTPException(status_code=404, detail=f"Game {game_id} not found")
     return games[game_id]
 
-async def get_player_info(session, user_id, variant):
+async def get_player_info(session, user_id, variant, default_name="Anonymous"):
     if not user_id:
-        return {"name": "Anonymous", "rating": 1500}
+        return {"name": default_name, "rating": 1500}
     
     if user_id == "computer":
         return {"id": "computer", "name": "Stockfish AI", "rating": 3000}
@@ -329,7 +329,7 @@ async def get_player_info(session, user_id, variant):
     user = (await session.execute(select(User).where(User.google_id == user_id))).scalar_one_or_none()
     if not user:
         print(f"WARNING: User with google_id={user_id} not found in DB.")
-        return {"name": "Anonymous", "rating": 1500} # Fallback to Anonymous instead of Unknown for cleaner UI
+        return {"name": default_name, "rating": 1500}
         
     rating_obj = (await session.execute(select(Rating).where(Rating.user_id == user_id, Rating.variant == variant))).scalar_one_or_none()
     
@@ -575,8 +575,8 @@ async def get_game_state(game_id: str):
     async with async_session() as session:
         model = (await session.execute(select(GameModel).where(GameModel.id == game_id))).scalar_one_or_none()
         
-        white_player = await get_player_info(session, model.white_player_id if model else None, variant)
-        black_player = await get_player_info(session, model.black_player_id if model else None, variant)
+        white_player = await get_player_info(session, model.white_player_id if model else None, variant, default_name="White")
+        black_player = await get_player_info(session, model.black_player_id if model else None, variant, default_name="Black")
 
         rating_diffs = None
         if model and model.white_rating_diff is not None:

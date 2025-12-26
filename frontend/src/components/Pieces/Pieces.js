@@ -716,25 +716,16 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                 
 
                 <PlayerNameDisplay 
-
                     isOpponent={true}
-
                     isFlipped={isFlipped}
-
                     player={topPlayer}
-
                     ratingDiff={topDiff}
-
                     takebackOffer={takebackOffer}
-
                     user={user}
-
                     timers={timers}
-
                     turn={turn}
-
                     formatTime={formatTime}
-
+                    matchmaking={matchmaking}
                 />
 
     
@@ -799,25 +790,16 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     
 
                 <PlayerNameDisplay 
-
                     isOpponent={false}
-
                     isFlipped={isFlipped}
-
                     player={bottomPlayer}
-
                     ratingDiff={bottomDiff}
-
                     takebackOffer={takebackOffer}
-
                     user={user}
-
                     timers={timers}
-
                     turn={turn}
-
                     formatTime={formatTime}
-
+                    matchmaking={matchmaking}
                 />
 
             </div>
