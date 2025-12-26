@@ -85,6 +85,10 @@ def migrate(db_file):
             print(f"Adding supporter_badge column to {db_file}...")
             cursor.execute("ALTER TABLE users ADD COLUMN supporter_badge TEXT")
 
+        # Data Migration: Give all current users the kickstarter badge
+        print(f"Ensuring all users have kickstarter badges in {db_file}...")
+        cursor.execute("UPDATE users SET supporter_badge = 'kickstarter' WHERE supporter_badge IS NULL")
+
         conn.commit()
         print(f"Migration successful for {db_file}.")
     except Exception as e:
