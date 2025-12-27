@@ -426,7 +426,7 @@ function Lobby() {
                     <button 
                         onClick={handlePlay} 
                         className={`play-main-button ${isQuickMatching ? 'matching' : ''}`}
-                        disabled={!user && gameMode !== 'otb'}
+                        disabled={!user && gameMode !== 'otb' && gameMode !== 'computer'}
                     >
                                                 {isQuickMatching ? (
                                                     <><span className="spinner"></span> Cancel Matching</>
