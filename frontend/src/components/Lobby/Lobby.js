@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { getWsBase, getMe, createGame } from '../../api';
+import { getWsBase, getMe, createGame, getAuthLinks } from '../../api';
 import './Lobby.css';
 import '../Pieces/Pieces.css'; // Reuse dialog/config styles
 import GameConfig from '../Pieces/subcomponents/GameConfig';
@@ -231,6 +231,28 @@ function Lobby() {
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
+    const switchToRandom = () => {
+        if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+            socketRef.current.send(JSON.stringify({ type: "leave_quick_match" }));
+            setSelectedVariant('random');
+            socketRef.current.send(JSON.stringify({
+                type: "join_quick_match",
+                variant: 'random',
+                time_control: isTimeControlEnabled ? {
+                    limit: startingTime * 60,
+                    increment: increment
+                } : null,
+                range: ratingRange
+            }));
+            setElapsedTime(0);
+        }
+    };
+
+    const playBotInstead = async () => {
+        leaveQuickMatch();
+        await playVsComputer();
+    };
+
     return (
         <div className="lobby-container">
             {isQuickMatching && (
@@ -427,9 +449,11 @@ function Lobby() {
                     
                                             )}
                     
-                                        </button>                                    </div>
-                                </div>
-                            </div>
-                        );
-                    }
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default Lobby;
