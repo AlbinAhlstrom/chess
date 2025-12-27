@@ -34,6 +34,30 @@ def test_atomic_explosion_broadcast(client):
         assert "x" in capture_msg["move_history"][-1] # Ensure it's a capture in SAN
         assert capture_msg["explosion_square"] == "e5" # The critical field we implemented
 
+def test_atomic_pawn_capture_e4d5(client):
+    """
+    Test specific e4d5 pawn capture reported by user.
+    """
+    create_res = client.post("/api/game/new", json={"variant": "atomic"})
+    game_id = create_res.json()["game_id"]
+
+    with client.websocket_connect(f"/ws/{game_id}") as ws:
+        ws.receive_json() # init
+
+        # Setup: e2e4, d7d5
+        ws.send_json({"type": "move", "uci": "e2e4"})
+        ws.receive_json()
+        ws.send_json({"type": "move", "uci": "d7d5"})
+        ws.receive_json()
+
+        # Capture: e4d5
+        ws.send_json({"type": "move", "uci": "e4d5"})
+        msg = ws.receive_json()
+
+        assert msg["type"] == "game_state"
+        assert "x" in msg["move_history"][-1]
+        assert msg["explosion_square"] == "d5"
+
 def test_standard_move_no_explosion(client):
     """
     Test that a standard non-capture move does NOT broadcast an explosion_square.
