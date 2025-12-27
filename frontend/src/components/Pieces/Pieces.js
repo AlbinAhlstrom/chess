@@ -1092,26 +1092,70 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     const bottomDiff = isFlipped ? blackDiff : whiteDiff;
 
     return (
-        <div
-            className="pieces"
-            ref={ref}
-            onClick={(e) => {
-                handleSquareClick(e);
-                if (isMenuOpen) setIsMenuOpen(false);
-            }}
-        >
-            <PlayerNameDisplay 
-                isOpponent={true}
-                isFlipped={isFlipped}
-                player={topPlayer}
-                ratingDiff={topDiff}
-                takebackOffer={takebackOffer}
-                user={user}
-                timers={timers}
-                turn={turn}
-                formatTime={formatTime}
-                matchmaking={matchmaking}
-            />
+        <>
+            <div
+                className="pieces"
+                ref={ref}
+                onClick={(e) => {
+                    handleSquareClick(e);
+                    if (isMenuOpen) setIsMenuOpen(false);
+                }}
+            >
+                <PlayerNameDisplay 
+                    isOpponent={true}
+                    isFlipped={isFlipped}
+                    player={topPlayer}
+                    ratingDiff={topDiff}
+                    takebackOffer={takebackOffer}
+                    user={user}
+                    timers={timers}
+                    turn={turn}
+                    formatTime={formatTime}
+                    matchmaking={matchmaking}
+                />
+
+                {isPromotionDialogOpen && <PromotionDialog onPromote={handlePromotion} onCancel={handleCancelPromotion} color={promotionColor} />}
+                {isImportDialogOpen && <ImportDialog onImport={handleImport} onCancel={handleCancelImport} />}
+
+                {selectedSquare && renderHighlight(selectedSquare, 'var(--selection-highlight)', 'selected')}
+                {lastMove && renderHighlight(lastMove.from, 'var(--last-move-highlight)', 'last-from')}
+                {lastMove && renderHighlight(lastMove.to, 'var(--last-move-highlight)', 'last-to')}
+
+                {showExplosion && renderExplosion()}
+                {renderKothAura()}
+                {showDropWarp && renderDropWarp()}
+                {showStrike && renderCheckStrike()}
+                {showTurbo && renderTurboEffect()}
+                {showShatter && renderShatterEffect()}
+
+                {position.map((rankArray, rankIndex) =>
+                    rankArray.map((pieceType, fileIndex) => 
+                        pieceType ? renderPiece(pieceType, fileIndex, rankIndex) : null
+                    )
+                )}
+
+                {!isGameOver && legalMoves.map((moveUci, index) => renderLegalMove(moveUci, index))}
+
+                <GameOverIndicator 
+                    isGameOver={isGameOver}
+                    position={position}
+                    winner={winner}
+                    isFlipped={isFlipped}
+                />
+
+                <PlayerNameDisplay 
+                    isOpponent={false}
+                    isFlipped={isFlipped}
+                    player={bottomPlayer}
+                    ratingDiff={bottomDiff}
+                    takebackOffer={takebackOffer}
+                    user={user}
+                    timers={timers}
+                    turn={turn}
+                    formatTime={formatTime}
+                    matchmaking={matchmaking}
+                />
+            </div>
 
             <GameSidebar 
                 matchmaking={matchmaking}
@@ -1143,49 +1187,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                 onStepBackward={handleStepBackward}
                 viewedIndex={viewedIndex}
             />
-
-            {isPromotionDialogOpen && <PromotionDialog onPromote={handlePromotion} onCancel={handleCancelPromotion} color={promotionColor} />}
-            {isImportDialogOpen && <ImportDialog onImport={handleImport} onCancel={handleCancelImport} />}
-
-            {selectedSquare && renderHighlight(selectedSquare, 'var(--selection-highlight)', 'selected')}
-            {lastMove && renderHighlight(lastMove.from, 'var(--last-move-highlight)', 'last-from')}
-            {lastMove && renderHighlight(lastMove.to, 'var(--last-move-highlight)', 'last-to')}
-
-            {showExplosion && renderExplosion()}
-            {renderKothAura()}
-            {showDropWarp && renderDropWarp()}
-            {showStrike && renderCheckStrike()}
-            {showTurbo && renderTurboEffect()}
-            {showShatter && renderShatterEffect()}
-
-            {position.map((rankArray, rankIndex) =>
-                rankArray.map((pieceType, fileIndex) => 
-                    pieceType ? renderPiece(pieceType, fileIndex, rankIndex) : null
-                )
-            )}
-
-            {!isGameOver && legalMoves.map((moveUci, index) => renderLegalMove(moveUci, index))}
-
-            <GameOverIndicator 
-                isGameOver={isGameOver}
-                position={position}
-                winner={winner}
-                isFlipped={isFlipped}
-            />
-
-            <PlayerNameDisplay 
-                isOpponent={false}
-                isFlipped={isFlipped}
-                player={bottomPlayer}
-                ratingDiff={bottomDiff}
-                takebackOffer={takebackOffer}
-                user={user}
-                timers={timers}
-                turn={turn}
-                formatTime={formatTime}
-                matchmaking={matchmaking}
-            />
-        </div>
+        </>
     );
 }
 
