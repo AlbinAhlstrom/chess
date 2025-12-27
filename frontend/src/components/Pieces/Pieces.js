@@ -493,6 +493,8 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                 const moveUci = `${fromSquare}${toSquare}q`;
                 if (ws.current && ws.current.readyState === WebSocket.OPEN) {
                     ws.current.send(JSON.stringify({ type: "move", uci: moveUci }));
+                    setSelectedSquare(null);
+                    setLegalMoves([]);
                 }
                 return;
             }
@@ -502,6 +504,9 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
             const moveUci = `${fromSquare}${toSquare}`;
             if (ws.current && ws.current.readyState === WebSocket.OPEN) {
                 ws.current.send(JSON.stringify({ type: "move", uci: moveUci }));
+                // Clear selection state immediately to avoid double-processing
+                setSelectedSquare(null);
+                setLegalMoves([]);
             }
         } catch (error) {
             console.error("Failed to make move:", error);
@@ -599,6 +604,8 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                     const moveUci = movesToTarget[0];
                     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
                         ws.current.send(JSON.stringify({ type: "move", uci: moveUci }));
+                        setSelectedSquare(null);
+                        setLegalMoves([]);
                     }
                 }
             } else {
