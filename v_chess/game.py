@@ -141,6 +141,10 @@ class Game:
             self.move_history.pop()
         if self.uci_history:
             self.uci_history.pop()
+        
+        if not self.uci_history:
+            self.last_move_at = None
+            
         print(f"Undo move. Restored FEN: {self.state.fen}")
         return self.state.fen
 
