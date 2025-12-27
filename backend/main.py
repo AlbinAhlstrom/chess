@@ -127,44 +127,48 @@ async def match_players():
     
     # Process matches
     for p1, p2 in matches:
-        game_id = str(uuid4())
-        variant = p1["variant"]
-        rules_cls = RULES_MAP.get(variant.lower(), StandardRules)
-        rules = rules_cls()
-        game = Game(rules=rules, time_control=p1["time_control"])
-        games[game_id] = game
-        game_variants[game_id] = variant
-        
-        # Randomize colors
-        if random.choice([True, False]):
-            white_id, black_id = p1["user_id"], p2["user_id"]
-        else:
-            white_id, black_id = p2["user_id"], p1["user_id"]
+        try:
+            game_id = str(uuid4())
+            variant = p1["variant"]
+            rules_cls = RULES_MAP.get(variant.lower(), StandardRules)
+            rules = rules_cls()
+            game = Game(rules=rules, time_control=p1["time_control"])
+            games[game_id] = game
+            game_variants[game_id] = variant
             
-        async with async_session() as session:
-            async with session.begin():
-                model = GameModel(
-                    id=game_id, 
-                    variant=variant, 
-                    fen=game.state.fen, 
-                    move_history=json.dumps(game.move_history), 
-                    uci_history=json.dumps(game.uci_history),
-                    time_control=json.dumps(game.time_control) if game.time_control else None, 
-                    white_player_id=white_id, 
-                    black_player_id=black_id, 
-                    is_over=False
-                )
-                session.add(model)
-        
-        # Notify players
-        await manager.broadcast_lobby(json.dumps({
-            "type": "quick_match_found",
-            "game_id": game_id,
-            "users": [p1["user_id"], p2["user_id"]]
-        }))
+            # Randomize colors
+            if random.choice([True, False]):
+                white_id, black_id = p1["user_id"], p2["user_id"]
+            else:
+                white_id, black_id = p2["user_id"], p1["user_id"]
+                
+            async with async_session() as session:
+                async with session.begin():
+                    model = GameModel(
+                        id=game_id, 
+                        variant=variant, 
+                        fen=game.state.fen, 
+                        move_history=json.dumps(game.move_history), 
+                        uci_history=json.dumps(game.uci_history),
+                        time_control=json.dumps(game.time_control) if game.time_control else None, 
+                        white_player_id=white_id, 
+                        black_player_id=black_id, 
+                        is_over=False
+                    )
+                    session.add(model)
+            
+            # Notify players
+            await manager.broadcast_lobby(json.dumps({
+                "type": "quick_match_found",
+                "game_id": game_id,
+                "users": [p1["user_id"], p2["user_id"]]
+            }))
+        except Exception as e:
+            print(f"ERROR in match_players processing match: {e}")
+            traceback.print_exc()
 
     # Update queue
-    quick_match_queue = [p for idx, p in enumerate(quick_match_queue) if idx not in to_remove]
+    quick_match_queue[:] = [p for idx, p in enumerate(quick_match_queue) if idx not in to_remove]
 
 async def quick_match_monitor():
     print("Quick match monitor started.")
