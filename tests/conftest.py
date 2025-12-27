@@ -46,7 +46,11 @@ def random_square_str(draw):
     return file_char + rank_char
 
 @pytest.fixture(scope="module", autouse=True)
-async def setup_test_db():
+async def setup_test_db(request):
+    # Skip for E2E tests which use their own environment/DB
+    if "tests/e2e" in str(request.node.fspath):
+        yield
+        return
     await init_db()
     yield
     # Cleanup test db file after run

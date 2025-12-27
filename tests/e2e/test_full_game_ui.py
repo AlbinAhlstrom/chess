@@ -1,43 +1,42 @@
 import pytest
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver import ActionChains
-import time
+import re
+from playwright.sync_api import Page, expect
 
-def move_piece(driver, start_sq, end_sq):
+def move_piece(page: Page, start_sq: str, end_sq: str):
+    """Moves a piece from start_sq to end_sq using low-level mouse actions to avoid interception issues."""
     start_selector = f"div.piece[data-square='{start_sq}']"
     end_selector = f".squares div[data-square='{end_sq}']"
     
-    try:
-        # Wait for piece to be interactable
-        piece = WebDriverWait(driver, 5).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, start_selector))
-        )
-        target = driver.find_element(By.CSS_SELECTOR, end_selector)
-        
-        # Perform drag and drop
-        action = ActionChains(driver)
-        action.click_and_hold(piece).move_to_element(target).release().perform()
-        
-        # Wait for piece to appear at destination
-        WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, f"div.piece[data-square='{end_sq}']"))
-        )
-    except Exception as e:
-        print(f"Failed to move {start_sq} to {end_sq}: {e}")
-        driver.save_screenshot(f"move_fail_{start_sq}_{end_sq}.png")
-        raise e
-
-def test_full_game_ui(driver, frontend_url):
-    print(f"Navigating to {frontend_url}/otb")
-    driver.get(f"{frontend_url}/otb")
+    # Locate elements
+    start_el = page.locator(start_selector)
+    end_el = page.locator(end_selector)
     
-    # Wait for game initialization
-    WebDriverWait(driver, 10).until(EC.url_contains("/game/"))
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.CLASS_NAME, "board"))
-    )
+    # Get bounding boxes for centers
+    start_box = start_el.bounding_box()
+    end_box = end_el.bounding_box()
+    
+    if not start_box or not end_box:
+        raise Exception(f"Could not find bounding box for {start_sq} or {end_sq}")
+
+    # Precise mouse movement
+    page.mouse.move(start_box["x"] + start_box["width"] / 2, start_box["y"] + start_box["height"] / 2)
+    page.mouse.down()
+    # Move to destination
+    page.mouse.move(end_box["x"] + end_box["width"] / 2, end_box["y"] + end_box["height"] / 2, steps=10)
+    page.mouse.up()
+    
+    # Wait for state update (piece moved)
+    page.wait_for_selector(f"div.piece[data-square='{end_sq}']", timeout=5000)
+
+def test_full_game_ui(page: Page, frontend_url: str):
+    print(f"Navigating to {frontend_url}/otb")
+    page.goto(f"{frontend_url}/otb", timeout=60000)
+    
+    print("Waiting for redirect to /game/...")
+    page.wait_for_url(re.compile(r".*/game/.*"), timeout=20000)
+    
+    print("Board loading...")
+    page.wait_for_selector(".board", timeout=10000)
     
     # Fool's Mate Sequence
     moves = [
@@ -48,37 +47,35 @@ def test_full_game_ui(driver, frontend_url):
     ]
     
     for start, end in moves:
-        move_piece(driver, start, end)
-        time.sleep(0.5) 
+        print(f"Moving {start} to {end}...")
+        move_piece(page, start, end)
+        page.wait_for_timeout(500) 
         
-    # Verify result in history
-    # We look for "0-1" text in the history container
-    WebDriverWait(driver, 5).until(
-        lambda d: "0-1" in d.find_element(By.CLASS_NAME, "move-history").text
-    )
-    
-    history_text = driver.find_element(By.CLASS_NAME, "move-history").text
-    assert "0-1" in history_text
+    print("Verifying checkmate result in history...")
+    history = page.locator(".move-history")
+    expect(history).to_contain_text("0-1", timeout=10000)
 
-def test_resignation_ui(driver, frontend_url):
+def test_undo_ui(page: Page, frontend_url: str):
+    """Tests the Undo button which is available in OTB mode."""
     print(f"Navigating to {frontend_url}/otb")
-    driver.get(f"{frontend_url}/otb")
+    page.goto(f"{frontend_url}/otb", timeout=60000)
     
-    WebDriverWait(driver, 10).until(EC.url_contains("/game/"))
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.CLASS_NAME, "board"))
-    )
+    page.wait_for_url(re.compile(r".*/game/.*"), timeout=20000)
+    page.wait_for_selector(".board", timeout=10000)
     
-    # White resigns immediately
-    resign_btn = WebDriverWait(driver, 5).until(
-        EC.element_to_be_clickable((By.CSS_SELECTOR, "button[title='Surrender']"))
-    )
-    resign_btn.click()
+    # Make a move
+    print("Making a move...")
+    move_piece(page, "e2", "e4")
     
-    # Verify result in history (0-1 because White resigned)
-    WebDriverWait(driver, 5).until(
-        lambda d: "0-1" in d.find_element(By.CLASS_NAME, "move-history").text
-    )
+    # Verify move in history
+    history = page.locator(".move-history")
+    expect(history).to_contain_text("e4")
     
-    history_text = driver.find_element(By.CLASS_NAME, "move-history").text
-    assert "0-1" in history_text
+    # Click Undo
+    print("Clicking Undo...")
+    undo_btn = page.locator("button[title='Undo']")
+    undo_btn.click()
+    
+    # Verify move removed from history
+    page.wait_for_timeout(1000)
+    expect(history).not_to_contain_text("e4")
