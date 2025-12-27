@@ -1,5 +1,6 @@
 .profile-container {
     max-width: 600px;
+    width: 100%;
     margin: 0 auto 80px auto;
     padding: 20px;
     color: #bababa;
@@ -7,6 +8,39 @@
     touch-action: pan-y;
     user-select: auto;
     -webkit-user-select: auto;
+    box-sizing: border-box;
+}
+
+@media (max-width: 650px) {
+    .profile-container {
+        padding: 10px;
+    }
+
+    .profile-card {
+        padding: 20px 15px;
+        border-radius: 0;
+    }
+
+    .profile-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .profile-identity {
+        width: 100%;
+    }
+
+    .info-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+        text-align: left;
+    }
+
+    .ratings-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .profile-card {
