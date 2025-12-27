@@ -150,6 +150,10 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     const promotionSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/promote.mp3"));
     const illegalSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/illegal.mp3"));
     const explosionSound = useRef(new Audio("/sounds/atomic_explosion.mp3"));
+    const dropSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/premove.mp3")); // Clean pop sound
+    const strikeSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-check.mp3")); 
+    const turboSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/castle.mp3")); // Whoosh-like
+    const shatterSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/capture.mp3")); 
     
     // Timer formatting helper
     const formatTime = (seconds) => {
@@ -221,6 +225,8 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                     if (pieceMoved?.toLowerCase() === 'k') {
                         setTurboSquare(toSq);
                         setShowTurbo(true);
+                        turboSound.current.currentTime = 0;
+                        turboSound.current.play().catch(e => {});
                         setTimeout(() => setShowTurbo(false), 600);
                     }
                 }
@@ -232,6 +238,8 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                         const cleanSAN = lastSAN.replace(/[+#]/g, '');
                         setShatterSquare(cleanSAN.slice(-2));
                         setShowShatter(true);
+                        shatterSound.current.currentTime = 0;
+                        shatterSound.current.play().catch(e => {});
                         setTimeout(() => setShowShatter(false), 800);
                     }
                 }
@@ -242,6 +250,8 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                     const targetSq = lastMoveUCI.split('@')[1];
                     setDropSquare(targetSq);
                     setShowDropWarp(true);
+                    dropSound.current.currentTime = 0;
+                    dropSound.current.play().catch(e => {});
                     setTimeout(() => {
                         setShowDropWarp(false);
                         setDropSquare(null);
@@ -266,6 +276,8 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                                     if (grid[r][c] === kingChar) {
                                         setStrikeSquare(coordsToAlgebraic(c, r));
                                         setShowStrike(true);
+                                        strikeSound.current.currentTime = 0;
+                                        strikeSound.current.play().catch(e => {});
                                         setTimeout(() => setShowStrike(false), 800);
                                         break;
                                     }
