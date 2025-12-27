@@ -4,6 +4,7 @@ pydantic
 python-multipart
 websockets
 pytest
+pytest-asyncio
 hypothesis
 sqlalchemy
 aiosqlite
