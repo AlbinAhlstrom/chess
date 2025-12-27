@@ -85,10 +85,10 @@ function Lobby() {
             } else if (data.type === "seek_removed") {
                 setSeeks(prev => prev.filter(s => s.id !== data.seek_id));
             } else if (data.type === "seek_accepted") {
-                navigate(`/matchmaking-game/${data.game_id}`);
+                navigate(`/matchmaking-game/${data.game_id}`, { state: { gameMode: 'lobby' } });
             } else if (data.type === "quick_match_found") {
                 if (data.users.includes(String(userRef.current?.id))) {
-                    navigate(`/matchmaking-game/${data.game_id}`);
+                    navigate(`/matchmaking-game/${data.game_id}`, { state: { gameMode: 'quick' } });
                 }
             }
         };

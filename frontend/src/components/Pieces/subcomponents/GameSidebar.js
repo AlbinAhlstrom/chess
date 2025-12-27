@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const UNDO_ICON = (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" style={{ width: 'var(--button-icon-size)', height: 'var(--button-icon-size)' }}>
@@ -49,6 +50,24 @@ const RESIGN_ICON = (
     </svg>
 );
 
+const REMATCH_ICON = (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" style={{ width: 'var(--button-icon-size)', height: 'var(--button-icon-size)' }}>
+        <path d="M463.5 224H472c13.3 0 24-10.7 24-24V72c0-9.7-5.8-18.5-14.8-22.2s-19.3-1.7-26.2 5.2L413.4 96.6c-87.6-86.5-228.7-86.2-315.8 1c-87.5 87.5-87.5 229.3 0 316.8s229.3 87.5 316.8 0c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0c-62.5 62.5-163.8 62.5-226.3 0s-62.5-163.8 0-226.3c62.2-62.2 162.7-62.5 225.3-1L327 183c-6.9 6.9-8.9 17.2-5.2 26.2s12.5 14.8 22.2 14.8H463.5z"/>
+    </svg>
+);
+
+const NEW_OPPONENT_ICON = (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" fill="currentColor" style={{ width: 'var(--button-icon-size)', height: 'var(--button-icon-size)' }}>
+        <path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304h91.4C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7H29.7C13.3 512 0 498.7 0 482.3zM504 312V248H440V216H504V152H536V216H600V248H536V312H504z"/>
+    </svg>
+);
+
+const ANALYSIS_ICON = (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" style={{ width: 'var(--button-icon-size)', height: 'var(--button-icon-size)' }}>
+        <path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"/>
+    </svg>
+);
+
 function GameSidebar({ 
     matchmaking, 
     moveHistory, 
@@ -65,8 +84,13 @@ function GameSidebar({
     handleImportClick,
     takebackOffer,
     user,
-    isGameOver
+    isGameOver,
+    handleRematch,
+    handleNewOpponent,
+    gameId,
+    isQuickMatch
 }) {
+    const navigate = useNavigate();
     return (
         <div className="game-sidebar" onClick={e => e.stopPropagation()}>
             <div className="move-history">
@@ -89,58 +113,82 @@ function GameSidebar({
             <div className="game-controls">
                 {matchmaking ? (
                     <>
-                        {takebackOffer && user && takebackOffer.by_user_id !== user.id ? (
-                            <div className="takeback-prompt-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
-                                <span className="takeback-prompt" style={{ fontSize: '12px', color: '#ffd700', fontWeight: 'bold' }}>Accept takeback?</span>
-                                <div className="takeback-actions">
+                        {!isGameOver ? (
+                            <>
+                                {takebackOffer && user && takebackOffer.by_user_id !== user.id ? (
+                                    <div className="takeback-prompt-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
+                                        <span className="takeback-prompt" style={{ fontSize: '12px', color: '#ffd700', fontWeight: 'bold' }}>Accept takeback?</span>
+                                        <div className="takeback-actions">
+                                            <button 
+                                                onClick={handleAcceptTakeback}
+                                                title="Accept Takeback"
+                                                className="control-button accept-btn"
+                                            >
+                                                <svg viewBox="0 0 448 512" fill="currentColor" style={{ width: 'var(--button-icon-size)', height: 'var(--button-icon-size)' }}>
+                                                    <path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/>
+                                                </svg>
+                                            </button>
+                                            <button 
+                                                onClick={handleDeclineTakeback}
+                                                title="Decline Takeback"
+                                                className="control-button decline-btn"
+                                            >
+                                                <svg viewBox="0 0 384 512" fill="currentColor" style={{ width: 'var(--button-icon-size)', height: 'var(--button-icon-size)' }}>
+                                                    <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
                                     <button 
-                                        onClick={handleAcceptTakeback}
-                                        title="Accept Takeback"
-                                        className="control-button accept-btn"
-                                        disabled={isGameOver}
+                                        onClick={handleUndo}
+                                        title={takebackOffer ? "Takeback Offered..." : "Offer Takeback"}
+                                        className={`control-button ${takebackOffer ? 'waiting' : ''}`}
+                                        disabled={!!takebackOffer}
                                     >
-                                        <svg viewBox="0 0 448 512" fill="currentColor" style={{ width: 'var(--button-icon-size)', height: 'var(--button-icon-size)' }}>
-                                            <path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/>
-                                        </svg>
+                                        {UNDO_ICON}
                                     </button>
-                                    <button 
-                                        onClick={handleDeclineTakeback}
-                                        title="Decline Takeback"
-                                        className="control-button decline-btn"
-                                        disabled={isGameOver}
-                                    >
-                                        <svg viewBox="0 0 384 512" fill="currentColor" style={{ width: 'var(--button-icon-size)', height: 'var(--button-icon-size)' }}>
-                                            <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
+                                )}
+                                <button 
+                                    onClick={handleOfferDraw}
+                                    title="Offer Draw"
+                                    className="control-button"
+                                >
+                                    {DRAW_ICON}
+                                </button>
+                                <button 
+                                    onClick={handleResign}
+                                    title="Surrender"
+                                    className="control-button"
+                                >
+                                    {RESIGN_ICON}
+                                </button>
+                            </>
                         ) : (
-                            <button 
-                                onClick={handleUndo}
-                                title={takebackOffer ? "Takeback Offered..." : "Offer Takeback"}
-                                className={`control-button ${takebackOffer ? 'waiting' : ''}`}
-                                disabled={!!takebackOffer || isGameOver}
-                            >
-                                {UNDO_ICON}
-                            </button>
+                            <>
+                                <button 
+                                    onClick={handleRematch}
+                                    title="Rematch"
+                                    className="control-button"
+                                >
+                                    {REMATCH_ICON}
+                                </button>
+                                <button 
+                                    onClick={handleNewOpponent}
+                                    title={isQuickMatch ? "New Opponent" : "Recreate Lobby"}
+                                    className="control-button"
+                                >
+                                    {NEW_OPPONENT_ICON}
+                                </button>
+                                <button 
+                                    onClick={() => navigate(`/analysis/${gameId}`)}
+                                    title="Analysis Board"
+                                    className="control-button"
+                                >
+                                    {ANALYSIS_ICON}
+                                </button>
+                            </>
                         )}
-                        <button 
-                            onClick={handleOfferDraw}
-                            title="Offer Draw"
-                            className="control-button"
-                            disabled={isGameOver}
-                        >
-                            {DRAW_ICON}
-                        </button>
-                        <button 
-                            onClick={handleResign}
-                            title="Surrender"
-                            className="control-button"
-                            disabled={isGameOver}
-                        >
-                            {RESIGN_ICON}
-                        </button>
                     </>
                 ) : (
                     <>

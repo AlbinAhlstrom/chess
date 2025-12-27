@@ -7,7 +7,7 @@ import ImportDialog from '../ImportDialog/ImportDialog.js';
 import { fenToPosition, coordsToAlgebraic, algebraicToCoords } from '../../helpers.js'
 import { createGame, getAllLegalMoves, getGame, getMe, login, logout, getWsBase } from '../../api.js'
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 
 // Subcomponents
 import GameSidebar from './subcomponents/GameSidebar';
@@ -44,6 +44,10 @@ const getAutoPromotePreference = () => {
 
 export function Pieces({ onFenChange, variant = "standard", matchmaking = false, computer = false, setFlipped }) {
     const { gameId: urlGameId } = useParams();
+    const location = useLocation();
+    const gameMode = location.state?.gameMode;
+    const isQuickMatch = gameMode === 'quick';
+    
     const ref = useRef()
     const highlightRef = useRef(null);
     // ... rest of state stays same ...
@@ -703,6 +707,15 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
         setIsMenuOpen(!isMenuOpen);
     }
 
+    const handleRematch = () => {
+        // Placeholder for rematch logic
+        navigate('/create-game');
+    };
+
+    const handleNewOpponent = () => {
+        navigate('/create-game');
+    };
+
     const copyFenToClipboard = async (e) => {
         if (e) e.stopPropagation();
         if (!fen) return;
@@ -777,6 +790,10 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                     takebackOffer={takebackOffer}
                     user={user}
                     isGameOver={isGameOver}
+                    handleRematch={handleRematch}
+                    handleNewOpponent={handleNewOpponent}
+                    gameId={urlGameId}
+                    isQuickMatch={isQuickMatch}
                 />
 
                 {isPromotionDialogOpen && <PromotionDialog onPromote={handlePromotion} onCancel={handleCancelPromotion} color={promotionColor} />}
