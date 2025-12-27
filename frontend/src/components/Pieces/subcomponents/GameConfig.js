@@ -19,7 +19,7 @@ function GameConfig({
 }) {
     return (
         <>
-            <div className="variants-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+            <div className="variants-grid">
                 {VARIANTS.map(v => (
                     <button
                         key={v.id}
@@ -35,7 +35,7 @@ function GameConfig({
             {showColorSelect && (
                 <div className="color-selection-container">
                     <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>Color:</label>
-                    <div className="variants-grid">
+                    <div className="variants-grid color-grid">
                         <button
                             className={`variant-select-btn ${selectedColor === 'white' ? 'active' : ''}`}
                             onClick={() => setSelectedColor('white')}
