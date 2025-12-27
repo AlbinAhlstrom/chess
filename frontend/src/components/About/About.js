@@ -22,7 +22,6 @@ function About() {
                 <section>
                     <h2>The Roadmap</h2>
                     <ul>
-                        <li><strong>Advanced Engine Integration:</strong> Stockfish support for all variants.</li>
                         <li><strong>Community Tournaments:</strong> Daily Arena and Swiss events.</li>
                         <li><strong>Variant Creator:</strong> Tools for you to design and play your own chess rules.</li>
                         <li><strong>Learning Tools:</strong> Daily puzzles and interactive lessons specific to variants.</li>
