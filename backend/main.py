@@ -399,7 +399,7 @@ class ConnectionManager:
 manager = ConnectionManager()
 seeks: dict[str, dict] = {}
 quick_match_queue: list[dict] = []
-pending_takebacks: dict[str, int] = {}
+pending_takebacks: dict[str, str] = {}
 
 @app.websocket("/ws/lobby")
 async def lobby_websocket(websocket: WebSocket):
