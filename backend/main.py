@@ -117,17 +117,25 @@ async def match_players():
             # Prevent matching with self
             if p1["user_id"] == s["user_id"]: continue
             
-            # Check criteria
-            if p1["variant"] == s["variant"] and p1["time_control"] == s["time_control"]:
+            # Check criteria (Random/Any matches any variant)
+            v_match = (p1["variant"] == s["variant"]) or (p1["variant"] == "random") or (s["variant"] == "random")
+            
+            if v_match and p1["time_control"] == s["time_control"]:
                 # For seeks, we need to know the rating of the creator
-                # Seeks don't currently store rating, so we'll fetch it or assume 1500
                 async with async_session() as session:
                     s_rating_info = await get_player_info(session, s["user_id"], s["variant"])
                     s_rating = s_rating_info["rating"]
                 
                 rating_diff = abs(p1["rating"] - s_rating)
-                # QM user has a range, Lobby user accepts anyone (for now)
                 if rating_diff <= p1["range"]:
+                    # Determine final variant
+                    match_variant = s["variant"]
+                    if match_variant == "random":
+                        if p1["variant"] == "random":
+                            match_variant = random.choice([v for v in RULES_MAP.keys() if v != 'random'])
+                        else:
+                            match_variant = p1["variant"]
+
                     matches.append({
                         "p1": p1,
                         "p2": {
@@ -136,7 +144,7 @@ async def match_players():
                         },
                         "is_seek": True,
                         "seek_id": seek_id,
-                        "variant": s["variant"],
+                        "variant": match_variant,
                         "time_control": s["time_control"]
                     })
                     to_remove_qm.add(i)
@@ -152,14 +160,24 @@ async def match_players():
             p1 = quick_match_queue[i]
             p2 = quick_match_queue[j]
 
-            if p1["variant"] == p2["variant"] and p1["time_control"] == p2["time_control"]:
+            v_match = (p1["variant"] == p2["variant"]) or (p1["variant"] == "random") or (p2["variant"] == "random")
+
+            if v_match and p1["time_control"] == p2["time_control"]:
                 rating_diff = abs(p1["rating"] - p2["rating"])
                 if rating_diff <= p1["range"] and rating_diff <= p2["range"]:
+                    # Determine final variant
+                    match_variant = p1["variant"]
+                    if match_variant == "random":
+                        if p2["variant"] == "random":
+                            match_variant = random.choice([v for v in RULES_MAP.keys() if v != 'random'])
+                        else:
+                            match_variant = p2["variant"]
+
                     matches.append({
                         "p1": p1,
                         "p2": p2,
                         "is_seek": False,
-                        "variant": p1["variant"],
+                        "variant": match_variant,
                         "time_control": p1["time_control"]
                     })
                     to_remove_qm.add(i)
@@ -441,6 +459,9 @@ async def lobby_websocket(websocket: WebSocket):
                     seek = seeks.pop(seek_id)
                     game_id = str(uuid4())
                     variant = seek["variant"]
+                    if variant == "random":
+                        variant = random.choice([v for v in RULES_MAP.keys() if v != 'random'])
+                        
                     rules_cls = RULES_MAP.get(variant.lower(), StandardRules)
                     rules = rules_cls()
                     game = Game(rules=rules, time_control=seek["time_control"])
@@ -806,9 +827,13 @@ class NewGameRequest(BaseModel):
 async def new_game(req: NewGameRequest, request: Request):
     try:
         game_id = str(uuid4())
-        rules = RULES_MAP.get(req.variant.lower(), StandardRules)()
+        variant = req.variant
+        if variant == "random":
+            variant = random.choice([v for v in RULES_MAP.keys() if v != 'random'])
+            
+        rules = RULES_MAP.get(variant.lower(), StandardRules)()
         game = Game(state=req.fen, rules=rules, time_control=req.time_control)
-        games[game_id], game_variants[game_id] = game, req.variant
+        games[game_id], game_variants[game_id] = game, variant
         
         user_session = request.session.get("user")
         user_id = str(user_session.get("id")) if user_session else None

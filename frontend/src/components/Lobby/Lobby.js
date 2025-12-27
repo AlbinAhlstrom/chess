@@ -15,6 +15,7 @@ const VARIANTS = [
     { id: 'kingofthehill', title: 'King of the Hill', icon: '⛰️' },
     { id: 'racingkings', title: 'Racing Kings', icon: '🏎️' },
     { id: 'threecheck', title: 'Three Check', icon: '3️⃣' },
+    { id: 'random', title: 'Random', icon: '❓' },
 ];
 
 const STARTING_TIME_VALUES = [
@@ -257,6 +258,7 @@ function Lobby() {
                     setIncrement={setIncrement}
                     INCREMENT_VALUES={INCREMENT_VALUES}
                     showColorSelect={false} // Handle color selection separately below
+                    gameMode={gameMode}
                 />
 
                 <div className="divider" />

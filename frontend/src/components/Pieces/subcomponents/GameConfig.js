@@ -14,11 +14,12 @@ function GameConfig({
     increment, 
     setIncrement, 
     INCREMENT_VALUES,
-    showColorSelect = false
+    showColorSelect = false,
+    gameMode = 'lobby'
 }) {
     return (
         <>
-            <div className="variants-grid">
+            <div className="variants-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                 {VARIANTS.map(v => (
                     <button
                         key={v.id}
@@ -26,7 +27,7 @@ function GameConfig({
                         onClick={() => setSelectedVariant(v.id)}
                     >
                         <span className="variant-icon">{v.icon}</span>
-                        <span>{v.title}</span>
+                        <span>{(gameMode === 'quick' && v.id === 'random') ? 'Any' : v.title}</span>
                     </button>
                 ))}
             </div>
