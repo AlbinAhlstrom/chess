@@ -63,14 +63,12 @@ function Header({ user }) {
             <line x1="3" y1="18" x2="21" y2="18" />
           </svg>
         </button>
-        <div className="auth-section">
-          {user ? (
-                      <div className="user-profile-dropdown-container" style={{ position: 'relative' }}>
-                        <div className="user-profile-trigger" onClick={toggleDropdown} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                          <span className="header-username">{user.username || user.name}</span>
-                          <img src={user.picture} alt={user.name} className="header-avatar" />
-                        </div>              
-              {isDropdownOpen && (
+                <div className="auth-section">
+                  {user ? (
+                    <div className="user-profile-dropdown-container" style={{ position: 'relative' }}>
+                      <div className="user-profile-trigger" onClick={toggleDropdown} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                        <img src={user.picture} alt={user.name} className="header-avatar" />
+                      </div>              {isDropdownOpen && (
                   <div className="profile-dropdown-menu">
                       <Link to="/profile" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
                           Profile

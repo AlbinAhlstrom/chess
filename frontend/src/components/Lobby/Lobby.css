@@ -63,7 +63,7 @@
 
 .lobby-container {
     max-width: 800px;
-    margin: 40px auto;
+    margin: 0 auto 40px auto;
     padding: 30px 20px 20px 20px;
     background: #262421;
     color: #bababa;

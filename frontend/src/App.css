@@ -26,6 +26,10 @@ html,body, #root {
     box-sizing: border-box;
 }
 
+main {
+    padding-top: 70px;
+}
+
 .header-left {
     display: flex;
     align-items: center;
@@ -119,10 +123,6 @@ html,body, #root {
         display: none;
     }
 
-    .header-username {
-        display: none;
-    }
-
     .hamburger-button {
         display: block;
         order: 1;
@@ -184,12 +184,6 @@ html,body, #root {
 
 .user-profile-trigger:hover {
     background-color: rgba(255, 255, 255, 0.1);
-}
-
-.header-username {
-    font-weight: 600;
-    font-size: 14px;
-    color: #ddd;
 }
 
 .header-avatar {
@@ -281,7 +275,7 @@ html,body, #root {
     min-height: 100vh;
     background: var(--bg-color);
     padding: 20px;
-    padding-top: 70px;
+    padding-top: 0;
     box-sizing: border-box;
     user-select: none;
     -webkit-user-select: none;
@@ -301,7 +295,7 @@ html,body, #root {
 
     .App {
         padding: 0;
-        padding-top: 60px; /* Tighter padding for mobile */
+        padding-top: 0; /* Tighter padding for mobile */
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
