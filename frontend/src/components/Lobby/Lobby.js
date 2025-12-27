@@ -89,34 +89,43 @@ function Lobby() {
     }, [isQuickMatching]);
 
     useEffect(() => {
-        const wsUrl = `${getWsBase()}/lobby`;
-        const socket = new WebSocket(wsUrl);
-        socketRef.current = socket;
+        let socket;
+        let isMounted = true;
+        let timeoutId = setTimeout(() => {
+            if (!isMounted) return;
 
-        socket.onerror = (err) => {
-            // Silently handle connection errors to avoid noisy console logs
-            // especially when testing locally without a backend
-        };
+            const wsUrl = `${getWsBase()}/lobby`;
+            socket = new WebSocket(wsUrl);
+            socketRef.current = socket;
 
-        socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            if (data.type === "seeks") {
-                setSeeks(data.seeks);
-            } else if (data.type === "seek_created") {
-                setSeeks(prev => [...prev, data.seek]);
-            } else if (data.type === "seek_removed") {
-                setSeeks(prev => prev.filter(s => s.id !== data.seek_id));
-            } else if (data.type === "seek_accepted") {
-                navigate(`/matchmaking-game/${data.game_id}`, { state: { gameMode: 'lobby' } });
-            } else if (data.type === "quick_match_found") {
-                if (data.users.includes(String(userRef.current?.id))) {
-                    navigate(`/matchmaking-game/${data.game_id}`, { state: { gameMode: 'quick' } });
+            socket.onerror = (err) => {
+                // Silently handle connection errors
+            };
+
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === "seeks") {
+                    setSeeks(data.seeks);
+                } else if (data.type === "seek_created") {
+                    setSeeks(prev => [...prev, data.seek]);
+                } else if (data.type === "seek_removed") {
+                    setSeeks(prev => prev.filter(s => s.id !== data.seek_id));
+                } else if (data.type === "seek_accepted") {
+                    navigate(`/matchmaking-game/${data.game_id}`, { state: { gameMode: 'lobby' } });
+                } else if (data.type === "quick_match_found") {
+                    if (data.users.includes(String(userRef.current?.id))) {
+                        navigate(`/matchmaking-game/${data.game_id}`, { state: { gameMode: 'quick' } });
+                    }
                 }
-            }
-        };
+            };
+        }, 100); // 100ms delay to ensure page is stable
 
         return () => {
-            socket.close();
+            isMounted = false;
+            clearTimeout(timeoutId);
+            if (socket) {
+                socket.close();
+            }
         };
     }, [navigate]);
 
