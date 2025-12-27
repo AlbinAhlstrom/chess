@@ -58,7 +58,8 @@ echo "Starting new server..."
 export ENV=prod
 # Run uvicorn with a slightly lower priority so SSH remains responsive
 # Run on port 80 to serve both frontend and backend
-nohup nice -n 5 venv/bin/uvicorn backend.main:app --host 0.0.0.0 --port 80 > backend.log 2>&1 &
+# Using sudo because port 80 is privileged
+nohup sudo ENV=prod nice -n 5 venv/bin/uvicorn backend.main:app --host 0.0.0.0 --port 80 > backend.log 2>&1 &
 
 echo "Done! Server is starting in the background on port 80."
 sleep 2
