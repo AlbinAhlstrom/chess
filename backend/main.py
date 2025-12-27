@@ -1211,8 +1211,14 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                         print(f"[WS] Undo error: {e}")
                         await websocket.send_text(json.dumps({"type": "error", "message": str(e)}))
             elif message["type"] == "resign":
-                if user_id in [white_id, black_id] or (not white_id and not black_id): # Allow anyone in anonymous games
-                    game.game_over_reason_override, game.winner_override = GameOverReason.SURRENDER, (Color.BLACK.value if user_id == white_id else Color.WHITE.value)
+                if user_id in [white_id, black_id] or (not white_id and not black_id): 
+                    if user_id == white_id:
+                        game.resign(Color.WHITE)
+                    elif user_id == black_id:
+                        game.resign(Color.BLACK)
+                    else:
+                        game.resign(game.state.turn)
+
                     rating_diffs = await save_game_to_db(game_id)
                     await manager.broadcast(game_id, json.dumps({
                         "type": "game_state", 
@@ -1228,6 +1234,29 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                         "explosion_square": str(game.state.explosion_square) if getattr(game.state, 'explosion_square', None) else None,
                         "is_drop": False
                     }))
+            elif message["type"] == "draw_offer":
+                await manager.broadcast(game_id, json.dumps({
+                    "type": "draw_offered",
+                    "by_user_id": user_id
+                }))
+            elif message["type"] == "draw_accept":
+                game.agree_draw()
+                rating_diffs = await save_game_to_db(game_id)
+                await manager.broadcast(game_id, json.dumps({
+                        "type": "game_state", 
+                        "fen": game.state.fen, 
+                        "turn": game.state.turn.value, 
+                        "is_over": game.is_over, 
+                        "in_check": game.rules.is_check(), 
+                        "winner": game.winner, 
+                        "move_history": game.move_history, 
+                        "uci_history": game.uci_history,
+                        "clocks": {c.value: t for c, t in game.get_current_clocks().items()} if game.clocks else None, 
+                        "rating_diffs": rating_diffs,
+                        "explosion_square": str(game.state.explosion_square) if getattr(game.state, 'explosion_square', None) else None,
+                        "is_drop": False,
+                        "status": "draw_agreed"
+                }))
     except WebSocketDisconnect:
         manager.disconnect(websocket, game_id)
     except Exception as e:

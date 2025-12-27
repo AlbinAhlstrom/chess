@@ -66,6 +66,21 @@ class Game:
         """Print the board."""
         self.state.board.print()
 
+    def resign(self, player_color: Color):
+        """Player resigns the game."""
+        self.game_over_reason_override = GameOverReason.SURRENDER
+        winner_color = player_color.opposite
+        self.winner_override = winner_color.value
+        
+        result = "1-0" if winner_color == Color.WHITE else "0-1"
+        self.move_history.append(result)
+
+    def agree_draw(self):
+        """Players agree to a draw."""
+        self.game_over_reason_override = GameOverReason.MUTUAL_AGREEMENT
+        self.winner_override = "draw"
+        self.move_history.append("1/2-1/2")
+
     def take_turn(self, move: Move, offer_draw: bool = False):
         """Make a move by finding the corresponding legal move."""
         if self.is_over:
