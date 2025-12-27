@@ -32,7 +32,7 @@ const GAME_MODES = [
     { id: 'quick', title: 'Quick Match', icon: '⏱️' },
     { id: 'lobby', title: 'Lobby Game', icon: '🏠' },
     { id: 'computer', title: 'vs Computer', icon: '🤖' },
-    { id: 'otb', title: 'Local Game', icon: '👥' },
+    { id: 'otb', title: 'Local\nGame', icon: '👥' },
 ];
 
 function Lobby() {
@@ -275,7 +275,7 @@ function Lobby() {
                             }}
                         >
                             <span className="variant-icon">{mode.icon}</span>
-                            <span>{mode.title}</span>
+                            <div style={{ whiteSpace: 'pre-line' }}>{mode.title}</div>
                         </button>
                     ))}
                 </div>
@@ -389,13 +389,12 @@ function Lobby() {
                         className={`play-main-button ${isQuickMatching ? 'matching' : ''}`}
                         disabled={!user && gameMode !== 'otb'}
                     >
-                        {isQuickMatching ? (
-                            <><span className="spinner"></span> Cancel Matching</>
-                        ) : (
-                            <>{gameMode === 'lobby' ? 'Create Lobby' : `Play ${GAME_MODES.find(m => m.id === gameMode).title}`}</>
-                        )}
-                                        </button>
-                                    </div>
+                                                {isQuickMatching ? (
+                                                    <><span className="spinner"></span> Cancel Matching</>
+                                                ) : (
+                                                    <>{gameMode === 'lobby' ? 'Create Lobby' : `Play ${GAME_MODES.find(m => m.id === gameMode).title.replace('\n', ' ')}`}</>
+                                                )}
+                                            </button>                                    </div>
                                 </div>
                             </div>
                         );
