@@ -169,6 +169,11 @@ class Move:
     @staticmethod
     def is_uci_valid(uci_str: str):
         try:
+            if "@" in uci_str:
+                parts = uci_str.split("@")
+                if len(parts) != 2: return False
+                return parts[0] in piece_from_char and Move.is_square_valid(parts[1])
+            
             if not 3 < len(uci_str) < 6:
                 return False
             Square(uci_str[:2])
@@ -177,7 +182,6 @@ class Move:
                 return uci_str[4] in piece_from_char.keys()
             return True
         except Exception as e:
-            # print(e) # Silence printing
             return False
 
     @staticmethod

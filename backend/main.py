@@ -922,9 +922,12 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
 
                 move_uci = message["uci"]
                 try:
-                    start_sq, end_sq = Square(move_uci[:2]), Square(move_uci[2:4])
-                    piece = game.state.board.get_piece(start_sq)
-                    if piece and piece.fen.lower() == "p" and len(move_uci) == 4 and end_sq.is_promotion_row(piece.color): move_uci += "q"
+                    # Handle automatic promotion for pawns if not specified
+                    if "@" not in move_uci:
+                        start_sq, end_sq = Square(move_uci[:2]), Square(move_uci[2:4])
+                        piece = game.state.board.get_piece(start_sq)
+                        if piece and piece.fen.lower() == "p" and len(move_uci) == 4 and end_sq.is_promotion_row(piece.color): 
+                            move_uci += "q"
                     
                     print(f"[WS] Applying human move: {move_uci} for game {game_id}")
                     game.take_turn(Move(move_uci, player_to_move=game.state.turn))
