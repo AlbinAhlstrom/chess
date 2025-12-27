@@ -480,7 +480,6 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
         };
     }, [variant, urlGameId]);
 
-    const isLatest = viewedIndex === fenHistory.length - 1 || viewedIndex === -1;
     const viewedFen = viewedIndex >= 0 && fenHistory[viewedIndex] ? fenHistory[viewedIndex] : fen;
 
     const handleJumpToMove = (index) => {
