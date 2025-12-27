@@ -205,6 +205,13 @@
     margin-bottom: 10px; /* Reduced from 20px */
 }
 
+@media (max-width: 500px) {
+    .variants-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5px;
+    }
+}
+
 .color-selection-container label {
     margin-bottom: 5px !important; /* Reduced from 10px */
 }
