@@ -968,7 +968,8 @@ async def trigger_ai_move(game_id: str, game: Game):
                                 "clocks": {c.value: t for c, t in game.get_current_clocks().items()} if game.clocks else None, 
                                 "rating_diffs": rating_diffs,
                                 "explosion_square": str(game.state.explosion_square) if game.state.explosion_square else None
-                            }))        else:
+                            }))
+        else:
             print(f"[AI] WARNING: Engine returned no move!")
     except Exception as e:
         print(f"[AI] ERROR in trigger_ai_move: {e}")
@@ -1091,7 +1092,9 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                                         "clocks": {c.value: t for c, t in game.get_current_clocks().items()} if game.clocks else None, 
                                         "rating_diffs": rating_diffs,
                                         "explosion_square": str(game.state.explosion_square) if game.state.explosion_square else None
-                                    }))    except WebSocketDisconnect: manager.disconnect(websocket, game_id)
+                                    }))
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, game_id)
     except Exception as e:
         print(f"[WS] CRITICAL ERROR in websocket loop: {e}")
         traceback.print_exc()
