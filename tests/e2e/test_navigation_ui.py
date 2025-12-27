@@ -16,7 +16,7 @@ def move_piece(page: Page, start_sq: str, end_sq: str):
     page.wait_for_selector(f"div.piece[data-square='{end_sq}']", timeout=10000)
 
 def test_history_navigation_ui(page: Page, frontend_url: str):
-    # page.set_viewport_size({"width": 375, "height": 667})
+    page.set_viewport_size({"width": 375, "height": 667})
     print(f"Navigating to {frontend_url}/otb")
     page.goto(f"{frontend_url}/otb", timeout=60000)
     

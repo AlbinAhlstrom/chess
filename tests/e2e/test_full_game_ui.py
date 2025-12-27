@@ -29,7 +29,9 @@ def move_piece(page: Page, start_sq: str, end_sq: str):
     page.wait_for_selector(f"div.piece[data-square='{end_sq}']", timeout=5000)
 
 def test_full_game_ui(page: Page, frontend_url: str):
-    print(f"Navigating to {frontend_url}/otb")
+    # Set a decent size for desktop play
+    page.set_viewport_size({"width": 1280, "height": 720})
+    page.on("console", lambda msg: print(f"BROWSER CONSOLE: {msg.text}"))
     page.goto(f"{frontend_url}/otb", timeout=60000)
     
     print("Waiting for redirect to /game/...")
