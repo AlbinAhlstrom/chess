@@ -49,6 +49,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     const gameMode = location.state?.gameMode;
     const isQuickMatch = gameMode === 'quick';
     
+    const [currentVariant, setCurrentVariant] = useState(variant);
     const ref = useRef()
     const highlightRef = useRef(null);
     // ... rest of state stays same ...
@@ -202,22 +203,18 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                 
                 // Detect explosion via server field OR by checking if it's an Atomic capture
                 let explosionSq = message.explosion_square;
-                if (!explosionSq && variant === 'atomic' && history.length > 0) {
+                if (!explosionSq && currentVariant === 'atomic' && history.length > 0) {
                     const lastSAN = history[history.length - 1];
                     if (lastSAN.includes('x')) {
-                        // Extract target square from SAN (last two chars, ignoring checks/mates)
                         const cleanSAN = lastSAN.replace(/[+#]/g, '');
                         explosionSq = cleanSAN.slice(-2);
                     }
                 }
 
-                console.log("[WS] Received game_state. explosion_square:", explosionSq);
                 if (explosionSq) {
-                    console.log("[WS] Triggering explosion at:", explosionSq);
                     setExplosionSquare(explosionSq);
                     setShowExplosion(true);
                     if (explosionSound.current) {
-                        console.log("[WS] Playing explosion sound...");
                         explosionSound.current.currentTime = 0;
                         explosionSound.current.play().catch(e => console.error("Error playing explosion sound:", e));
                     }
@@ -305,6 +302,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                 setWinner(data.winner);
                 setIsGameOver(data.is_over);
                 setTurn(data.turn);
+                if (data.variant) setCurrentVariant(data.variant.toLowerCase());
                 if (data.rating_diffs) setRatingDiffs(data.rating_diffs);
                 
                 if (data.white_player) {
@@ -528,7 +526,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     };
 
     const renderKothAura = () => {
-        if (variant !== 'kingofthehill') return null;
+        if (currentVariant !== 'kingofthehill') return null;
 
         const centerSquares = ['d4', 'd5', 'e4', 'e5'];
         return centerSquares.map(sq => {
