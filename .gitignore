@@ -10,3 +10,4 @@ v_chess_engine.egg-info/
 chess.db
 *.db
 hypothesis/constants/*
+backend_local.log
