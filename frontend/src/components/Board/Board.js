@@ -22,12 +22,12 @@ function Board({ children, flipped = false, showCoordinates = false }) { // Acce
         {flipped ? 
             ranks.slice().reverse().map((rank, i) =>
                 files.slice().reverse().map((file, j) =>
-                    <div key={file + rank} className={getSquareColor(7 - i, 7 - j)}></div>)
+                    <div key={file + rank} className={getSquareColor(7 - i, 7 - j)} data-square={file + rank}></div>)
             )
             :
             ranks.map((rank, i) =>
                 files.map((file, j) =>
-                    <div key={file + rank} className={getSquareColor(i, j)}></div>)
+                    <div key={file + rank} className={getSquareColor(i, j)} data-square={file + rank}></div>)
             )
         }
         </div>

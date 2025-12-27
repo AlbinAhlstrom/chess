@@ -8,6 +8,10 @@ function Piece({ piece, file, rank, actualFile, actualRank, onDragStartCallback,
     const realFile = actualFile !== undefined ? actualFile : file;
     const realRank = actualRank !== undefined ? actualRank : rank;
 
+    const fileChar = String.fromCharCode(97 + realFile);
+    const rankChar = 8 - realRank;
+    const squareStr = `${fileChar}${rankChar}`;
+
     const pieceStyle = {
         left: `calc(${file} * var(--square-size))`,
         top: `calc(${rank} * var(--square-size))`,
@@ -144,6 +148,8 @@ function Piece({ piece, file, rank, actualFile, actualRank, onDragStartCallback,
             style={{...pieceStyle, touchAction: 'none'}}
             onMouseDown={startDrag}
             onTouchStart={startDrag}
+            data-piece={piece}
+            data-square={squareStr}
         />
     );
 }

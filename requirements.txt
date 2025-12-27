@@ -12,3 +12,5 @@ authlib
 httpx
 itsdangerous
 python-dotenv
+selenium
+webdriver-manager
