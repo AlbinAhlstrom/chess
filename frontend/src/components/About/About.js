@@ -43,6 +43,10 @@ function About() {
                         </a>
                     </div>
                 </section>
+
+                <p style={{ color: '#444', fontSize: '0.8rem', marginTop: '40px' }}>
+                    Server Version: 1.0.2 (Automated Deployment Verified)
+                </p>
             </div>
         </div>
     );
