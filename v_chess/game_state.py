@@ -28,6 +28,7 @@ class GameState:
     fullmove_count: int
     rules: "Rules"
     repetition_count: int = 1
+    explosion_square: Optional[Square] = None
 
     STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     EMPTY_BOARD_FEN = "8/8/8/8/8/8/8/8 w KQkq - 0 1"

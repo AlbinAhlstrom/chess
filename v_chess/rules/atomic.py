@@ -69,7 +69,8 @@ class AtomicRules(StandardRules):
             halfmove_clock=new_halfmove_clock,
             fullmove_count=new_fullmove_count,
             rules=new_rules,
-            repetition_count=1
+            repetition_count=1,
+            explosion_square=move.end
         )
         new_rules.state = new_state
         return new_state

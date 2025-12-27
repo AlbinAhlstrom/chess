@@ -66,6 +66,8 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     const [winner, setWinner] = useState(null);
     const [isGameOver, setIsGameOver] = useState(false);
     const [ratingDiffs, setRatingDiffs] = useState(null);
+    const [explosionSquare, setExplosionSquare] = useState(null);
+    const [showExplosion, setShowExplosion] = useState(false);
     const ws = useRef(null);
     const [isPromotionDialogOpen, setPromotionDialogOpen] = useState(false);
     const [isImportDialogOpen, setImportDialogOpen] = useState(false);
@@ -196,6 +198,16 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                 setTurn(message.turn);
                 if (message.clocks) setTimers(message.clocks);
                 if (message.rating_diffs) setRatingDiffs(message.rating_diffs);
+                
+                if (message.explosion_square) {
+                    setExplosionSquare(message.explosion_square);
+                    setShowExplosion(true);
+                    setTimeout(() => {
+                        setShowExplosion(false);
+                        setExplosionSquare(null);
+                    }, 1000); // Animation duration
+                }
+
                 setSelectedSquare(null);
                 setLegalMoves([]);
                 if (highlightRef.current) highlightRef.current.style.display = 'none';
@@ -452,6 +464,44 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
             isDark={isDark}
             color={color}
         />;
+    };
+
+    const renderExplosion = () => {
+        if (!showExplosion || !explosionSquare) return null;
+        
+        const { file, rank } = algebraicToCoords(explosionSquare);
+        let displayFile = isFlipped ? 7 - file : file;
+        let displayRank = isFlipped ? 7 - rank : rank;
+
+        const style = {
+            left: `calc(${displayFile} * var(--square-size))`,
+            top: `calc(${displayRank} * var(--square-size))`,
+        };
+
+        return (
+            <div className="explosion-container" style={style}>
+                <div className="explosion-ring"></div>
+                <div className="explosion-ring"></div>
+                <div className="explosion-ring"></div>
+                {[...Array(12)].map((_, i) => {
+                    const angle = (i / 12) * 2 * Math.PI;
+                    const dist = 100 + Math.random() * 100;
+                    const dx = Math.cos(angle) * dist;
+                    const dy = Math.sin(angle) * dist;
+                    return (
+                        <div 
+                            key={i} 
+                            className="explosion-particle" 
+                            style={{ 
+                                '--dx': `${dx}px`, 
+                                '--dy': `${dy}px`,
+                                animationDelay: `${Math.random() * 0.2}s`
+                            }}
+                        ></div>
+                    );
+                })}
+            </div>
+        );
     };
 
     const handleManualDrop = useCallback(({ clientX, clientY, piece, file, rank }) => {
@@ -810,13 +860,31 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
 
     
 
-                {selectedSquare && renderHighlight(selectedSquare, 'var(--selection-highlight)', 'selected')}
-                {lastMove && renderHighlight(lastMove.from, 'var(--last-move-highlight)', 'last-from')}
-                {lastMove && renderHighlight(lastMove.to, 'var(--last-move-highlight)', 'last-to')}
+                                {selectedSquare && renderHighlight(selectedSquare, 'var(--selection-highlight)', 'selected')}
 
     
 
-                {position.map((rankArray, rankIndex) =>
+                                {lastMove && renderHighlight(lastMove.from, 'var(--last-move-highlight)', 'last-from')}
+
+    
+
+                                {lastMove && renderHighlight(lastMove.to, 'var(--last-move-highlight)', 'last-to')}
+
+    
+
+                
+
+    
+
+                                {renderExplosion()}
+
+    
+
+                
+
+    
+
+                                {position.map((rankArray, rankIndex) =>
 
                     rankArray.map((pieceType, fileIndex) => 
 

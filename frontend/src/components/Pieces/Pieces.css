@@ -624,3 +624,70 @@
         --button-icon-size: 14px; /* Scale down the icons */
     }
 }
+
+/* Explosion Animation */
+.explosion-container {
+    position: absolute;
+    width: var(--square-size);
+    height: var(--square-size);
+    pointer-events: none;
+    z-index: 50;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.explosion-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 4px solid #ff4500;
+    width: 0;
+    height: 0;
+    opacity: 1;
+    animation: explode-animation 0.8s ease-out forwards;
+}
+
+.explosion-ring:nth-child(2) {
+    animation-delay: 0.1s;
+    border-color: #ffa500;
+    border-width: 2px;
+}
+
+.explosion-ring:nth-child(3) {
+    animation-delay: 0.2s;
+    border-color: #ffff00;
+    border-width: 1px;
+}
+
+@keyframes explode-animation {
+    0% {
+        width: 0;
+        height: 0;
+        opacity: 1;
+    }
+    100% {
+        width: calc(var(--square-size) * 3);
+        height: calc(var(--square-size) * 3);
+        opacity: 0;
+    }
+}
+
+.explosion-particle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #ff4500;
+    border-radius: 50%;
+    animation: particle-animation 0.6s ease-out forwards;
+}
+
+@keyframes particle-animation {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--dx), var(--dy)) scale(0);
+        opacity: 0;
+    }
+}

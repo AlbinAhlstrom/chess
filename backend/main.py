@@ -964,11 +964,11 @@ async def trigger_ai_move(game_id: str, game: Game):
                 "in_check": game.rules.is_check(), 
                 "winner": game.winner, 
                 "move_history": game.move_history, 
-                "uci_history": game.uci_history,
-                "clocks": {c.value: t for c, t in game.get_current_clocks().items()} if game.clocks else None, 
-                "rating_diffs": rating_diffs
-            }))
-        else:
+                                "uci_history": game.uci_history,
+                                "clocks": {c.value: t for c, t in game.get_current_clocks().items()} if game.clocks else None, 
+                                "rating_diffs": rating_diffs,
+                                "explosion_square": str(game.state.explosion_square) if game.state.explosion_square else None
+                            }))        else:
             print(f"[AI] WARNING: Engine returned no move!")
     except Exception as e:
         print(f"[AI] ERROR in trigger_ai_move: {e}")
@@ -997,7 +997,8 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
         "winner": game.winner, 
         "move_history": game.move_history, 
         "uci_history": game.uci_history,
-        "clocks": {c.value: t for c, t in game.clocks.items()} if game.clocks else None
+        "clocks": {c.value: t for c, t in game.clocks.items()} if game.clocks else None,
+        "explosion_square": str(game.state.explosion_square) if game.state.explosion_square else None
     }))
 
     # If it's computer's turn, trigger it
@@ -1060,11 +1061,11 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                         "in_check": game.rules.is_check(), 
                         "winner": game.winner, 
                         "move_history": game.move_history, 
-                        "uci_history": game.uci_history,
-                        "clocks": {c.value: t for c, t in game.get_current_clocks().items()} if game.clocks else None, 
-                        "rating_diffs": rating_diffs
-                    }))
-
+                                        "uci_history": game.uci_history,
+                                        "clocks": {c.value: t for c, t in game.get_current_clocks().items()} if game.clocks else None, 
+                                        "rating_diffs": rating_diffs,
+                                        "explosion_square": str(game.state.explosion_square) if game.state.explosion_square else None
+                                    }))
                     # Trigger AI move
                     if not game.is_over:
                         if (game.state.turn == Color.WHITE and white_id == "computer") or \
@@ -1086,11 +1087,11 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                         "in_check": game.rules.is_check(), 
                         "winner": game.winner, 
                         "move_history": game.move_history, 
-                        "uci_history": game.uci_history,
-                        "clocks": {c.value: t for c, t in game.get_current_clocks().items()} if game.clocks else None, 
-                        "rating_diffs": rating_diffs
-                    }))
-    except WebSocketDisconnect: manager.disconnect(websocket, game_id)
+                                        "uci_history": game.uci_history,
+                                        "clocks": {c.value: t for c, t in game.get_current_clocks().items()} if game.clocks else None, 
+                                        "rating_diffs": rating_diffs,
+                                        "explosion_square": str(game.state.explosion_square) if game.state.explosion_square else None
+                                    }))    except WebSocketDisconnect: manager.disconnect(websocket, game_id)
     except Exception as e:
         print(f"[WS] CRITICAL ERROR in websocket loop: {e}")
         traceback.print_exc()
