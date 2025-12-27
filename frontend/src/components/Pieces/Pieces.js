@@ -506,6 +506,28 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
         );
     };
 
+    const renderKothAura = () => {
+        if (variant !== 'kingofthehill') return null;
+
+        const centerSquares = ['d4', 'd5', 'e4', 'e5'];
+        return centerSquares.map(sq => {
+            const { file, rank } = algebraicToCoords(sq);
+            let displayFile = isFlipped ? 7 - file : file;
+            let displayRank = isFlipped ? 7 - rank : rank;
+
+            return (
+                <div 
+                    key={`koth-${sq}`}
+                    className="koth-aura"
+                    style={{
+                        left: `calc(${displayFile} * var(--square-size))`,
+                        top: `calc(${displayRank} * var(--square-size))`,
+                    }}
+                />
+            );
+        });
+    };
+
     const handleManualDrop = useCallback(({ clientX, clientY, piece, file, rank }) => {
         if (highlightRef.current) highlightRef.current.style.display = 'none';
         
@@ -870,23 +892,27 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
 
     
 
-                                {lastMove && renderHighlight(lastMove.to, 'var(--last-move-highlight)', 'last-to')}
+                                                {lastMove && renderHighlight(lastMove.to, 'var(--last-move-highlight)', 'last-to')}
 
     
 
-                
+                                
 
     
 
-                                {renderExplosion()}
+                                                {renderExplosion()}
 
     
 
-                
+                                                {renderKothAura()}
 
     
 
-                                {position.map((rankArray, rankIndex) =>
+                                
+
+    
+
+                                                {position.map((rankArray, rankIndex) =>
 
                     rankArray.map((pieceType, fileIndex) => 
 
