@@ -524,12 +524,12 @@ async def get_game(game_id: str) -> Game:
                 raise HTTPException(status_code=404, detail=f"Game {game_id} not found")
     return games[game_id]
 
-async def get_player_info(session, user_id, variant, default_name="Anonymous"):
+async def get_player_info(session, user_id, variant, default_name="Anonymous", fallback_rating=1500):
     if not user_id:
-        return {"name": default_name, "rating": 1500}
+        return {"name": default_name, "rating": fallback_rating}
     
     if user_id == "computer":
-        return {"id": "computer", "name": "Stockfish AI", "rating": 3000}
+        return {"id": "computer", "name": "Stockfish AI", "rating": fallback_rating}
     
     user = (await session.execute(select(User).where(User.google_id == user_id))).scalar_one_or_none()
     if not user:
@@ -875,8 +875,15 @@ async def get_game_state(game_id: str):
     async with async_session() as session:
         model = (await session.execute(select(GameModel).where(GameModel.id == game_id))).scalar_one_or_none()
         
-        white_player = await get_player_info(session, model.white_player_id if model else None, variant, default_name="White")
-        black_player = await get_player_info(session, model.black_player_id if model else None, variant, default_name="Black")
+        # Fetch human rating first to use as fallback for computer
+        human_id = model.white_player_id if model and model.black_player_id == "computer" else (model.black_player_id if model else None)
+        human_rating = 1500
+        if human_id and human_id != "computer":
+            human_info = await get_player_info(session, human_id, variant)
+            human_rating = human_info["rating"]
+
+        white_player = await get_player_info(session, model.white_player_id if model else None, variant, default_name="White", fallback_rating=human_rating)
+        black_player = await get_player_info(session, model.black_player_id if model else None, variant, default_name="Black", fallback_rating=human_rating)
 
         rating_diffs = None
         if model and model.white_rating_diff is not None:

@@ -73,10 +73,11 @@ async def update_game_ratings(session, game_model, winner_color: str | None):
     if not game_model.white_player_id or not game_model.black_player_id:
         return None
         
-    if game_model.white_player_id == "computer" or game_model.black_player_id == "computer":
-        return None
+    is_computer_game = game_model.white_player_id == "computer" or game_model.black_player_id == "computer"
 
     async def get_rating_obj(user_id, variant):
+        if user_id == "computer":
+            return None # Handle computer separately
         stmt = select(Rating).where(Rating.user_id == user_id, Rating.variant == variant)
         res = await session.execute(stmt)
         obj = res.scalar_one_or_none()
@@ -89,23 +90,32 @@ async def update_game_ratings(session, game_model, winner_color: str | None):
     white_rating_obj = await get_rating_obj(game_model.white_player_id, game_model.variant)
     black_rating_obj = await get_rating_obj(game_model.black_player_id, game_model.variant)
 
-    old_white_rating = white_rating_obj.rating
-    old_black_rating = black_rating_obj.rating
+    # Use actual values or player's rating for computer
+    w_r = white_rating_obj.rating if white_rating_obj else black_rating_obj.rating
+    w_rd = white_rating_obj.rd if white_rating_obj else 350.0
+    w_v = white_rating_obj.volatility if white_rating_obj else 0.06
 
-    w_p = Glicko2Player(white_rating_obj.rating, white_rating_obj.rd, white_rating_obj.volatility)
-    b_p = Glicko2Player(black_rating_obj.rating, black_rating_obj.rd, black_rating_obj.volatility)
+    b_r = black_rating_obj.rating if black_rating_obj else white_rating_obj.rating
+    b_rd = black_rating_obj.rd if black_rating_obj else 350.0
+    b_v = black_rating_obj.volatility if black_rating_obj else 0.06
+
+    w_p = Glicko2Player(w_r, w_rd, w_v)
+    b_p = Glicko2Player(b_r, b_rd, b_v)
 
     outcome = 1.0 if winner_color == 'w' else (0.0 if winner_color == 'b' else 0.5)
 
     w_p.update(b_p.mu, b_p.phi, outcome)
     b_p.update(w_p.mu, w_p.phi, 1.0 - outcome)
 
-    white_rating_obj.rating, white_rating_obj.rd, white_rating_obj.volatility = w_p.get_rating(), w_p.get_rd(), w_p.sigma
-    black_rating_obj.rating, black_rating_obj.rd, black_rating_obj.volatility = b_p.get_rating(), b_p.get_rd(), b_p.sigma
+    ret = {"white_diff": 0, "black_diff": 0}
+
+    if white_rating_obj:
+        ret["white_diff"] = int(w_p.get_rating() - white_rating_obj.rating)
+        white_rating_obj.rating, white_rating_obj.rd, white_rating_obj.volatility = w_p.get_rating(), w_p.get_rd(), w_p.sigma
+    
+    if black_rating_obj:
+        ret["black_diff"] = int(b_p.get_rating() - black_rating_obj.rating)
+        black_rating_obj.rating, black_rating_obj.rd, black_rating_obj.volatility = b_p.get_rating(), b_p.get_rd(), b_p.sigma
     
     await session.flush()
-
-    return {
-        "white_diff": int(white_rating_obj.rating - old_white_rating),
-        "black_diff": int(black_rating_obj.rating - old_black_rating)
-    }
+    return ret
