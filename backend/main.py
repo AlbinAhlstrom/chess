@@ -1082,7 +1082,8 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                     print(f"[WS] Move error: {e}")
                     await websocket.send_text(json.dumps({"type": "error", "message": str(e)}))
             elif message["type"] == "undo":
-                if not matchmaking or (user_id in [white_id, black_id]):
+                is_local_game = (white_id is None and black_id is None)
+                if is_local_game or (user_id in [white_id, black_id]):
                     try:
                         game.undo_move()
                         await save_game_to_db(game_id)
