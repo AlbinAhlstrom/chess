@@ -73,3 +73,85 @@ def test_standard_move_no_explosion(client):
 
         assert msg["type"] == "game_state"
         assert msg["explosion_square"] is None
+
+def test_crazyhouse_drop_broadcast(client):
+    """
+    Test that a piece drop in Crazyhouse correctly broadcasts the is_drop flag.
+    """
+    # 1. Create a game with pieces already in pocket (via FEN)
+    # White has a Pawn in pocket: [P]
+    fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR[P] w KQkq - 0 1"
+    create_res = client.post("/api/game/new", json={"variant": "crazyhouse", "fen": fen})
+    game_id = create_res.json()["game_id"]
+
+    with client.websocket_connect(f"/ws/{game_id}") as ws:
+        ws.receive_json() # init
+
+        # 2. Perform a drop move: P@e4
+        ws.send_json({"type": "move", "uci": "P@e4"})
+        msg = ws.receive_json()
+
+        assert msg["type"] == "game_state"
+        assert msg["is_drop"] is True
+
+def test_threecheck_strike_broadcast(client):
+    """
+    Test that a check in Three-Check results in a FEN with updated check counts.
+    """
+    create_res = client.post("/api/game/new", json={"variant": "threecheck"})
+    game_id = create_res.json()["game_id"]
+
+    with client.websocket_connect(f"/ws/{game_id}") as ws:
+        ws.receive_json() # init
+
+        # e2e4, e7e5, d1h5, d8h4, h5xf7+ (Check)
+        moves = ["e2e4", "e7e5", "d1h5", "d8h4", "h5f7"]
+        for move in moves:
+            ws.send_json({"type": "move", "uci": move})
+            last_msg = ws.receive_json()
+
+        assert last_msg["type"] == "game_state"
+        # Check FEN suffix for +1+0
+        assert "+1+0" in last_msg["fen"]
+
+def test_racingkings_turbo_logic(client):
+    """
+    Test that a King move in Racing Kings is correctly detected.
+    """
+    # Racing Kings starting position: kings are on the first/second rank
+    create_res = client.post("/api/game/new", json={"variant": "racingkings"})
+    game_id = create_res.json()["game_id"]
+
+    with client.websocket_connect(f"/ws/{game_id}") as ws:
+        ws.receive_json() # init
+
+        # Move White King: h1h2 (if h1 is king) or h2h3
+        # In FEN "8/8/8/8/8/8/krbnNBRK/qrbnNBRQ", h2(row 6, col 7) is King 'K'.
+        ws.send_json({"type": "move", "uci": "h2h3"})
+        msg = ws.receive_json()
+
+        assert msg["type"] == "game_state"
+        assert msg["uci_history"][-1] == "h2h3"
+
+def test_antichess_shatter_logic(client):
+    """
+    Test that a capture in Antichess is correctly identified.
+    """
+    create_res = client.post("/api/game/new", json={"variant": "antichess"})
+    game_id = create_res.json()["game_id"]
+
+    with client.websocket_connect(f"/ws/{game_id}") as ws:
+        ws.receive_json() # init
+
+        # e2e4, d7d5, e4xd5 (Mandatory capture often in Antichess)
+        ws.send_json({"type": "move", "uci": "e2e4"})
+        ws.receive_json()
+        ws.send_json({"type": "move", "uci": "d7d5"})
+        ws.receive_json()
+        
+        ws.send_json({"type": "move", "uci": "e4d5"})
+        msg = ws.receive_json()
+
+        assert msg["type"] == "game_state"
+        assert "x" in msg["move_history"][-1]
+
