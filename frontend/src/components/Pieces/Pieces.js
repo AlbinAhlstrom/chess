@@ -200,17 +200,26 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                 if (message.clocks) setTimers(message.clocks);
                 if (message.rating_diffs) setRatingDiffs(message.rating_diffs);
                 
-                console.log("[WS] Received game_state. explosion_square:", message.explosion_square);
-                if (message.explosion_square) {
-                    console.log("[WS] Triggering explosion at:", message.explosion_square);
-                    setExplosionSquare(message.explosion_square);
+                // Detect explosion via server field OR by checking if it's an Atomic capture
+                let explosionSq = message.explosion_square;
+                if (!explosionSq && variant === 'atomic' && history.length > 0) {
+                    const lastSAN = history[history.length - 1];
+                    if (lastSAN.includes('x')) {
+                        // Extract target square from SAN (last two chars, ignoring checks/mates)
+                        const cleanSAN = lastSAN.replace(/[+#]/g, '');
+                        explosionSq = cleanSAN.slice(-2);
+                    }
+                }
+
+                console.log("[WS] Received game_state. explosion_square:", explosionSq);
+                if (explosionSq) {
+                    console.log("[WS] Triggering explosion at:", explosionSq);
+                    setExplosionSquare(explosionSq);
                     setShowExplosion(true);
                     if (explosionSound.current) {
                         console.log("[WS] Playing explosion sound...");
                         explosionSound.current.currentTime = 0;
                         explosionSound.current.play().catch(e => console.error("Error playing explosion sound:", e));
-                    } else {
-                        console.error("[WS] explosionSound.current is NULL!");
                     }
                     setTimeout(() => {
                         setShowExplosion(false);
