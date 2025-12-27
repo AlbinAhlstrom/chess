@@ -91,11 +91,11 @@ async def update_game_ratings(session, game_model, winner_color: str | None):
     black_rating_obj = await get_rating_obj(game_model.black_player_id, game_model.variant)
 
     # Use actual values or player's rating for computer
-    w_r = white_rating_obj.rating if white_rating_obj else black_rating_obj.rating
+    w_r = white_rating_obj.rating if white_rating_obj else round(black_rating_obj.rating / 50) * 50
     w_rd = white_rating_obj.rd if white_rating_obj else 350.0
     w_v = white_rating_obj.volatility if white_rating_obj else 0.06
 
-    b_r = black_rating_obj.rating if black_rating_obj else white_rating_obj.rating
+    b_r = black_rating_obj.rating if black_rating_obj else round(white_rating_obj.rating / 50) * 50
     b_rd = black_rating_obj.rd if black_rating_obj else 350.0
     b_v = black_rating_obj.volatility if black_rating_obj else 0.06
 

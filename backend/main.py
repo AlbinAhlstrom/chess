@@ -529,7 +529,9 @@ async def get_player_info(session, user_id, variant, default_name="Anonymous", f
         return {"name": default_name, "rating": fallback_rating}
     
     if user_id == "computer":
-        return {"id": "computer", "name": "Stockfish AI", "rating": fallback_rating}
+        # Match player to the closest increment of 50
+        rounded_rating = round(fallback_rating / 50) * 50
+        return {"id": "computer", "name": f"Stockfish AI ({rounded_rating})", "rating": rounded_rating}
     
     user = (await session.execute(select(User).where(User.google_id == user_id))).scalar_one_or_none()
     if not user:
@@ -932,9 +934,10 @@ async def trigger_ai_move(game_id: str, game: Game):
     # Scaling Logic:
     # 1. Use UCI_Elo for a base level
     # 2. Use Nodes limit to simulate tactical blindness
-    # Rating 800 -> 1000 nodes; Rating 2000 -> 100,000 nodes
-    node_limit = max(500, (user_rating ** 2) // 40)
-    elo_target = user_rating
+    # Match player to the closest increment of 50
+    bot_rating = round(user_rating / 50) * 50
+    node_limit = max(500, (bot_rating ** 2) // 40)
+    elo_target = bot_rating
 
     print(f"[AI] Calling engine for FEN: {fen}, variant: {variant}, elo={elo_target}, nodes={node_limit}")
     
