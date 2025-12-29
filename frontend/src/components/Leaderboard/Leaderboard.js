@@ -45,16 +45,18 @@ function Leaderboard() {
             <div className="leaderboard-card">
                 <h1>Global Leaderboards</h1>
                 
-                <div className="variant-tabs">
-                    {VARIANTS.map(v => (
-                        <button 
-                            key={v.id} 
-                            className={`variant-tab ${variant === v.id ? 'active' : ''}`}
-                            onClick={() => handleVariantChange(v.id)}
-                        >
-                            {v.title}
-                        </button>
-                    ))}
+                <div className="variant-select-container">
+                    <select 
+                        value={variant} 
+                        onChange={(e) => handleVariantChange(e.target.value)}
+                        className="variant-select-dropdown"
+                    >
+                        {VARIANTS.map(v => (
+                            <option key={v.id} value={v.id}>
+                                {v.title}
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
                 {loading ? (

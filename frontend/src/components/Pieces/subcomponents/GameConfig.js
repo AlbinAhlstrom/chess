@@ -19,17 +19,19 @@ function GameConfig({
 }) {
     return (
         <>
-            <div className="variants-grid">
-                {VARIANTS.map(v => (
-                    <button
-                        key={v.id}
-                        className={`variant-select-btn ${selectedVariant === v.id ? 'active' : ''}`}
-                        onClick={() => setSelectedVariant(v.id)}
-                    >
-                        <span className="variant-icon">{v.icon}</span>
-                        <span>{v.title}</span>
-                    </button>
-                ))}
+            <div className="variant-select-container" style={{ justifyContent: 'flex-start' }}>
+                <select 
+                    value={selectedVariant} 
+                    onChange={(e) => setSelectedVariant(e.target.value)}
+                    className="variant-select-dropdown"
+                    style={{ width: '100%' }}
+                >
+                    {VARIANTS.map(v => (
+                        <option key={v.id} value={v.id}>
+                            {v.icon} {v.title}
+                        </option>
+                    ))}
+                </select>
             </div>
 
             {showColorSelect && (

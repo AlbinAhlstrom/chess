@@ -298,6 +298,41 @@ main {
     touch-action: manipulation;
 }
 
+/* Global Variant Select Styles */
+.variant-select-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.variant-select-dropdown {
+    background: #3c3934;
+    border: 1px solid #555;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    width: 250px;
+    max-width: 100%;
+    outline: none;
+    transition: all 0.2s;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+}
+
+.variant-select-dropdown:hover {
+    background-color: #4a4742;
+    border-color: #666;
+}
+
+.variant-select-dropdown:focus {
+    border-color: #4CAF50;
+}
+
 @media (max-width: 850px) {
     :root {
         --square-size: 80px;

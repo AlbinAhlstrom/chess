@@ -20,36 +20,9 @@
     text-align: center;
 }
 
-.variant-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
-    margin-bottom: 30px;
+.variant-select-container {
     padding-bottom: 20px;
     border-bottom: 1px solid #3c3934;
-}
-
-.variant-tab {
-    background: #2d2b28;
-    border: 1px solid #3c3934;
-    color: #8b8987;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: all 0.2s;
-}
-
-.variant-tab:hover {
-    background: #3c3934;
-    color: white;
-}
-
-.variant-tab.active {
-    background: #4CAF50;
-    color: white;
-    border-color: #4CAF50;
 }
 
 .leaderboard-table-container {

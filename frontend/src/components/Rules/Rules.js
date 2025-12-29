@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import './Rules.css';
 
 const VARIANT_RULES = {
@@ -96,6 +96,8 @@ function Rules() {
     const currentVariant = variant || 'standard';
     const variantData = VARIANT_RULES[currentVariant];
 
+    const navigate = useNavigate();
+
     if (!variantData) {
         return (
             <div className="rules-container">
@@ -105,17 +107,24 @@ function Rules() {
         );
     }
 
+    const handleVariantChange = (vId) => {
+        navigate(`/rules/${vId}`);
+    };
+
     return (
         <div className="rules-container">
-            <div className="rules-sidebar">
-                <h3>Variants</h3>
-                <ul>
+            <div className="variant-select-container">
+                <select 
+                    value={currentVariant} 
+                    onChange={(e) => handleVariantChange(e.target.value)}
+                    className="variant-select-dropdown"
+                >
                     {Object.keys(VARIANT_RULES).map(v => (
-                        <li key={v} className={v === currentVariant ? 'active' : ''}>
-                            <Link to={`/rules/${v}`}>{VARIANT_RULES[v].title}</Link>
-                        </li>
+                        <option key={v} value={v}>
+                            {VARIANT_RULES[v].title}
+                        </option>
                     ))}
-                </ul>
+                </select>
             </div>
             <div className="rules-content">
                 <h1>{variantData.title}</h1>
