@@ -100,54 +100,70 @@ function AtomicTutorialBoard() {
         { id: 'bk', type: 'k', color: 'b', file: 0, rank: 0 }, // King at a4 - safe
     ]);
     const [explosion, setExplosion] = useState(null);
-    const [message, setMessage] = useState("Move the White Knight to capture the Black Pawn!");
+    const [message, setMessage] = useState("Click the White Knight to select it, then capture the Black Pawn!");
     const [completed, setCompleted] = useState(false);
+    const [selected, setSelected] = useState(null);
 
     const handleSquareClick = (file, rank) => {
         if (completed || explosion) return;
 
-        const knight = pieces.find(p => p.id === 'wk');
-        const target = pieces.find(p => p.file === file && p.rank === rank);
+        const clickedPiece = pieces.find(p => p.file === file && p.rank === rank);
 
-        // Check for valid knight move to target
-        const dx = Math.abs(file - knight.file);
-        const dy = Math.abs(rank - knight.rank);
-        const isKnightMove = (dx === 1 && dy === 2) || (dx === 2 && dy === 1);
+        // If clicking the knight, select it
+        if (clickedPiece && clickedPiece.id === 'wk') {
+            setSelected({ file, rank });
+            setMessage("Knight selected. Now click the Black Pawn to capture!");
+            return;
+        }
 
-        if (isKnightMove && target && target.color === 'b') {
-            // Valid capture
-            setMessage("BOOM! The capture caused an explosion!");
+        // If knight is selected, try to move
+        if (selected) {
+            const knight = pieces.find(p => p.id === 'wk');
             
-            // 1. Move knight visually first
-            setPieces(prev => prev.map(p => p.id === 'wk' ? { ...p, file, rank } : p));
+            // Check for valid knight move to target
+            const dx = Math.abs(file - knight.file);
+            const dy = Math.abs(rank - knight.rank);
+            const isKnightMove = (dx === 1 && dy === 2) || (dx === 2 && dy === 1);
 
-            // 2. Trigger explosion animation
-            setExplosion({ file, rank });
+            const target = pieces.find(p => p.file === file && p.rank === rank);
 
-            // 3. Remove pieces after delay
-            setTimeout(() => {
-                setPieces(prev => prev.filter(p => {
-                    const pdx = Math.abs(p.file - file);
-                    const pdy = Math.abs(p.rank - rank);
-                    // Remove if in 1 square radius (King is immune to explosion normally but in atomic only pawns survive surrounding explosions? 
-                    // Rules: "The explosion removes the capturing piece, the captured piece, and all non-pawn pieces in the surrounding 3x3 area."
-                    // Pawns only removed if directly involved.
-                    
-                    if (p.id === 'wk') return false; // Capturing piece dies
-                    if (p.file === file && p.rank === rank) return false; // Captured piece dies
-                    
-                    if (pdx <= 1 && pdy <= 1) {
-                        if (p.type === 'p') return true; // Pawns survive surrounding
-                        return false; // Others die
-                    }
-                    return true;
-                }));
-                setExplosion(null);
-                setCompleted(true);
-                setMessage("Notice: The Knight, Pawn, and surrounding pieces exploded. The King survived!");
-            }, 800);
-        } else if (isKnightMove) {
-            setMessage("Move to capture the Black Pawn to see the explosion!");
+            if (isKnightMove && target && target.color === 'b') {
+                // Valid capture
+                setMessage("BOOM! The capture caused an explosion!");
+                setSelected(null);
+                
+                // 1. Move knight visually first
+                setPieces(prev => prev.map(p => p.id === 'wk' ? { ...p, file, rank } : p));
+
+                // 2. Trigger explosion animation
+                setExplosion({ file, rank });
+
+                // 3. Remove pieces after delay
+                setTimeout(() => {
+                    setPieces(prev => prev.filter(p => {
+                        const pdx = Math.abs(p.file - file);
+                        const pdy = Math.abs(p.rank - rank);
+                        
+                        if (p.id === 'wk') return false; // Capturing piece dies
+                        if (p.file === file && p.rank === rank) return false; // Captured piece dies
+                        
+                        if (pdx <= 1 && pdy <= 1) {
+                            if (p.type === 'p') return true; // Pawns survive surrounding
+                            return false; // Others die
+                        }
+                        return true;
+                    }));
+                    setExplosion(null);
+                    setCompleted(true);
+                    setMessage("Notice: The Knight, Pawn, and surrounding pieces exploded. The King survived!");
+                }, 800);
+            } else if (isKnightMove) {
+                setMessage("Capture the Black Pawn to see the explosion!");
+                setSelected(null);
+            } else {
+                 setMessage("Invalid move. Select the Knight and try again.");
+                 setSelected(null);
+            }
         }
     };
 
@@ -161,7 +177,8 @@ function AtomicTutorialBoard() {
         ]);
         setExplosion(null);
         setCompleted(false);
-        setMessage("Move the White Knight to capture the Black Pawn!");
+        setSelected(null);
+        setMessage("Click the White Knight to select it, then capture the Black Pawn!");
     };
 
     return (
@@ -170,10 +187,11 @@ function AtomicTutorialBoard() {
                 {[0, 1, 2, 3].map(rank => (
                     [0, 1, 2, 3].map(file => {
                         const isBlack = (rank + file) % 2 === 1;
+                        const isSelected = selected && selected.file === file && selected.rank === rank;
                         return (
                             <div 
                                 key={`${file}-${rank}`}
-                                className={`tutorial-square ${isBlack ? 'black-square' : 'white-square'}`}
+                                className={`tutorial-square ${isBlack ? 'black-square' : 'white-square'} ${isSelected ? 'selected-square' : ''}`}
                                 onClick={() => handleSquareClick(file, rank)}
                             />
                         );
