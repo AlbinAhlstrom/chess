@@ -187,7 +187,7 @@ function AtomicTutorialBoard() {
                         style={{
                             left: `${p.file * 25}%`,
                             top: `${p.rank * 25}%`,
-                            backgroundImage: `url("/images/pieces/${p.color}${p.type}.png")`
+                            backgroundImage: `url("/images/pieces/${p.type}.png")`
                         }}
                         onClick={(e) => {
                             e.stopPropagation();
