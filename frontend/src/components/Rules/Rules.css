@@ -164,3 +164,7 @@
 .selected-square {
     background-color: rgba(255, 255, 0, 0.5) !important;
 }
+
+.tutorial-board .legal-move-dot {
+    z-index: 20;
+}

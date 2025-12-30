@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import Piece from '../Pieces/Piece';
+import LegalMoveDot from '../LegalMoveDot/LegalMoveDot';
+import HighlightSquare from '../HighlightSquare/HighlightSquare';
 import './Rules.css';
 
 const VARIANT_RULES = {
@@ -100,70 +103,139 @@ function AtomicTutorialBoard() {
         { id: 'bk', type: 'k', color: 'b', file: 0, rank: 0 }, // King at a4 - safe
     ]);
     const [explosion, setExplosion] = useState(null);
-    const [message, setMessage] = useState("Click the White Knight to select it, then capture the Black Pawn!");
+    const [message, setMessage] = useState("Drag or click the White Knight to capture the Black Pawn!");
     const [completed, setCompleted] = useState(false);
-    const [selected, setSelected] = useState(null);
+    const [selected, setSelected] = useState(null); // { file, rank }
+    const [legalMoves, setLegalMoves] = useState([]);
+    const boardRef = useRef(null);
 
-    const handleSquareClick = (file, rank) => {
+    const getSquareFromCoords = (clientX, clientY) => {
+        if (!boardRef.current) return null;
+        const rect = boardRef.current.getBoundingClientRect();
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+        const squareSize = rect.width / 4;
+        
+        const file = Math.floor(x / squareSize);
+        const rank = Math.floor(y / squareSize);
+        
+        if (file >= 0 && file < 4 && rank >= 0 && rank < 4) {
+            return { file, rank };
+        }
+        return null;
+    };
+
+    const calculateLegalMoves = (file, rank) => {
+        const moves = [];
+        const offsets = [[1, 2], [1, -2], [-1, 2], [-1, -2], [2, 1], [2, -1], [-2, 1], [-2, -1]];
+        
+        offsets.forEach(([dx, dy]) => {
+            const newFile = file + dx;
+            const newRank = rank + dy;
+            
+            if (newFile >= 0 && newFile < 4 && newRank >= 0 && newRank < 4) {
+                moves.push({ file: newFile, rank: newRank });
+            }
+        });
+        return moves;
+    };
+
+    const executeMove = (targetFile, targetRank) => {
+         const knight = pieces.find(p => p.id === 'wk');
+         if (!knight) return;
+
+         const dx = Math.abs(targetFile - knight.file);
+         const dy = Math.abs(targetRank - knight.rank);
+         const isKnightMove = (dx === 1 && dy === 2) || (dx === 2 && dy === 1);
+
+         if (!isKnightMove) {
+             setMessage("That's not a valid Knight move!");
+             setSelected(null);
+             setLegalMoves([]);
+             return;
+         }
+
+         const targetPiece = pieces.find(p => p.file === targetFile && p.rank === targetRank);
+         
+         if (targetPiece && targetPiece.color === 'b') {
+            setMessage("BOOM! The capture caused an explosion!");
+            
+            setPieces(prev => prev.map(p => p.id === 'wk' ? { ...p, file: targetFile, rank: targetRank } : p));
+            setExplosion({ file: targetFile, rank: targetRank });
+            setSelected(null);
+            setLegalMoves([]);
+
+            setTimeout(() => {
+                setPieces(prev => prev.filter(p => {
+                    const pdx = Math.abs(p.file - targetFile);
+                    const pdy = Math.abs(p.rank - targetRank);
+                    
+                    if (p.id === 'wk') return false; 
+                    if (p.file === targetFile && p.rank === targetRank) return false;
+                    
+                    if (pdx <= 1 && pdy <= 1) {
+                        if (p.type === 'p') return true; 
+                        return false; 
+                    }
+                    return true;
+                }));
+                setExplosion(null);
+                setCompleted(true);
+                setMessage("Notice: The Knight, Pawn, and surrounding pieces exploded. The King survived!");
+            }, 800);
+         } else {
+             setMessage("Move to capture the Black Pawn to see the explosion!");
+             setPieces(prev => prev.map(p => p.id === 'wk' ? { ...p, file: targetFile, rank: targetRank } : p));
+             setSelected(null);
+             setLegalMoves([]);
+         }
+    };
+
+    const handleBoardClick = (e) => {
         if (completed || explosion) return;
+        const sq = getSquareFromCoords(e.clientX, e.clientY);
+        if (!sq) return;
 
-        const clickedPiece = pieces.find(p => p.file === file && p.rank === rank);
+        const clickedPiece = pieces.find(p => p.file === sq.file && p.rank === sq.rank);
 
-        // If clicking the knight, select it
+        // Select own piece (Knight)
         if (clickedPiece && clickedPiece.id === 'wk') {
-            setSelected({ file, rank });
-            setMessage("Knight selected. Now click the Black Pawn to capture!");
+            setSelected(sq);
+            setLegalMoves(calculateLegalMoves(sq.file, sq.rank));
+            setMessage("Knight selected. Drag or click the Black Pawn!");
             return;
         }
 
-        // If knight is selected, try to move
+        // Move if selected
         if (selected) {
-            const knight = pieces.find(p => p.id === 'wk');
-            
-            // Check for valid knight move to target
-            const dx = Math.abs(file - knight.file);
-            const dy = Math.abs(rank - knight.rank);
-            const isKnightMove = (dx === 1 && dy === 2) || (dx === 2 && dy === 1);
-
-            const target = pieces.find(p => p.file === file && p.rank === rank);
-
-            if (isKnightMove && target && target.color === 'b') {
-                // Valid capture
-                setMessage("BOOM! The capture caused an explosion!");
-                setSelected(null);
-                
-                // 1. Move knight visually first
-                setPieces(prev => prev.map(p => p.id === 'wk' ? { ...p, file, rank } : p));
-
-                // 2. Trigger explosion animation
-                setExplosion({ file, rank });
-
-                // 3. Remove pieces after delay
-                setTimeout(() => {
-                    setPieces(prev => prev.filter(p => {
-                        const pdx = Math.abs(p.file - file);
-                        const pdy = Math.abs(p.rank - rank);
-                        
-                        if (p.id === 'wk') return false; // Capturing piece dies
-                        if (p.file === file && p.rank === rank) return false; // Captured piece dies
-                        
-                        if (pdx <= 1 && pdy <= 1) {
-                            if (p.type === 'p') return true; // Pawns survive surrounding
-                            return false; // Others die
-                        }
-                        return true;
-                    }));
-                    setExplosion(null);
-                    setCompleted(true);
-                    setMessage("Notice: The Knight, Pawn, and surrounding pieces exploded. The King survived!");
-                }, 800);
-            } else if (isKnightMove) {
-                setMessage("Capture the Black Pawn to see the explosion!");
-                setSelected(null);
+            const isLegal = legalMoves.some(m => m.file === sq.file && m.rank === sq.rank);
+            if (isLegal) {
+                executeMove(sq.file, sq.rank);
             } else {
-                 setMessage("Invalid move. Select the Knight and try again.");
-                 setSelected(null);
+                setSelected(null);
+                setLegalMoves([]);
             }
+        }
+    };
+
+    const handlePieceDragStart = ({ file, rank, piece }) => {
+        if (completed || explosion) return;
+        // piece is "N" (White Knight type)
+        if (piece !== 'N') return; 
+
+        setSelected({ file, rank });
+        setLegalMoves(calculateLegalMoves(file, rank));
+    };
+
+    const handlePieceDrop = ({ clientX, clientY }) => {
+        if (completed || explosion) return;
+        const sq = getSquareFromCoords(clientX, clientY);
+        
+        if (sq && selected) {
+             const isLegal = legalMoves.some(m => m.file === sq.file && m.rank === sq.rank);
+             if (isLegal) {
+                 executeMove(sq.file, sq.rank);
+             }
         }
     };
 
@@ -178,42 +250,57 @@ function AtomicTutorialBoard() {
         setExplosion(null);
         setCompleted(false);
         setSelected(null);
-        setMessage("Click the White Knight to select it, then capture the Black Pawn!");
+        setLegalMoves([]);
+        setMessage("Drag or click the White Knight to capture the Black Pawn!");
     };
 
     return (
         <div className="atomic-tutorial">
-            <div className="tutorial-board">
+            <div 
+                className="tutorial-board" 
+                ref={boardRef}
+                onClick={handleBoardClick}
+            >
+                {/* Board Squares */}
                 {[0, 1, 2, 3].map(rank => (
                     [0, 1, 2, 3].map(file => {
                         const isBlack = (rank + file) % 2 === 1;
-                        const isSelected = selected && selected.file === file && selected.rank === rank;
                         return (
                             <div 
                                 key={`${file}-${rank}`}
-                                className={`tutorial-square ${isBlack ? 'black-square' : 'white-square'} ${isSelected ? 'selected-square' : ''}`}
-                                onClick={() => handleSquareClick(file, rank)}
+                                className={`tutorial-square ${isBlack ? 'black-square' : 'white-square'}`}
                             />
                         );
                     })
                 ))}
                 
+                {/* Highlight Selected Square */}
+                {selected && (
+                    <HighlightSquare 
+                        file={selected.file} 
+                        rank={selected.rank} 
+                        color="rgba(255, 255, 0, 0.5)" 
+                    />
+                )}
+
+                {/* Legal Move Dots */}
+                {legalMoves.map((m, i) => (
+                    <LegalMoveDot key={i} file={m.file} rank={m.rank} />
+                ))}
+
+                {/* Pieces */}
                 {pieces.map(p => (
-                    <div
+                    <Piece
                         key={p.id}
-                        className="tutorial-piece"
-                        style={{
-                            left: `${p.file * 25}%`,
-                            top: `${p.rank * 25}%`,
-                            backgroundImage: `url("/images/pieces/${p.type}.png")`
-                        }}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleSquareClick(p.file, p.rank);
-                        }}
+                        piece={p.type}
+                        file={p.file}
+                        rank={p.rank}
+                        onDragStartCallback={handlePieceDragStart}
+                        onDropCallback={handlePieceDrop}
                     />
                 ))}
 
+                {/* Explosion */}
                 {explosion && (
                     <div 
                         className="explosion-container"
