@@ -162,25 +162,26 @@ function AtomicTutorialBoard() {
          if (targetPiece && targetPiece.color === 'b') {
             setMessage("BOOM! The capture caused an explosion!");
             
-            setPieces(prev => prev.map(p => p.id === 'wk' ? { ...p, file: targetFile, rank: targetRank } : p));
             setExplosion({ file: targetFile, rank: targetRank });
             setSelected(null);
             setLegalMoves([]);
 
+            // Remove pieces immediately
+            setPieces(prev => prev.filter(p => {
+                const pdx = Math.abs(p.file - targetFile);
+                const pdy = Math.abs(p.rank - targetRank);
+                
+                if (p.id === 'wk') return false; 
+                if (p.file === targetFile && p.rank === targetRank) return false;
+                
+                if (pdx <= 1 && pdy <= 1) {
+                    if (p.type === 'p') return true; 
+                    return false; 
+                }
+                return true;
+            }));
+
             setTimeout(() => {
-                setPieces(prev => prev.filter(p => {
-                    const pdx = Math.abs(p.file - targetFile);
-                    const pdy = Math.abs(p.rank - targetRank);
-                    
-                    if (p.id === 'wk') return false; 
-                    if (p.file === targetFile && p.rank === targetRank) return false;
-                    
-                    if (pdx <= 1 && pdy <= 1) {
-                        if (p.type === 'p') return true; 
-                        return false; 
-                    }
-                    return true;
-                }));
                 setExplosion(null);
                 setCompleted(true);
                 setMessage("Notice: The Knight, King, and other pieces exploded. The side Pawns survived!");
