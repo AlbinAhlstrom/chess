@@ -98,12 +98,14 @@ function AtomicTutorialBoard() {
     const [pieces, setPieces] = useState([
         { id: 'wk', type: 'N', color: 'w', file: 1, rank: 3 }, // Knight at b1 (relative to 4x4)
         { id: 'bp', type: 'p', color: 'b', file: 2, rank: 1 }, // Pawn at c3 (relative to 4x4)
+        { id: 'bp2', type: 'p', color: 'b', file: 1, rank: 1 }, // Pawn at b3 - will survive
+        { id: 'bp3', type: 'p', color: 'b', file: 3, rank: 1 }, // Pawn at d3 - will survive
         { id: 'br', type: 'r', color: 'b', file: 1, rank: 0 }, // Rook at b4 - will explode
         { id: 'bq', type: 'q', color: 'b', file: 3, rank: 0 }, // Queen at d4 - will explode
-        { id: 'bk', type: 'k', color: 'b', file: 0, rank: 0 }, // King at a4 - safe
+        { id: 'bk', type: 'k', color: 'b', file: 2, rank: 0 }, // King at c4 - will explode
     ]);
     const [explosion, setExplosion] = useState(null);
-    const [message, setMessage] = useState("Drag or click the White Knight to capture the Black Pawn!");
+    const [message, setMessage] = useState("Drag or click the White Knight to capture the middle Black Pawn!");
     const [completed, setCompleted] = useState(false);
     const [selected, setSelected] = useState(null); // { file, rank }
     const [legalMoves, setLegalMoves] = useState([]);
@@ -181,10 +183,10 @@ function AtomicTutorialBoard() {
                 }));
                 setExplosion(null);
                 setCompleted(true);
-                setMessage("Notice: The Knight, Pawn, and surrounding pieces exploded. The King survived!");
+                setMessage("Notice: The Knight, King, and other pieces exploded. The side Pawns survived!");
             }, 800);
          } else {
-             setMessage("Move to capture the Black Pawn to see the explosion!");
+             setMessage("Move to capture the middle Black Pawn to see the explosion!");
              setPieces(prev => prev.map(p => p.id === 'wk' ? { ...p, file: targetFile, rank: targetRank } : p));
              setSelected(null);
              setLegalMoves([]);
@@ -202,7 +204,7 @@ function AtomicTutorialBoard() {
         if (clickedPiece && clickedPiece.id === 'wk') {
             setSelected(sq);
             setLegalMoves(calculateLegalMoves(sq.file, sq.rank));
-            setMessage("Knight selected. Drag or click the Black Pawn!");
+            setMessage("Knight selected. Drag or click the middle Black Pawn!");
             return;
         }
 
@@ -243,15 +245,17 @@ function AtomicTutorialBoard() {
         setPieces([
             { id: 'wk', type: 'N', color: 'w', file: 1, rank: 3 },
             { id: 'bp', type: 'p', color: 'b', file: 2, rank: 1 },
+            { id: 'bp2', type: 'p', color: 'b', file: 1, rank: 1 },
+            { id: 'bp3', type: 'p', color: 'b', file: 3, rank: 1 },
             { id: 'br', type: 'r', color: 'b', file: 1, rank: 0 },
             { id: 'bq', type: 'q', color: 'b', file: 3, rank: 0 },
-            { id: 'bk', type: 'k', color: 'b', file: 0, rank: 0 },
+            { id: 'bk', type: 'k', color: 'b', file: 2, rank: 0 },
         ]);
         setExplosion(null);
         setCompleted(false);
         setSelected(null);
         setLegalMoves([]);
-        setMessage("Drag or click the White Knight to capture the Black Pawn!");
+        setMessage("Drag or click the middle Black Pawn!");
     };
 
     return (
