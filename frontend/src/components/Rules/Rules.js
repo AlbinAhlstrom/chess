@@ -132,11 +132,13 @@ function AtomicTutorialBoard() {
     const [isFlying, setIsFlying] = useState(false);
     const [isPreparing, setIsPreparing] = useState(false);
     const [isShaking, setIsShaking] = useState(false);
+    const [scorchMark, setScorchMark] = useState(null); // { file, rank }
     const [animatingKnight, setAnimatingKnight] = useState(null); // { file, rank }
     const boardRef = useRef(null);
     const canvasRef = useRef(null);
     const explosionSound = useRef(new Audio("/sounds/atomic_explosion.mp3"));
     const launchSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/castle.mp3"));
+    const lockSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-check.mp3"));
 
     // Particle System based on requested snippet
     useEffect(() => {
@@ -315,6 +317,7 @@ function AtomicTutorialBoard() {
                 setIsFlying(true);
                 setAnimatingKnight({ file: targetFile, rank: targetRank }); // Set destination for CSS transition
                 launchSound.current.play().catch(() => {});
+                lockSound.current.play().catch(() => {});
                 setMessage("Incoming atom bomb!");
                 
                 // Wait for flight animation to finish (0.4s)
@@ -324,6 +327,7 @@ function AtomicTutorialBoard() {
                     setIsShaking(true);
                     explosionSound.current.play().catch(() => {});
                     setExplosion({ file: targetFile, rank: targetRank });
+                    setScorchMark({ file: targetFile, rank: targetRank });
 
                     setPieces(prev => prev.filter(p => {
                         const pdx = Math.abs(p.file - targetFile);
@@ -421,6 +425,7 @@ function AtomicTutorialBoard() {
         setIsPreparing(false);
         setIsShaking(false);
         setAnimatingKnight(null);
+        setScorchMark(null);
         setMessage("Drag or click the White Knight to capture the middle Black Pawn!");
     };
 
@@ -458,14 +463,22 @@ function AtomicTutorialBoard() {
                     <LegalMoveDot key={i} file={m.file} rank={m.rank} />
                 ))}
 
+                {/* Scorch Mark */}
+                {scorchMark && (
+                    <div 
+                        className="scorch-mark"
+                        style={{
+                            left: `${scorchMark.file * 25}%`,
+                            top: `${scorchMark.rank * 25}%`,
+                        }}
+                    />
+                )}
+
                 {/* Targeting Crosshair */}
                 {(isPreparing || isFlying) && animatingKnight && (
                     <div 
                         className="target-crosshair"
                         style={{
-                            left: '50%', // Centered on target (2, 1) - wait, target is fixed in this tutorial
-                            top: '25%', 
-                            // Using fixed target coords for this specific tutorial scenario
                             left: '50%',
                             top: '25%',
                             width: '25%',
@@ -475,8 +488,10 @@ function AtomicTutorialBoard() {
                         }}
                     >
                         <div className="crosshair-ring"></div>
+                        <div className="crosshair-ring ring-2"></div>
                         <div className="crosshair-line h"></div>
                         <div className="crosshair-line v"></div>
+                        <div className="crosshair-text">LOCK</div>
                     </div>
                 )}
 

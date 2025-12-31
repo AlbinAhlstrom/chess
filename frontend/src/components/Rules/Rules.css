@@ -554,12 +554,30 @@
 }
 
 .crosshair-ring {
+    position: absolute;
     width: 80%;
     height: 80%;
     border: 2px solid #f00;
     border-radius: 50%;
     animation: crosshair-pulse 0.4s infinite alternate;
     box-shadow: 0 0 10px #f00;
+}
+
+.crosshair-ring.ring-2 {
+    width: 100%;
+    height: 100%;
+    border: 1px dashed #f00;
+    animation: crosshair-spin 2s linear infinite;
+}
+
+.crosshair-text {
+    position: absolute;
+    top: -20px;
+    font-size: 10px;
+    font-weight: 900;
+    color: #f00;
+    text-shadow: 0 0 5px #f00;
+    letter-spacing: 1px;
 }
 
 .crosshair-line {
@@ -574,4 +592,27 @@
 @keyframes crosshair-pulse {
     from { transform: scale(0.8); opacity: 0.6; }
     to { transform: scale(1.1); opacity: 1; }
+}
+
+@keyframes crosshair-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Scorch Mark */
+.scorch-mark {
+    position: absolute;
+    width: 25%;
+    height: 25%;
+    background: radial-gradient(circle, rgba(0,0,0,0.8) 0%, rgba(40,40,40,0.6) 40%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(4px);
+    z-index: 1;
+    animation: scorch-fade 3s forwards;
+}
+
+@keyframes scorch-fade {
+    0% { opacity: 0; transform: scale(0.5); }
+    10% { opacity: 1; transform: scale(1.2); }
+    100% { opacity: 0.4; transform: scale(1); }
 }
