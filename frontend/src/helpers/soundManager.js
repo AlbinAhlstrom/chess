@@ -16,7 +16,7 @@ const sounds = {
     
     // Atomic: Heavy, deep mining impact
     explosion: new Howl({ 
-        src: ['/sounds/kenney_impact-sounds/Audio/impactMining_003.ogg'], 
+        src: ['/sounds/atomic_explosion.mp3'], 
         volume: 1.0 
     }),
     
