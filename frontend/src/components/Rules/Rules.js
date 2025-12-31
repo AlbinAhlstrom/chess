@@ -335,7 +335,7 @@ function AtomicTutorialBoard() {
             setPieces(prev => prev.filter(p => p.id !== 'wk')); // Remove original knight immediately
             setIsPreparing(true);
             setIsIgnition(true);
-            setIsFlashing(true); // Start flashing immediately at takeoff prep
+            setIsFlashing(true); // Start fade immediately at very start of anim sequence
             setSelected(null);
             setLegalMoves([]);
 
@@ -347,7 +347,7 @@ function AtomicTutorialBoard() {
                 setAnimatingKnight({ file: targetFile, rank: targetRank }); // Set destination for CSS transition
                 launchSound.current.play().catch(() => {});
                 
-                // Triple beep lock sequence synchronized with flight
+                // Triple beep sequence
                 const playBeep = () => {
                     lockSound.current.currentTime = 0;
                     lockSound.current.play().catch(() => {});
