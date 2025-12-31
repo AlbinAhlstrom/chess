@@ -107,11 +107,18 @@ function FlyingKnight({ file, rank, isPreparing, isFlying }) {
         backgroundSize: '100%'
     };
 
-    let className = 'simple-flying-knight';
+    let className = 'visceral-knight';
     if (isPreparing) className += ' preparing';
     if (isFlying) className += ' flying';
 
-    return <div className={className} style={style} />;
+    return (
+        <div className={className} style={style}>
+            <div className="vk-inner">
+                <div className="vk-front" style={{ backgroundImage: 'var(--piece-image)' }}></div>
+                <div className="vk-back" style={{ backgroundImage: 'var(--piece-image)' }}></div>
+            </div>
+        </div>
+    );
 }
 
 function AtomicTutorialBoard() {
