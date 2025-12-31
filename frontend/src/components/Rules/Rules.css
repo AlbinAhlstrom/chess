@@ -489,8 +489,9 @@
 
 /* Pocketing Animation (Crazyhouse) */
 @keyframes fly-to-pocket {
-    0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; }
-    100% { transform: translate(0, 150px) scale(0.2) rotate(180deg); opacity: 0; }
+    0% { transform: translate(0, 0) scale(1) rotate(0deg) perspective(1000px) rotateX(0deg); opacity: 1; }
+    40% { transform: translate(50px, -100px) scale(1.2) rotate(90deg) perspective(1000px) rotateX(-45deg); opacity: 1; }
+    100% { transform: translate(0, 150px) scale(0.2) rotate(360deg) perspective(1000px) rotateX(-90deg); opacity: 0; }
 }
 
 .pocketing-animation {
@@ -500,7 +501,23 @@
     background-size: 100%;
     z-index: 2000;
     pointer-events: none;
-    animation: fly-to-pocket 0.5s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards;
+    animation: fly-to-pocket 0.5s cubic-bezier(0.455, 0.03, 0.515, 0.955) forwards;
+}
+
+@keyframes pocket-flare-anim {
+    0% { transform: scale(0.8); opacity: 0; box-shadow: 0 0 0px #95bb4a; }
+    50% { opacity: 1; box-shadow: 0 0 30px #95bb4a; }
+    100% { transform: scale(1.2); opacity: 0; box-shadow: 0 0 50px transparent; }
+}
+
+.pocket-flare {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(149, 187, 74, 0.2);
+    border-radius: 12px;
+    pointer-events: none;
+    z-index: 5;
+    animation: pocket-flare-anim 0.3s ease-out forwards;
 }
 
 /* Turbo Effect (Racing Kings) */

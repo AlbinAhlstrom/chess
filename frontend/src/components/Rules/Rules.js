@@ -850,6 +850,7 @@ function CrazyhouseTutorialBoard() {
     const [selectedReserve, setSelectedReserve] = useState(null); // index in reserve
     const [warpPieceId, setWarpPieceId] = useState(null); // ID of piece to animate drop
     const [pocketingPiece, setPocketingPiece] = useState(null); // { type, file, rank }
+    const [pocketArrival, setPocketArrival] = useState(false);
     const boardRef = useRef(null);
     const captureSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/capture.mp3"));
     const dropSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/premove.mp3"));
@@ -916,7 +917,9 @@ function CrazyhouseTutorialBoard() {
             setTimeout(() => {
                 setReserve(['B']);
                 setPocketingPiece(null);
+                setPocketArrival(true);
                 clinkSound.current.play().catch(() => {});
+                setTimeout(() => setPocketArrival(false), 300);
                 setMessage("Bishop captured! It's now in your reserve. Click it in the tray, then click an empty square to drop it!");
             }, 500);
         } else if (clickedPiece && clickedPiece.color === 'b') {
@@ -949,7 +952,9 @@ function CrazyhouseTutorialBoard() {
             setTimeout(() => {
                 setReserve(['B']);
                 setPocketingPiece(null);
+                setPocketArrival(true);
                 clinkSound.current.play().catch(() => {});
+                setTimeout(() => setPocketArrival(false), 300);
                 setMessage("Bishop captured! It's now in your reserve. Click it in the tray, then click an empty square to drop it!");
             }, 500);
         }
@@ -996,7 +1001,8 @@ function CrazyhouseTutorialBoard() {
                 <WinnerSound completed={completed} />
             </div>
             
-            <div className="reserve-tray">
+            <div className="reserve-tray" style={{ position: 'relative' }}>
+                {pocketArrival && <div className="pocket-flare"></div>}
                 <h4>Your Reserve</h4>
                 <div className="reserve-slots">
                     {reserve.map((type, i) => (
