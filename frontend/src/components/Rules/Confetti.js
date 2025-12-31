@@ -4,10 +4,10 @@ import confetti from 'canvas-confetti';
 const Confetti = ({ trigger }) => {
     useEffect(() => {
         if (trigger) {
-            // High-performance burst from the bottom center
-            const duration = 1 * 1000;
+            // Very brief high-impact bursts
+            const duration = 0.5 * 1000;
             const animationEnd = Date.now() + duration;
-            const defaults = { startVelocity: 45, spread: 70, ticks: 100, zIndex: 99999, gravity: 1.2, scalar: 1.2 };
+            const defaults = { startVelocity: 85, spread: 60, ticks: 60, zIndex: 99999, gravity: 1.4, scalar: 1.2 };
 
             const randomInRange = (min, max) => Math.random() * (max - min) + min;
 
@@ -18,25 +18,25 @@ const Confetti = ({ trigger }) => {
                     return clearInterval(interval);
                 }
 
-                const particleCount = 50 * (timeLeft / duration);
+                const particleCount = 40 * (timeLeft / duration);
                 
-                // Fountain burst from bottom center
-                confetti({
-                    ...defaults,
-                    particleCount,
-                    origin: { x: 0.5, y: 1.1 },
-                    angle: randomInRange(75, 105), // Narrower upward cone
-                    spread: randomInRange(40, 80),
-                    gravity: 1.2,
-                    startVelocity: randomInRange(70, 100)
+                // Three evenly spaced origins at the bottom
+                [0.2, 0.5, 0.8].forEach(xOrigin => {
+                    confetti({
+                        ...defaults,
+                        particleCount,
+                        origin: { x: xOrigin, y: 1.1 },
+                        angle: randomInRange(80, 100), // Very straight upward burst
+                        startVelocity: randomInRange(75, 105)
+                    });
                 });
-            }, 250);
+            }, 150);
 
             return () => clearInterval(interval);
         }
     }, [trigger]);
 
-    return null; // canvas-confetti creates its own global canvas
+    return null;
 };
 
 export default Confetti;
