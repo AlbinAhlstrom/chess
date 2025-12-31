@@ -280,7 +280,7 @@ function AtomicTutorialBoard() {
             setSelected(null);
             setLegalMoves([]);
 
-            // Phase 1: Tilt in place (400ms)
+            // Phase 1: Tilt in place (250ms - snappier)
             setTimeout(() => {
                 setIsPreparing(false);
                 setIsFlying(true);
@@ -319,7 +319,7 @@ function AtomicTutorialBoard() {
                         setMessage("Notice: The Knight, King, and other pieces exploded. The side Pawns survived!");
                     }, 800);
                 }, 400);
-            }, 400);
+            }, 250);
          } else {
              setMessage("Move to capture the middle Black Pawn to see the explosion!");
              setPieces(prev => prev.map(p => p.id === 'wk' ? { ...p, file: targetFile, rank: targetRank } : p));
@@ -486,9 +486,11 @@ function AntichessTutorialBoard() {
     const [isShaking, setIsShaking] = useState(false);
     const boardRef = useRef(null);
     const canvasRef = useRef(null);
+    const shatterSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/capture.mp3"));
 
     useEffect(() => {
         if (!shatter || !canvasRef.current || !boardRef.current) return;
+        shatterSound.current.play().catch(() => {});
 
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
@@ -666,6 +668,8 @@ function CrazyhouseTutorialBoard() {
     const [selectedReserve, setSelectedReserve] = useState(null); // index in reserve
     const [warpPieceId, setWarpPieceId] = useState(null); // ID of piece to animate drop
     const boardRef = useRef(null);
+    const captureSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/capture.mp3"));
+    const dropSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/premove.mp3"));
 
     const getSquareFromCoords = (clientX, clientY) => {
         if (!boardRef.current) return null;
@@ -696,6 +700,7 @@ function CrazyhouseTutorialBoard() {
                 setSelectedReserve(null);
                 setWarpPieceId(dropId);
                 setCompleted(true);
+                dropSound.current.play().catch(() => {});
                 setMessage("Excellent! You dropped a piece from your reserve onto the board. This is the heart of Crazyhouse!");
                 
                 // Clear warp effect after animation
@@ -721,6 +726,7 @@ function CrazyhouseTutorialBoard() {
             setReserve(['B']);
             setSelected(null);
             setLegalMoves([]);
+            captureSound.current.play().catch(() => {});
             setMessage("Bishop captured! It's now in your reserve. Click it in the tray, then click an empty square to drop it!");
         } else {
             setSelected(null);
@@ -745,6 +751,7 @@ function CrazyhouseTutorialBoard() {
             setReserve(['B']);
             setSelected(null);
             setLegalMoves([]);
+            captureSound.current.play().catch(() => {});
             setMessage("Bishop captured! It's now in your reserve. Click it in the tray, then click an empty square to drop it!");
         }
     };
