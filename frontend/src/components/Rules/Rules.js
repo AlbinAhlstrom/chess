@@ -1844,6 +1844,7 @@ function Chess960TutorialBoard() {
     ]);
     const [message, setMessage] = useState("Chess960: The starting positions of pieces are randomized!");
     const [isShuffling, setIsShuffling] = useState(false);
+    const [completed, setCompleted] = useState(false);
     const shuffleSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/castle.mp3"));
     const lockSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-check.mp3"));
     
@@ -1865,6 +1866,7 @@ function Chess960TutorialBoard() {
             if (count > 8) {
                 clearInterval(interval);
                 setIsShuffling(false);
+                setCompleted(true);
                 lockSound.current.play().catch(() => {});
                 setMessage("POSITION LOCKED! In a full game, there are 960 possible starting positions.");
             }
@@ -1886,6 +1888,7 @@ function Chess960TutorialBoard() {
                         className={isShuffling ? 'quantum-glitch' : ''}
                     />
                 ))}
+                <WinnerSound completed={completed} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
