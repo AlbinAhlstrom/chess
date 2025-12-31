@@ -110,6 +110,7 @@ function AtomicTutorialBoard() {
     const [selected, setSelected] = useState(null); // { file, rank }
     const [legalMoves, setLegalMoves] = useState([]);
     const [isFlying, setIsFlying] = useState(false);
+    const [isShaking, setIsShaking] = useState(false);
     const boardRef = useRef(null);
 
     const getSquareFromCoords = (clientX, clientY) => {
@@ -173,6 +174,7 @@ function AtomicTutorialBoard() {
             // 2. Wait for flight animation to finish (0.5s)
             setTimeout(() => {
                 setIsFlying(false);
+                setIsShaking(true);
                 setExplosion({ file: targetFile, rank: targetRank });
 
                 // Remove pieces immediately after impact
@@ -190,6 +192,9 @@ function AtomicTutorialBoard() {
                     return true;
                 }));
 
+                // Clear shake after a moment
+                setTimeout(() => setIsShaking(false), 300);
+
                 // Clear explosion after its animation (0.8s)
                 setTimeout(() => {
                     setExplosion(null);
@@ -206,7 +211,7 @@ function AtomicTutorialBoard() {
     };
 
     const handleBoardClick = (e) => {
-        if (completed || explosion || isFlying) return;
+        if (completed || explosion || isFlying || isShaking) return;
         const sq = getSquareFromCoords(e.clientX, e.clientY);
         if (!sq) return;
 
@@ -233,7 +238,7 @@ function AtomicTutorialBoard() {
     };
 
     const handlePieceDragStart = ({ file, rank, piece }) => {
-        if (completed || explosion || isFlying) return;
+        if (completed || explosion || isFlying || isShaking) return;
         // piece is "N" (White Knight type)
         if (piece !== 'N') return; 
 
@@ -242,7 +247,7 @@ function AtomicTutorialBoard() {
     };
 
     const handlePieceDrop = ({ clientX, clientY }) => {
-        if (completed || explosion || isFlying) return;
+        if (completed || explosion || isFlying || isShaking) return;
         const sq = getSquareFromCoords(clientX, clientY);
         
         if (sq && selected) {
@@ -268,13 +273,14 @@ function AtomicTutorialBoard() {
         setSelected(null);
         setLegalMoves([]);
         setIsFlying(false);
-        setMessage("Drag or click the White Knight to capture the middle Black Pawn!");
+        setIsShaking(false);
+        setMessage("Drag or click the middle Black Pawn!");
     };
 
     return (
         <div className="atomic-tutorial">
             <div 
-                className="tutorial-board" 
+                className={`tutorial-board ${isShaking ? 'shaking' : ''}`}
                 ref={boardRef}
                 onClick={handleBoardClick}
             >
