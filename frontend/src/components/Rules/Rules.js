@@ -1158,6 +1158,8 @@ function RacingKingsTutorialBoard() {
     const [legalMoves, setLegalMoves] = useState([]);
     const [turboTrail, setTurboTrail] = useState(null); // { file, rank }
     const boardRef = useRef(null);
+    const zoomSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/castle.mp3"));
+    const victorySound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/game-end.mp3"));
 
     const getSquareFromCoords = (clientX, clientY) => {
         if (!boardRef.current) return null;
@@ -1203,17 +1205,19 @@ function RacingKingsTutorialBoard() {
                 setTurboTrail(oldPos);
                 setSelected(null);
                 setLegalMoves([]);
+                zoomSound.current.play().catch(() => {});
                 
                 setTimeout(() => setTurboTrail(null), 500);
 
                 if (sq.rank === 0) {
                     setCompleted(true);
-                    setMessage("You reached the top rank! You win the race. Remember, checks were never allowed!");
+                    victorySound.current.play().catch(() => {});
+                    setMessage("FINISH LINE CROSSED! You win the race. Remember, checks are never allowed!");
                 } else {
-                    setMessage("Good progress! Keep climbing, but stay out of the Rook's line of fire.");
+                    setMessage("Great zoom! Keep climbing, but stay out of the Rook's line of fire.");
                 }
             } else if (sq.file === 2) {
-                setMessage("Illegal Move! In Racing Kings, you cannot move into check.");
+                setMessage("FORBIDDEN! In Racing Kings, you cannot move into check.");
                 setSelected(null);
                 setLegalMoves([]);
             } else {
@@ -1256,12 +1260,14 @@ function RacingKingsTutorialBoard() {
                 setTurboTrail(oldPos);
                 setSelected(null);
                 setLegalMoves([]);
+                zoomSound.current.play().catch(() => {});
                 
                 setTimeout(() => setTurboTrail(null), 500);
 
                 if (sq.rank === 0) {
                     setCompleted(true);
-                    setMessage("You reached the top rank! You win the race. Remember, checks were never allowed!");
+                    victorySound.current.play().catch(() => {});
+                    setMessage("FINISH LINE CROSSED! You win the race. Remember, checks are never allowed!");
                 }
             }
         }
@@ -1287,16 +1293,15 @@ function RacingKingsTutorialBoard() {
                     const isDanger = file === 2;
                     return (
                         <div key={`${file}-${rank}`} 
-                             className={`tutorial-square ${(rank + file) % 2 === 1 ? 'black-square' : 'white-square'} ${isTarget ? 'target-row' : ''} ${isDanger ? 'danger-line' : ''}`} 
+                             className={`tutorial-square ${(rank + file) % 2 === 1 ? 'black-square' : 'white-square'} ${isTarget ? 'finish-line' : ''} ${isDanger ? 'danger-line' : ''}`} 
                         />
                     );
                 }))}
                 {turboTrail && (
-                    <div className="turbo-effect" 
+                    <div className="speed-streak" 
                          style={{ 
                              left: `${turboTrail.file * 25}%`, 
                              top: `${turboTrail.rank * 25}%`,
-                             width: '25%', height: '25%' 
                          }} />
                 )}
                 {selected && <HighlightSquare file={selected.file} rank={selected.rank} color="rgba(255, 255, 0, 0.5)" />}

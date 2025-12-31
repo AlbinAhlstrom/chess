@@ -583,6 +583,32 @@
     animation: pillar-ascent 2s ease-out forwards;
 }
 
+/* Racing Kings Visceral Effects */
+.tutorial-square.finish-line {
+    background-image: 
+        repeating-conic-gradient(#fff 0% 25%, #000 0% 50%) !important;
+    background-size: 20px 20px;
+    background-position: center;
+    box-shadow: inset 0 0 20px rgba(0, 255, 0, 0.4);
+    opacity: 0.8;
+}
+
+@keyframes streak-fade {
+    0% { transform: scaleX(1); opacity: 0.8; }
+    100% { transform: scaleX(2); opacity: 0; }
+}
+
+.speed-streak {
+    position: absolute;
+    width: 25%;
+    height: 25%;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.6), transparent);
+    filter: blur(4px);
+    pointer-events: none;
+    z-index: 5;
+    animation: streak-fade 0.5s ease-out forwards;
+}
+
 /* Combined Atomic Explosion Styles */
 .mushroom-cloud-container {
     position: absolute;
