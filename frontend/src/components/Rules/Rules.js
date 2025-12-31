@@ -94,6 +94,19 @@ const VARIANT_RULES = {
     }
 };
 
+function WinnerSound({ completed }) {
+    const soundRef = useRef(new Audio("/sounds/winner-game-sound.mp3"));
+    
+    useEffect(() => {
+        if (completed) {
+            soundRef.current.currentTime = 0;
+            soundRef.current.play().catch(() => {});
+        }
+    }, [completed]);
+
+    return null;
+}
+
 function FlyingKnight({ file, rank, isPreparing, isFlying }) {
     const style = {
         left: `calc(${file} * 25%)`,
@@ -577,6 +590,7 @@ function AtomicTutorialBoard() {
                         <canvas ref={canvasRef} className="explosion-canvas" />
                     </>
                 )}
+                <WinnerSound completed={completed} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
@@ -783,6 +797,8 @@ function AntichessTutorialBoard() {
                         />
                     );
                 })}
+                {shatter && <canvas ref={canvasRef} className="explosion-canvas" />}
+                <WinnerSound completed={completed} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
@@ -948,6 +964,7 @@ function CrazyhouseTutorialBoard() {
                         }}
                     />
                 )}
+                <WinnerSound completed={completed} />
             </div>
             
             <div className="reserve-tray">
@@ -1138,6 +1155,7 @@ function KOTHTutorialBoard() {
                         <div className="victory-pillar"></div>
                     </div>
                 )}
+                <WinnerSound completed={completed} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
@@ -1310,6 +1328,7 @@ function RacingKingsTutorialBoard() {
                     <Piece key={p.id} piece={p.type} file={p.file} rank={p.rank} 
                            onDragStartCallback={handlePieceDragStart} onDropCallback={handlePieceDrop} />
                 ))}
+                <WinnerSound completed={completed} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
@@ -1432,6 +1451,7 @@ function HordeTutorialBoard() {
                         className={p.color === 'w' ? (completed ? 'horde-pawn-victory' : 'horde-pawn') : ''}
                     />
                 ))}
+                <WinnerSound completed={completed} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
@@ -1640,6 +1660,7 @@ function ThreeCheckTutorialBoard() {
                         <div className="strike-line"></div>
                     </div>
                 )}
+                <WinnerSound completed={completed} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
@@ -1804,6 +1825,7 @@ function StandardTutorialBoard() {
                         className={completed ? (p.color === 'w' ? 'victory-gold' : 'royal-collapse') : (selected && selected.file === p.file && selected.rank === p.rank ? 'piece-lift' : '')}
                     />
                 ))}
+                <WinnerSound completed={completed} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
