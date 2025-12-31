@@ -784,6 +784,7 @@ function KOTHTutorialBoard() {
     const [completed, setCompleted] = useState(false);
     const [selected, setSelected] = useState(null);
     const [legalMoves, setLegalMoves] = useState([]);
+    const [victoryAura, setVictoryAura] = useState(false);
     const boardRef = useRef(null);
 
     const centerSquares = [
@@ -818,7 +819,7 @@ function KOTHTutorialBoard() {
                 for (let dr = -1; dr <= 1; dr++) {
                     if (df === 0 && dr === 0) continue;
                     const nf = sq.file + df, nr = sq.rank + dr;
-                    if (nf >= 0 && nf < 4 && nr >= 0 && nr < 4) moves.push({ file: nf, rank: nr });
+                    if (nf >= 0 && nf < 4 && nr >= 0 && nr < 4) moves.push({ file: nf, nr });
                 }
             }
             setLegalMoves(moves);
@@ -834,6 +835,7 @@ function KOTHTutorialBoard() {
                 setLegalMoves([]);
                 if (isCenter) {
                     setCompleted(true);
+                    setVictoryAura(true);
                     setMessage("You reached the center! In King of the Hill, this is an instant victory.");
                 } else {
                     setMessage("Good move! Now keep heading for the center squares.");
@@ -872,6 +874,7 @@ function KOTHTutorialBoard() {
                 setLegalMoves([]);
                 if (isCenter) {
                     setCompleted(true);
+                    setVictoryAura(true);
                     setMessage("You reached the center! In King of the Hill, this is an instant victory.");
                 } else {
                     setMessage("Good move! Now keep heading for the center squares.");
@@ -886,6 +889,7 @@ function KOTHTutorialBoard() {
             { id: 'bk', type: 'k', color: 'b', file: 3, rank: 0 },
         ]);
         setCompleted(false);
+        setVictoryAura(false);
         setSelected(null);
         setLegalMoves([]);
         setMessage("King of the Hill: Race your King to the center squares!");
@@ -904,7 +908,8 @@ function KOTHTutorialBoard() {
                 {legalMoves.map((m, i) => <LegalMoveDot key={i} file={m.file} rank={m.rank} />)}
                 {pieces.map(p => (
                     <Piece key={p.id} piece={p.type} file={p.file} rank={p.rank} 
-                           onDragStartCallback={handlePieceDragStart} onDropCallback={handlePieceDrop} />
+                           onDragStartCallback={handlePieceDragStart} onDropCallback={handlePieceDrop}
+                           className={p.id === 'wk' && victoryAura ? 'koth-aura' : ''} />
                 ))}
             </div>
             <div className="tutorial-controls">
