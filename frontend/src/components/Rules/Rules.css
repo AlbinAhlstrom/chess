@@ -541,3 +541,34 @@
     animation: koth-aura-pulse 1.5s infinite ease-in-out;
     z-index: 1000 !important;
 }
+
+/* Targeting Crosshair (Atomic) */
+.target-crosshair {
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.crosshair-ring {
+    width: 80%;
+    height: 80%;
+    border: 2px solid #f00;
+    border-radius: 50%;
+    animation: crosshair-pulse 0.4s infinite alternate;
+    box-shadow: 0 0 10px #f00;
+}
+
+.crosshair-line {
+    position: absolute;
+    background: #f00;
+    box-shadow: 0 0 5px #f00;
+}
+
+.crosshair-line.h { width: 100%; height: 1px; }
+.crosshair-line.v { width: 1px; height: 100%; }
+
+@keyframes crosshair-pulse {
+    from { transform: scale(0.8); opacity: 0.6; }
+    to { transform: scale(1.1); opacity: 1; }
+}

@@ -458,6 +458,28 @@ function AtomicTutorialBoard() {
                     <LegalMoveDot key={i} file={m.file} rank={m.rank} />
                 ))}
 
+                {/* Targeting Crosshair */}
+                {(isPreparing || isFlying) && animatingKnight && (
+                    <div 
+                        className="target-crosshair"
+                        style={{
+                            left: '50%', // Centered on target (2, 1) - wait, target is fixed in this tutorial
+                            top: '25%', 
+                            // Using fixed target coords for this specific tutorial scenario
+                            left: '50%',
+                            top: '25%',
+                            width: '25%',
+                            height: '25%',
+                            position: 'absolute',
+                            zIndex: 5
+                        }}
+                    >
+                        <div className="crosshair-ring"></div>
+                        <div className="crosshair-line h"></div>
+                        <div className="crosshair-line v"></div>
+                    </div>
+                )}
+
                 {/* Static Pieces */}
                 {pieces.map(p => (
                     <Piece
