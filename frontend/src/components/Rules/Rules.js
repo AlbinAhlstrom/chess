@@ -1854,6 +1854,11 @@ function StandardTutorialBoard() {
                         className={completed ? (p.color === 'w' ? 'victory-gold' : 'royal-collapse') : (selected && selected.file === p.file && selected.rank === p.rank ? 'piece-lift' : '')}
                     />
                 ))}
+                
+                {completed && (
+                    <div className="standard-shockwave" style={{ left: '0%', top: '0%' }}></div>
+                )}
+                
                 <WinnerSound completed={completed} />
             </div>
             <div className="tutorial-controls">

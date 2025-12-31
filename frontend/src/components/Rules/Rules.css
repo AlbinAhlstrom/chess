@@ -737,14 +737,46 @@
 }
 
 /* Standard Chess Visceral Effects */
-@keyframes royal-collapse-anim {
-    0% { transform: scale(1) rotate(0deg); filter: grayscale(0) brightness(1); }
-    100% { transform: translateY(5px) rotate(80deg); filter: grayscale(1) brightness(0.6); }
+@keyframes royal-slam-anim {
+    0% { transform: scale(1) translateZ(0) rotate(0deg); filter: brightness(1); }
+    30% { transform: scale(1.1) translateY(-20px) translateZ(50px) rotate(-10deg); filter: brightness(1.5); }
+    60% { transform: scale(1) translateY(0) translateZ(0) rotate(75deg); filter: brightness(0.5); }
+    70% { transform: scale(1) translateY(-2px) rotate(70deg); }
+    80% { transform: scale(1) translateY(0) rotate(80deg); }
+    100% { transform: translateY(2px) rotate(85deg); filter: grayscale(1) brightness(0.4) drop-shadow(0 5px 15px rgba(0,0,0,0.8)); }
 }
 
 .piece.royal-collapse {
-    animation: royal-collapse-anim 0.8s ease-in-out forwards;
-    z-index: 10 !important;
+    animation: royal-slam-anim 1.2s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
+    z-index: 100 !important;
+}
+
+@keyframes royal-shockwave {
+    0% { transform: scale(0.5); opacity: 1; border-width: 4px; }
+    100% { transform: scale(3); opacity: 0; border-width: 1px; }
+}
+
+.standard-shockwave {
+    position: absolute;
+    width: 25%;
+    height: 25%;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 5;
+    animation: royal-shockwave 0.6s ease-out forwards;
+}
+
+@keyframes board-impact-shake {
+    0%, 100% { transform: translate(0,0); }
+    10%, 30%, 50% { transform: translate(-2px, 2px); }
+    20%, 40%, 60% { transform: translate(2px, -2px); }
+}
+
+.tutorial-board.royal-victory {
+    animation: 
+        board-impact-shake 0.4s 0.3s ease-out both,
+        board-victory-glow 3s infinite;
 }
 
 @keyframes victory-radiance {
