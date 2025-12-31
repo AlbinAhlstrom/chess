@@ -172,13 +172,12 @@
 
 @keyframes board-shake {
     0%, 100% { transform: translate(0, 0); }
-    25% { transform: translate(-4px, 4px); }
-    50% { transform: translate(4px, -4px); }
-    75% { transform: translate(-4px, -4px); }
+    10%, 30%, 50%, 70%, 90% { transform: translate(-6px, 6px); }
+    20%, 40%, 60%, 80% { transform: translate(6px, -6px); }
 }
 
 .tutorial-board.shaking {
-    animation: board-shake 0.3s ease-in-out;
+    animation: board-shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
 }
 
 @keyframes ballistic-flight {
@@ -186,28 +185,48 @@
         transform: scale(1) rotate(0deg);
         filter: none;
     }
-    25% {
-        filter: drop-shadow(-5px 5px 5px rgba(255, 255, 255, 0.4));
+    30% {
+        transform: scale(2.2) rotate(15deg);
+        filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8));
     }
-    50% { 
-        transform: scale(1.8) rotate(20deg);
-        filter: 
-            drop-shadow(-10px 10px 8px rgba(255, 255, 255, 0.5))
-            drop-shadow(-20px 20px 15px rgba(255, 255, 255, 0.3));
-    }
-    75% {
-        filter: drop-shadow(-8px 8px 6px rgba(255, 255, 255, 0.4));
+    70% {
+        transform: scale(2.0) rotate(35deg);
+        filter: drop-shadow(-15px 15px 15px rgba(255, 165, 0, 0.6));
     }
     100% { 
         transform: scale(1) rotate(45deg);
-        filter: none;
+        filter: drop-shadow(0 0 20px rgba(255, 69, 0, 1));
     }
 }
 
 .piece.flying-knight {
-    transition: left 0.5s linear, top 0.5s linear !important;
-    animation: ballistic-flight 0.5s ease-in-out forwards;
+    /* Use different easings for X and Y to create a curve/arc */
+    transition: 
+        left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    animation: ballistic-flight 0.4s ease-in-out forwards;
     z-index: 1000 !important;
+}
+
+/* Rocket Exhaust Trail */
+.piece.flying-knight::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 120%;
+    height: 120%;
+    background: radial-gradient(circle, rgba(255, 165, 0, 0.9) 0%, rgba(255, 69, 0, 0.6) 40%, transparent 70%);
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    filter: blur(8px);
+    z-index: -1;
+    animation: rocket-pulse 0.1s infinite alternate;
+}
+
+@keyframes rocket-pulse {
+    from { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+    to { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
 }
 
 @media (max-width: 400px) {

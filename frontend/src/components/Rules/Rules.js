@@ -171,7 +171,7 @@ function AtomicTutorialBoard() {
             // 1. Move the knight in state to trigger CSS transition
             setPieces(prev => prev.map(p => p.id === 'wk' ? { ...p, file: targetFile, rank: targetRank } : p));
 
-            // 2. Wait for flight animation to finish (0.5s)
+            // 2. Wait for flight animation to finish (0.4s)
             setTimeout(() => {
                 setIsFlying(false);
                 setIsShaking(true);
