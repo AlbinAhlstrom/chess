@@ -492,13 +492,14 @@
 
 /* Target Square Warning Fade */
 @keyframes target-fade-anim {
-    from { background-color: rgba(255, 200, 0, 0); }
-    to { background-color: rgba(255, 200, 0, 0.5); }
+    from { background-image: linear-gradient(rgba(255, 200, 0, 0), rgba(255, 200, 0, 0)); }
+    to { background-image: linear-gradient(rgba(255, 200, 0, 0.5), rgba(255, 200, 0, 0.5)); }
 }
 
 .tutorial-square.target-flash {
     animation: target-fade-anim 0.65s ease-in forwards;
     z-index: 2;
+    background-blend-mode: overlay;
 }
 
 /* Combined Atomic Explosion Styles */
