@@ -1660,6 +1660,8 @@ function StandardTutorialBoard() {
     const [selected, setSelected] = useState(null);
     const [legalMoves, setLegalMoves] = useState([]);
     const boardRef = useRef(null);
+    const moveSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-check.mp3"));
+    const victorySound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/game-end.mp3"));
 
     const getSquareFromCoords = (clientX, clientY) => {
         if (!boardRef.current) return null;
@@ -1709,18 +1711,21 @@ function StandardTutorialBoard() {
                 ));
                 setSelected(null);
                 setLegalMoves([]);
+                
                 if (sq.file === 2 && sq.rank === 0) {
                     setCompleted(true);
-                    setMessage("CHECKMATE! The Rook cuts off the escape. You win!");
+                    victorySound.current.play().catch(() => {});
+                    setMessage("CHECKMATE! The Rook delivers the final blow. Victory!");
                 } else {
+                    moveSound.current.play().catch(() => {});
                     setMessage("Good move, keep pushing the King into the corner!");
                 }
+            } else if (clickedPiece && clickedPiece.color === 'b') {
+                return;
             } else {
                 setSelected(null);
                 setLegalMoves([]);
             }
-        } else if (clickedPiece && clickedPiece.color === 'b') {
-            return;
         } else {
             setSelected(null);
             setLegalMoves([]);
@@ -1761,7 +1766,8 @@ function StandardTutorialBoard() {
                 setLegalMoves([]);
                 if (sq.file === 2 && sq.rank === 0) {
                     setCompleted(true);
-                    setMessage("CHECKMATE! The Rook cuts off the escape. You win!");
+                    victorySound.current.play().catch(() => {});
+                    setMessage("CHECKMATE! The Rook delivers the final blow. Victory!");
                 }
             }
         }
@@ -1781,15 +1787,22 @@ function StandardTutorialBoard() {
 
     return (
         <div className="standard-tutorial">
-            <div className="tutorial-board" ref={boardRef} onClick={handleBoardClick}>
+            <div className={`tutorial-board ${completed ? 'royal-victory' : ''}`} ref={boardRef} onClick={handleBoardClick}>
                 {[0, 1, 2, 3].map(rank => [0, 1, 2, 3].map(file => (
                     <div key={`${file}-${rank}`} className={`tutorial-square ${(rank + file) % 2 === 1 ? 'black-square' : 'white-square'}`} />
                 )))}
                 {selected && <HighlightSquare file={selected.file} rank={selected.rank} color="rgba(255, 255, 0, 0.5)" />}
                 {legalMoves.map((m, i) => <LegalMoveDot key={i} file={m.file} rank={m.rank} />)}
                 {pieces.map(p => (
-                    <Piece key={p.id} piece={p.type} file={p.file} rank={p.rank} 
-                           onDragStartCallback={handlePieceDragStart} onDropCallback={handlePieceDrop} />
+                    <Piece 
+                        key={p.id} 
+                        piece={p.type} 
+                        file={p.file} 
+                        rank={p.rank} 
+                        onDragStartCallback={handlePieceDragStart} 
+                        onDropCallback={handlePieceDrop}
+                        className={completed ? (p.color === 'w' ? 'victory-gold' : 'royal-collapse') : (selected && selected.file === p.file && selected.rank === p.rank ? 'piece-lift' : '')}
+                    />
                 ))}
             </div>
             <div className="tutorial-controls">

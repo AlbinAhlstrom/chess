@@ -736,6 +736,45 @@
     filter: sepia(0.5) hue-rotate(180deg);
 }
 
+/* Standard Chess Visceral Effects */
+@keyframes royal-shatter {
+    0% { transform: scale(1) rotate(0deg); filter: brightness(1) grayscale(0); }
+    50% { transform: scale(1.2) rotate(10deg); filter: brightness(2) grayscale(0.5); }
+    100% { transform: scale(0) rotate(180deg); filter: brightness(0) grayscale(1); opacity: 0; }
+}
+
+.piece.royal-collapse {
+    animation: royal-shatter 1s ease-in-out forwards;
+}
+
+@keyframes victory-radiance {
+    0% { filter: drop-shadow(0 0 5px #ffd700) brightness(1); }
+    50% { filter: drop-shadow(0 0 20px #ffd700) brightness(1.5); }
+    100% { filter: drop-shadow(0 0 5px #ffd700) brightness(1); }
+}
+
+.piece.victory-gold {
+    animation: victory-radiance 2s infinite ease-in-out;
+    z-index: 1000 !important;
+}
+
+.piece.piece-lift {
+    transform: translateY(-10px) scale(1.1);
+    filter: drop-shadow(0 15px 10px rgba(0,0,0,0.5));
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 100 !important;
+}
+
+@keyframes board-victory-glow {
+    0% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.2); }
+    50% { box-shadow: 0 0 60px rgba(255, 215, 0, 0.5); }
+    100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.2); }
+}
+
+.tutorial-board.royal-victory {
+    animation: board-victory-glow 3s infinite;
+}
+
 /* Combined Atomic Explosion Styles */
 .mushroom-cloud-container {
     position: absolute;
