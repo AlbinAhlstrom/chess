@@ -630,3 +630,31 @@
     10% { opacity: 1; transform: scale(1.2); }
     100% { opacity: 0.4; transform: scale(1); }
 }
+
+/* Launch Puff */
+.launch-puff {
+    position: absolute;
+    width: 25%;
+    height: 25%;
+    background: radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(100,100,100,0.4) 40%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(8px);
+    pointer-events: none;
+    z-index: 5;
+    animation: puff-expand 1s ease-out forwards;
+}
+
+@keyframes puff-expand {
+    0% { transform: scale(0.5); opacity: 1; }
+    100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* Crosshair Blink */
+@keyframes text-blink {
+    from { opacity: 1; }
+    to { opacity: 0.3; }
+}
+
+.crosshair-text {
+    animation: text-blink 0.2s infinite alternate;
+}

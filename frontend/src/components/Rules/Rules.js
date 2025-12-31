@@ -141,6 +141,7 @@ function AtomicTutorialBoard() {
     const [isShaking, setIsShaking] = useState(false);
     const [scorchMark, setScorchMark] = useState(null); // { file, rank }
     const [animatingKnight, setAnimatingKnight] = useState(null); // { file, rank }
+    const [launchPuff, setLaunchPuff] = useState(null); // { file, rank }
     const boardRef = useRef(null);
     const canvasRef = useRef(null);
     const explosionSound = useRef(new Audio("/sounds/atomic_explosion.mp3"));
@@ -322,11 +323,15 @@ function AtomicTutorialBoard() {
             setTimeout(() => {
                 setIsPreparing(false);
                 setIsFlying(true);
+                setLaunchPuff({ file: knight.file, rank: knight.rank });
                 setAnimatingKnight({ file: targetFile, rank: targetRank }); // Set destination for CSS transition
                 launchSound.current.play().catch(() => {});
                 lockSound.current.play().catch(() => {});
                 setMessage("Incoming atom bomb!");
                 
+                // Clear puff after 1s
+                setTimeout(() => setLaunchPuff(null), 1000);
+
                 // Wait for flight animation to finish (0.4s)
                 setTimeout(() => {
                     setIsFlying(false);
@@ -433,6 +438,7 @@ function AtomicTutorialBoard() {
         setIsShaking(false);
         setAnimatingKnight(null);
         setScorchMark(null);
+        setLaunchPuff(null);
         setMessage("Drag or click the White Knight to capture the middle Black Pawn!");
     };
 
@@ -481,6 +487,17 @@ function AtomicTutorialBoard() {
                     />
                 )}
 
+                {/* Launch Puff */}
+                {launchPuff && (
+                    <div 
+                        className="launch-puff"
+                        style={{
+                            left: `${launchPuff.file * 25}%`,
+                            top: `${launchPuff.rank * 25}%`,
+                        }}
+                    />
+                )}
+
                 {/* Targeting Crosshair */}
                 {(isPreparing || isFlying) && animatingKnight && (
                     <div 
@@ -498,7 +515,7 @@ function AtomicTutorialBoard() {
                         <div className="crosshair-ring ring-2"></div>
                         <div className="crosshair-line h"></div>
                         <div className="crosshair-line v"></div>
-                        <div className="crosshair-text">LOCK</div>
+                        <div className="crosshair-text">TARGET LOCKED</div>
                     </div>
                 )}
 
