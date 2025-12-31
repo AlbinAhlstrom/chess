@@ -112,6 +112,86 @@ function AtomicTutorialBoard() {
     const [isFlying, setIsFlying] = useState(false);
     const [isShaking, setIsShaking] = useState(false);
     const boardRef = useRef(null);
+    const canvasRef = useRef(null);
+
+    // Particle System based on requested snippet
+    useEffect(() => {
+        if (!explosion || !canvasRef.current || !boardRef.current) return;
+
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        const rect = boardRef.current.getBoundingClientRect();
+        
+        // Match canvas resolution to board size
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+
+        const squareSize = rect.width / 4;
+        const centerX = (explosion.file + 0.5) * squareSize;
+        const centerY = (explosion.rank + 0.5) * squareSize;
+
+        const config = {
+            particleNumber: 300,
+            maxParticleSize: 6,
+            maxSpeed: 25,
+            colorVariation: 50
+        };
+
+        const colorPalette = {
+            matter: [
+                {r:36,g:18,b:42},   // darkPRPL
+                {r:78,g:36,b:42},   // rockDust
+                {r:252,g:178,b:96}, // solarFlare
+                {r:253,g:238,b:152} // totesASun
+            ]
+        };
+
+        const colorVariation = (color) => {
+            const r = Math.round(((Math.random() * config.colorVariation) - (config.colorVariation/2)) + color.r);
+            const g = Math.round(((Math.random() * config.colorVariation) - (config.colorVariation/2)) + color.g);
+            const b = Math.round(((Math.random() * config.colorVariation) - (config.colorVariation/2)) + color.b);
+            const a = Math.random() + 0.5;
+            return `rgba(${r},${g},${b},${a})`;
+        };
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.r = Math.ceil(Math.random() * config.maxParticleSize);
+                this.c = colorVariation(colorPalette.matter[Math.floor(Math.random() * colorPalette.matter.length)]);
+                this.s = Math.pow(Math.ceil(Math.random() * config.maxSpeed), 0.7);
+                this.d = Math.random() * Math.PI * 2; // Direction in radians
+            }
+            update() {
+                this.x += Math.cos(this.d) * this.s;
+                this.y += Math.sin(this.d) * this.s;
+                this.s *= 0.96; // Add some drag
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.fillStyle = this.c;
+                ctx.arc(this.x, this.y, this.r, 0, 2 * Math.PI, false);
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+
+        const particles = Array.from({ length: config.particleNumber }, () => new Particle(centerX, centerY));
+
+        let animationFrame;
+        const animate = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            animationFrame = requestAnimationFrame(animate);
+        };
+
+        animate();
+        return () => cancelAnimationFrame(animationFrame);
+    }, [explosion]);
 
     const getSquareFromCoords = (clientX, clientY) => {
         if (!boardRef.current) return null;
@@ -324,21 +404,9 @@ function AtomicTutorialBoard() {
                     />
                 ))}
 
-                {/* Explosion */}
+                {/* Explosion Canvas */}
                 {explosion && (
-                    <div 
-                        className="atomic-explosion"
-                        style={{
-                            left: `${explosion.file * 25}%`,
-                            top: `${explosion.rank * 25}%`,
-                        }}
-                    >
-                        <div className="mushroom-cloud cloud-1"></div>
-                        <div className="mushroom-cloud cloud-2"></div>
-                        <div className="mushroom-cloud cloud-3"></div>
-                        <div className="explosion-shockwave"></div>
-                        <div className="explosion-flash"></div>
-                    </div>
+                    <canvas ref={canvasRef} className="explosion-canvas" />
                 )}
             </div>
             <div className="tutorial-controls">
