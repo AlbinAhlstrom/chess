@@ -426,7 +426,77 @@ function AntichessTutorialBoard() {
     const [completed, setCompleted] = useState(false);
     const [selected, setSelected] = useState(null);
     const [legalMoves, setLegalMoves] = useState([]);
+    const [shatter, setShatter] = useState(null); // { file, rank }
     const boardRef = useRef(null);
+    const canvasRef = useRef(null);
+
+    useEffect(() => {
+        if (!shatter || !canvasRef.current || !boardRef.current) return;
+
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        const rect = boardRef.current.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+
+        const squareSize = rect.width / 4;
+        const centerX = (shatter.file + 0.5) * squareSize;
+        const centerY = (shatter.rank + 0.5) * squareSize;
+
+        class Shard {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 8 + 4;
+                this.s = Math.random() * 5 + 2;
+                this.d = Math.random() * Math.PI * 2;
+                this.rot = Math.random() * Math.PI * 2;
+                this.rotS = (Math.random() - 0.5) * 0.2;
+                this.color = Math.random() > 0.5 ? '#fff' : '#ccc';
+                this.opacity = 1;
+            }
+            update() {
+                this.x += Math.cos(this.d) * this.s;
+                this.y += Math.sin(this.d) * this.s;
+                this.s *= 0.95;
+                this.rot += this.rotS;
+                this.opacity -= 0.02;
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rot);
+                ctx.globalAlpha = Math.max(0, this.opacity);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.moveTo(0, -this.size / 2);
+                ctx.lineTo(this.size / 2, this.size / 2);
+                ctx.lineTo(-this.size / 2, this.size / 2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        const shards = Array.from({ length: 20 }, () => new Shard(centerX, centerY));
+
+        let animationFrame;
+        const animate = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            shards.forEach(s => {
+                s.update();
+                s.draw();
+            });
+            if (shards.some(s => s.opacity > 0)) {
+                animationFrame = requestAnimationFrame(animate);
+            } else {
+                setShatter(null);
+            }
+        };
+
+        animate();
+        return () => cancelAnimationFrame(animationFrame);
+    }, [shatter]);
 
     const getSquareFromCoords = (clientX, clientY) => {
         if (!boardRef.current) return null;
@@ -441,7 +511,7 @@ function AntichessTutorialBoard() {
     };
 
     const handleBoardClick = (e) => {
-        if (completed) return;
+        if (completed || shatter) return;
         const sq = getSquareFromCoords(e.clientX, e.clientY);
         if (!sq) return;
 
@@ -449,21 +519,14 @@ function AntichessTutorialBoard() {
 
         if (clickedPiece && clickedPiece.color === 'w') {
             setSelected(sq);
-            // In this setup, only capture is legal
             setLegalMoves([{ file: 2, rank: 1 }]); 
             setMessage("You MUST capture the Knight! Moving forward is illegal here.");
             return;
         }
 
         if (selected && sq.file === 2 && sq.rank === 1) {
-            // Execute capture
-            setPieces(prev => prev.filter(p => p.color === 'w').map(p => 
-                p.id === 'wp' ? { ...p, file: 2, rank: 1 } : p
-            ).filter(p => p.id === 'wp')); // Remove black knight
-            
-            // In Antichess, pieces are just removed. But we'll keep the capturing piece for the visual.
-            // Wait, actually in the tutorial let's just show the capture.
             setPieces([{ id: 'wp', type: 'P', color: 'w', file: 2, rank: 1 }]);
+            setShatter({ file: 2, rank: 1 });
             setSelected(null);
             setLegalMoves([]);
             setCompleted(true);
@@ -475,17 +538,18 @@ function AntichessTutorialBoard() {
     };
 
     const handlePieceDragStart = ({ file, rank, piece }) => {
-        if (completed) return;
+        if (completed || shatter) return;
         if (piece !== 'P') return;
         setSelected({ file, rank });
         setLegalMoves([{ file: 2, rank: 1 }]);
     };
 
     const handlePieceDrop = ({ clientX, clientY }) => {
-        if (completed) return;
+        if (completed || shatter) return;
         const sq = getSquareFromCoords(clientX, clientY);
         if (sq && sq.file === 2 && sq.rank === 1) {
             setPieces([{ id: 'wp', type: 'P', color: 'w', file: 2, rank: 1 }]);
+            setShatter({ file: 2, rank: 1 });
             setSelected(null);
             setLegalMoves([]);
             setCompleted(true);
@@ -501,6 +565,7 @@ function AntichessTutorialBoard() {
         setCompleted(false);
         setSelected(null);
         setLegalMoves([]);
+        setShatter(null);
         setMessage("In Antichess, captures are mandatory! Try to move or capture.");
     };
 
@@ -516,6 +581,7 @@ function AntichessTutorialBoard() {
                     <Piece key={p.id} piece={p.type} file={p.file} rank={p.rank} 
                            onDragStartCallback={handlePieceDragStart} onDropCallback={handlePieceDrop} />
                 ))}
+                {shatter && <canvas ref={canvasRef} className="explosion-canvas" />}
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
@@ -536,6 +602,7 @@ function CrazyhouseTutorialBoard() {
     const [selected, setSelected] = useState(null);
     const [legalMoves, setLegalMoves] = useState([]);
     const [selectedReserve, setSelectedReserve] = useState(null); // index in reserve
+    const [warpPieceId, setWarpPieceId] = useState(null); // ID of piece to animate drop
     const boardRef = useRef(null);
 
     const getSquareFromCoords = (clientX, clientY) => {
@@ -560,12 +627,17 @@ function CrazyhouseTutorialBoard() {
             const isOccupied = pieces.some(p => p.file === sq.file && p.rank === sq.rank);
             if (!isOccupied) {
                 const type = reserve[selectedReserve];
-                const newPiece = { id: `drop-${Date.now()}`, type, color: 'w', file: sq.file, rank: sq.rank };
+                const dropId = `drop-${Date.now()}`;
+                const newPiece = { id: dropId, type, color: 'w', file: sq.file, rank: sq.rank };
                 setPieces(prev => [...prev, newPiece]);
                 setReserve(prev => prev.filter((_, i) => i !== selectedReserve));
                 setSelectedReserve(null);
+                setWarpPieceId(dropId);
                 setCompleted(true);
                 setMessage("Excellent! You dropped a piece from your reserve onto the board. This is the heart of Crazyhouse!");
+                
+                // Clear warp effect after animation
+                setTimeout(() => setWarpPieceId(null), 600);
             }
             return;
         }
@@ -638,7 +710,8 @@ function CrazyhouseTutorialBoard() {
                 {legalMoves.map((m, i) => <LegalMoveDot key={i} file={m.file} rank={m.rank} />)}
                 {pieces.map(p => (
                     <Piece key={p.id} piece={p.type} file={p.file} rank={p.rank} 
-                           onDragStartCallback={handlePieceDragStart} onDropCallback={handlePieceDrop} />
+                           onDragStartCallback={handlePieceDragStart} onDropCallback={handlePieceDrop}
+                           className={p.id === warpPieceId ? 'drop-warp' : ''} />
                 ))}
             </div>
             
@@ -816,6 +889,7 @@ function RacingKingsTutorialBoard() {
     const [completed, setCompleted] = useState(false);
     const [selected, setSelected] = useState(null);
     const [legalMoves, setLegalMoves] = useState([]);
+    const [turboTrail, setTurboTrail] = useState(null); // { file, rank }
     const boardRef = useRef(null);
 
     const getSquareFromCoords = (clientX, clientY) => {
@@ -857,9 +931,14 @@ function RacingKingsTutorialBoard() {
         if (selected) {
             const isLegal = legalMoves.some(m => m.file === sq.file && m.rank === sq.rank);
             if (isLegal) {
+                const oldPos = { file: selected.file, rank: selected.rank };
                 setPieces(prev => prev.map(p => p.id === 'wk' ? { ...p, file: sq.file, rank: sq.rank } : p));
+                setTurboTrail(oldPos);
                 setSelected(null);
                 setLegalMoves([]);
+                
+                setTimeout(() => setTurboTrail(null), 500);
+
                 if (sq.rank === 0) {
                     setCompleted(true);
                     setMessage("You reached the top rank! You win the race. Remember, checks were never allowed!");
@@ -900,9 +979,14 @@ function RacingKingsTutorialBoard() {
         if (sq && selected) {
             const isLegal = legalMoves.some(m => m.file === sq.file && m.rank === sq.rank);
             if (isLegal) {
+                const oldPos = { file: selected.file, rank: selected.rank };
                 setPieces(prev => prev.map(p => p.id === 'wk' ? { ...p, file: sq.file, rank: sq.rank } : p));
+                setTurboTrail(oldPos);
                 setSelected(null);
                 setLegalMoves([]);
+                
+                setTimeout(() => setTurboTrail(null), 500);
+
                 if (sq.rank === 0) {
                     setCompleted(true);
                     setMessage("You reached the top rank! You win the race. Remember, checks were never allowed!");
@@ -919,6 +1003,7 @@ function RacingKingsTutorialBoard() {
         setCompleted(false);
         setSelected(null);
         setLegalMoves([]);
+        setTurboTrail(null);
         setMessage("Racing Kings: Race your King to the top! Note: Checks are ILLEGAL.");
     };
 
@@ -934,6 +1019,14 @@ function RacingKingsTutorialBoard() {
                         />
                     );
                 }))}
+                {turboTrail && (
+                    <div className="turbo-effect" 
+                         style={{ 
+                             left: `${turboTrail.file * 25}%`, 
+                             top: `${turboTrail.rank * 25}%`,
+                             width: '25%', height: '25%' 
+                         }} />
+                )}
                 {selected && <HighlightSquare file={selected.file} rank={selected.rank} color="rgba(255, 255, 0, 0.5)" />}
                 {legalMoves.map((m, i) => <LegalMoveDot key={i} file={m.file} rank={m.rank} />)}
                 {pieces.map(p => (
