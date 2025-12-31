@@ -133,7 +133,7 @@ function AtomicTutorialBoard() {
         const config = {
             particleNumber: 300,
             maxParticleSize: 6,
-            maxSpeed: 25,
+            maxSpeed: 12, // Half speed for half distance
             colorVariation: 50
         };
 
@@ -146,12 +146,11 @@ function AtomicTutorialBoard() {
             ]
         };
 
-        const colorVariation = (color) => {
+        const getColor = (color) => {
             const r = Math.round(((Math.random() * config.colorVariation) - (config.colorVariation/2)) + color.r);
             const g = Math.round(((Math.random() * config.colorVariation) - (config.colorVariation/2)) + color.g);
             const b = Math.round(((Math.random() * config.colorVariation) - (config.colorVariation/2)) + color.b);
-            const a = Math.random() + 0.5;
-            return `rgba(${r},${g},${b},${a})`;
+            return { r, g, b };
         };
 
         class Particle {
@@ -159,18 +158,22 @@ function AtomicTutorialBoard() {
                 this.x = x;
                 this.y = y;
                 this.r = Math.ceil(Math.random() * config.maxParticleSize);
-                this.c = colorVariation(colorPalette.matter[Math.floor(Math.random() * colorPalette.matter.length)]);
+                const baseColor = getColor(colorPalette.matter[Math.floor(Math.random() * colorPalette.matter.length)]);
+                this.colorBase = `${baseColor.r},${baseColor.g},${baseColor.b}`;
                 this.s = Math.pow(Math.ceil(Math.random() * config.maxSpeed), 0.7);
-                this.d = Math.random() * Math.PI * 2; // Direction in radians
+                this.d = Math.random() * Math.PI * 2;
+                this.alpha = Math.random() * 0.5 + 0.5;
             }
             update() {
                 this.x += Math.cos(this.d) * this.s;
                 this.y += Math.sin(this.d) * this.s;
-                this.s *= 0.96; // Add some drag
+                this.s *= 0.96;
+                this.alpha -= 0.015; // Fade out
             }
             draw() {
+                if (this.alpha <= 0) return;
                 ctx.beginPath();
-                ctx.fillStyle = this.c;
+                ctx.fillStyle = `rgba(${this.colorBase},${this.alpha})`;
                 ctx.arc(this.x, this.y, this.r, 0, 2 * Math.PI, false);
                 ctx.fill();
                 ctx.closePath();
@@ -404,9 +407,22 @@ function AtomicTutorialBoard() {
                     />
                 ))}
 
-                {/* Explosion Canvas */}
+                {/* Combined Explosion Effects */}
                 {explosion && (
-                    <canvas ref={canvasRef} className="explosion-canvas" />
+                    <>
+                        <div 
+                            className="mushroom-cloud-container"
+                            style={{
+                                left: `${explosion.file * 25}%`,
+                                top: `${explosion.rank * 25}%`,
+                            }}
+                        >
+                            <div className="mushroom-cloud cloud-1"></div>
+                            <div className="mushroom-cloud cloud-2"></div>
+                            <div className="explosion-flash"></div>
+                        </div>
+                        <canvas ref={canvasRef} className="explosion-canvas" />
+                    </>
                 )}
             </div>
             <div className="tutorial-controls">
