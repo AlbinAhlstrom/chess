@@ -335,6 +335,7 @@ function AtomicTutorialBoard() {
             setPieces(prev => prev.filter(p => p.id !== 'wk')); // Remove original knight immediately
             setIsPreparing(true);
             setIsIgnition(true);
+            setIsFlashing(true); // Start flashing immediately at takeoff prep
             setSelected(null);
             setLegalMoves([]);
 
@@ -346,29 +347,26 @@ function AtomicTutorialBoard() {
                 setAnimatingKnight({ file: targetFile, rank: targetRank }); // Set destination for CSS transition
                 launchSound.current.play().catch(() => {});
                 
-                // Trigger Target Flash and Beeps 1/3 through flight
-                setTimeout(() => {
-                    setIsFlashing(true);
-                    
-                    // Triple beep sequence
-                    const playBeep = () => {
-                        lockSound.current.currentTime = 0;
-                        lockSound.current.play().catch(() => {});
-                    };
-                    
-                    playBeep();
-                    setTimeout(playBeep, 80);
-                    setTimeout(playBeep, 160);
-                }, 133);
+                // Triple beep lock sequence synchronized with flight
+                const playBeep = () => {
+                    lockSound.current.currentTime = 0;
+                    lockSound.current.play().catch(() => {});
+                };
+                
+                setTimeout(playBeep, 50);
+                setTimeout(playBeep, 150);
+                setTimeout(playBeep, 250);
 
                 setMessage("Incoming atom bomb!");
                 
                 // Clear puff after 1s
                 setTimeout(() => setLaunchPuff(null), 1000);
+                setLaunchPuff({ file: knight.file, rank: knight.rank }); // <-- This line is added in replace
 
                 // Wait for flight animation to finish (0.4s)
                 setTimeout(() => {
                     setIsFlying(false);
+                    setIsFlashing(false); // Stop flashing on impact
                     setAnimatingKnight(null); // Clear animating knight
                     setIsShaking(true);
                     explosionSound.current.play().catch(() => {});
