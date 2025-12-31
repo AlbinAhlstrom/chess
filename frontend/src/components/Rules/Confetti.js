@@ -5,7 +5,7 @@ const Confetti = ({ trigger }) => {
     useEffect(() => {
         if (trigger) {
             // High-performance burst from the bottom center
-            const duration = 3 * 1000;
+            const duration = 1 * 1000;
             const animationEnd = Date.now() + duration;
             const defaults = { startVelocity: 45, spread: 70, ticks: 100, zIndex: 99999, gravity: 1.2, scalar: 1.2 };
 
