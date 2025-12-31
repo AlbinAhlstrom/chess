@@ -547,8 +547,11 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
             }
             onFenChange(viewedFen);
             lastNotifiedFen.current = viewedFen;
+            
+            // Refresh legal moves from backend for the new position
+            if (gameId) fetchLegalMoves(gameId);
         }
-    }, [viewedFen, onFenChange, inCheck]);
+    }, [viewedFen, onFenChange, inCheck, gameId, fetchLegalMoves]);
 
     const position = useMemo(() => {
         if (!viewedFen) return [];
