@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import Piece from '../Pieces/Piece';
 import LegalMoveDot from '../LegalMoveDot/LegalMoveDot';
 import HighlightSquare from '../HighlightSquare/HighlightSquare';
+import Confetti from './Confetti';
 import './Rules.css';
 
 const VARIANT_RULES = {
@@ -104,7 +105,7 @@ function WinnerSound({ completed }) {
         }
     }, [completed]);
 
-    return null;
+    return <Confetti trigger={completed} />;
 }
 
 function FlyingKnight({ file, rank, isPreparing, isFlying }) {
