@@ -349,6 +349,114 @@ function AtomicTutorialBoard() {
     );
 }
 
+function AntichessTutorialBoard() {
+    const [pieces, setPieces] = useState([
+        { id: 'wp', type: 'P', color: 'w', file: 1, rank: 2 }, // White Pawn at b2
+        { id: 'bn', type: 'n', color: 'b', file: 2, rank: 1 }, // Black Knight at c3
+    ]);
+    const [message, setMessage] = useState("In Antichess, captures are mandatory! Try to move or capture.");
+    const [completed, setCompleted] = useState(false);
+    const [selected, setSelected] = useState(null);
+    const [legalMoves, setLegalMoves] = useState([]);
+    const boardRef = useRef(null);
+
+    const getSquareFromCoords = (clientX, clientY) => {
+        if (!boardRef.current) return null;
+        const rect = boardRef.current.getBoundingClientRect();
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+        const squareSize = rect.width / 4;
+        const file = Math.floor(x / squareSize);
+        const rank = Math.floor(y / squareSize);
+        if (file >= 0 && file < 4 && rank >= 0 && rank < 4) return { file, rank };
+        return null;
+    };
+
+    const handleBoardClick = (e) => {
+        if (completed) return;
+        const sq = getSquareFromCoords(e.clientX, e.clientY);
+        if (!sq) return;
+
+        const clickedPiece = pieces.find(p => p.file === sq.file && p.rank === sq.rank);
+
+        if (clickedPiece && clickedPiece.color === 'w') {
+            setSelected(sq);
+            // In this setup, only capture is legal
+            setLegalMoves([{ file: 2, rank: 1 }]); 
+            setMessage("You MUST capture the Knight! Moving forward is illegal here.");
+            return;
+        }
+
+        if (selected && sq.file === 2 && sq.rank === 1) {
+            // Execute capture
+            setPieces(prev => prev.filter(p => p.color === 'w').map(p => 
+                p.id === 'wp' ? { ...p, file: 2, rank: 1 } : p
+            ).filter(p => p.id === 'wp')); // Remove black knight
+            
+            // In Antichess, pieces are just removed. But we'll keep the capturing piece for the visual.
+            // Wait, actually in the tutorial let's just show the capture.
+            setPieces([{ id: 'wp', type: 'P', color: 'w', file: 2, rank: 1 }]);
+            setSelected(null);
+            setLegalMoves([]);
+            setCompleted(true);
+            setMessage("Great! You made the mandatory capture. Lose all your pieces to win!");
+        } else {
+            setSelected(null);
+            setLegalMoves([]);
+        }
+    };
+
+    const handlePieceDragStart = ({ file, rank, piece }) => {
+        if (completed) return;
+        if (piece !== 'P') return;
+        setSelected({ file, rank });
+        setLegalMoves([{ file: 2, rank: 1 }]);
+    };
+
+    const handlePieceDrop = ({ clientX, clientY }) => {
+        if (completed) return;
+        const sq = getSquareFromCoords(clientX, clientY);
+        if (sq && sq.file === 2 && sq.rank === 1) {
+            setPieces([{ id: 'wp', type: 'P', color: 'w', file: 2, rank: 1 }]);
+            setSelected(null);
+            setLegalMoves([]);
+            setCompleted(true);
+            setMessage("Great! You made the mandatory capture. Lose all your pieces to win!");
+        }
+    };
+
+    const reset = () => {
+        setPieces([
+            { id: 'wp', type: 'P', color: 'w', file: 1, rank: 2 },
+            { id: 'bn', type: 'n', color: 'b', file: 2, rank: 1 },
+        ]);
+        setCompleted(false);
+        setSelected(null);
+        setLegalMoves([]);
+        setMessage("In Antichess, captures are mandatory! Try to move or capture.");
+    };
+
+    return (
+        <div className="antichess-tutorial">
+            <div className="tutorial-board" ref={boardRef} onClick={handleBoardClick}>
+                {[0, 1, 2, 3].map(rank => [0, 1, 2, 3].map(file => (
+                    <div key={`${file}-${rank}`} className={`tutorial-square ${(rank + file) % 2 === 1 ? 'black-square' : 'white-square'}`} />
+                )))}
+                {selected && <HighlightSquare file={selected.file} rank={selected.rank} color="rgba(255, 255, 0, 0.5)" />}
+                {legalMoves.map((m, i) => <LegalMoveDot key={i} file={m.file} rank={m.rank} />)}
+                {pieces.map(p => (
+                    <Piece key={p.id} piece={p.type} file={p.file} rank={p.rank} 
+                           onDragStartCallback={handlePieceDragStart} onDropCallback={handlePieceDrop} />
+                ))}
+            </div>
+            <div className="tutorial-controls">
+                <p>{message}</p>
+                {completed && <button onClick={reset}>Reset Tutorial</button>}
+            </div>
+        </div>
+    );
+}
+
 function Rules() {
     const { variant } = useParams();
     const currentVariant = variant || 'standard';
@@ -389,6 +497,7 @@ function Rules() {
                 <p className="variant-description">{variantData.description}</p>
                 
                 {currentVariant === 'atomic' && <AtomicTutorialBoard />}
+                {currentVariant === 'antichess' && <AntichessTutorialBoard />}
 
                 <ul className="rules-list">
                     {variantData.rules.map((rule, index) => (
