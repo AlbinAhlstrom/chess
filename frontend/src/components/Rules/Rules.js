@@ -148,6 +148,13 @@ function AtomicTutorialBoard() {
     const [launchPuff, setLaunchPuff] = useState(null); // { file, rank }
     const boardRef = useRef(null);
     const canvasRef = useRef(null);
+    const hasPlayedConfetti = useRef(false);
+
+    useEffect(() => {
+        if (completed && !hasPlayedConfetti.current) {
+            hasPlayedConfetti.current = true;
+        }
+    }, [completed]);
 
     // Particle System based on requested snippet
     useEffect(() => {
@@ -340,8 +347,8 @@ function AtomicTutorialBoard() {
 
             // Rapid beep sequence
             SoundManager.play('caution');
-            setTimeout(() => SoundManager.play('caution'), 200);
-            setTimeout(() => SoundManager.play('caution'), 400);
+            setTimeout(() => SoundManager.play('caution'), 150);
+            setTimeout(() => SoundManager.play('caution'), 300);
 
             // Phase 1: Tilt in place (600ms)
             setTimeout(() => {
@@ -571,7 +578,7 @@ function AtomicTutorialBoard() {
                         <canvas ref={canvasRef} className="explosion-canvas" />
                     </>
                 )}
-                <Confetti trigger={completed} />
+                <Confetti trigger={completed && !hasPlayedConfetti.current} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
@@ -598,6 +605,13 @@ function AntichessTutorialBoard() {
     const [isProcessing, setIsProcessing] = useState(false);
     const boardRef = useRef(null);
     const canvasRef = useRef(null);
+    const hasPlayedConfetti = useRef(false);
+
+    useEffect(() => {
+        if (completed && !hasPlayedConfetti.current) {
+            hasPlayedConfetti.current = true;
+        }
+    }, [completed]);
 
     useEffect(() => {
         if (!shatter || !canvasRef.current || !boardRef.current) return;
@@ -806,7 +820,7 @@ function AntichessTutorialBoard() {
                     );
                 })}
                 {shatter && <canvas ref={canvasRef} className="explosion-canvas" />}
-                <Confetti trigger={completed} />
+                <Confetti trigger={completed && !hasPlayedConfetti.current} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
@@ -831,6 +845,13 @@ function CrazyhouseTutorialBoard() {
     const [pocketingPiece, setPocketingPiece] = useState(null); // { type, file, rank }
     const [pocketArrival, setPocketArrival] = useState(false);
     const boardRef = useRef(null);
+    const hasPlayedConfetti = useRef(false);
+
+    useEffect(() => {
+        if (completed && !hasPlayedConfetti.current) {
+            hasPlayedConfetti.current = true;
+        }
+    }, [completed]);
 
     const getSquareFromCoords = (clientX, clientY) => {
         if (!boardRef.current) return null;
@@ -974,7 +995,7 @@ function CrazyhouseTutorialBoard() {
                         }}
                     />
                 )}
-                <Confetti trigger={completed} />
+                <Confetti trigger={completed && !hasPlayedConfetti.current} />
             </div>
             
             <div className="reserve-tray" style={{ position: 'relative' }}>
@@ -1015,6 +1036,13 @@ function KOTHTutorialBoard() {
     const [victoryAura, setVictoryAura] = useState(false);
     const [isShaking, setIsShaking] = useState(false);
     const boardRef = useRef(null);
+    const hasPlayedConfetti = useRef(false);
+
+    useEffect(() => {
+        if (completed && !hasPlayedConfetti.current) {
+            hasPlayedConfetti.current = true;
+        }
+    }, [completed]);
 
     const centerSquares = [
         { file: 1, rank: 1 }, { file: 2, rank: 1 },
@@ -1162,7 +1190,7 @@ function KOTHTutorialBoard() {
                         <div className="victory-pillar"></div>
                     </div>
                 )}
-                <Confetti trigger={completed} />
+                <Confetti trigger={completed && !hasPlayedConfetti.current} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
@@ -1183,6 +1211,13 @@ function RacingKingsTutorialBoard() {
     const [legalMoves, setLegalMoves] = useState([]);
     const [turboTrail, setTurboTrail] = useState(null); // { file, rank }
     const boardRef = useRef(null);
+    const hasPlayedConfetti = useRef(false);
+
+    useEffect(() => {
+        if (completed && !hasPlayedConfetti.current) {
+            hasPlayedConfetti.current = true;
+        }
+    }, [completed]);
 
     const getSquareFromCoords = (clientX, clientY) => {
         if (!boardRef.current) return null;
@@ -1331,7 +1366,7 @@ function RacingKingsTutorialBoard() {
                     <Piece key={p.id} piece={p.type} file={p.file} rank={p.rank} 
                            onDragStartCallback={handlePieceDragStart} onDropCallback={handlePieceDrop} />
                 ))}
-                <Confetti trigger={completed} />
+                <Confetti trigger={completed && !hasPlayedConfetti.current} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
@@ -1352,6 +1387,13 @@ function HordeTutorialBoard() {
     const [selected, setSelected] = useState(null);
     const [legalMoves, setLegalMoves] = useState([]);
     const boardRef = useRef(null);
+    const hasPlayedConfetti = useRef(false);
+
+    useEffect(() => {
+        if (completed && !hasPlayedConfetti.current) {
+            hasPlayedConfetti.current = true;
+        }
+    }, [completed]);
 
     const getSquareFromCoords = (clientX, clientY) => {
         if (!boardRef.current) return null;
@@ -1450,7 +1492,7 @@ function HordeTutorialBoard() {
                         className={p.color === 'w' ? (completed ? 'horde-pawn-victory' : 'horde-pawn') : ''}
                     />
                 ))}
-                <Confetti trigger={completed} />
+                <Confetti trigger={completed && !hasPlayedConfetti.current} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
@@ -1473,6 +1515,13 @@ function ThreeCheckTutorialBoard() {
     const [checkFlash, setCheckFlash] = useState(false);
     const [strikeSquare, setStrikeSquare] = useState(null); // { file, rank }
     const boardRef = useRef(null);
+    const hasPlayedConfetti = useRef(false);
+
+    useEffect(() => {
+        if (completed && !hasPlayedConfetti.current) {
+            hasPlayedConfetti.current = true;
+        }
+    }, [completed]);
 
     const getSquareFromCoords = (clientX, clientY) => {
         if (!boardRef.current) return null;
@@ -1655,7 +1704,7 @@ function ThreeCheckTutorialBoard() {
                         <div className="strike-line"></div>
                     </div>
                 )}
-                <Confetti trigger={completed} />
+                <Confetti trigger={completed && !hasPlayedConfetti.current} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
@@ -1676,6 +1725,13 @@ function StandardTutorialBoard() {
     const [selected, setSelected] = useState(null);
     const [legalMoves, setLegalMoves] = useState([]);
     const boardRef = useRef(null);
+    const hasPlayedConfetti = useRef(false);
+
+    useEffect(() => {
+        if (completed && !hasPlayedConfetti.current) {
+            hasPlayedConfetti.current = true;
+        }
+    }, [completed]);
 
     const getSquareFromCoords = (clientX, clientY) => {
         if (!boardRef.current) return null;
@@ -1822,7 +1878,7 @@ function StandardTutorialBoard() {
                     <div className="standard-shockwave" style={{ left: '0%', top: '0%' }}></div>
                 )}
                 
-                <Confetti trigger={completed} />
+                <Confetti trigger={completed && !hasPlayedConfetti.current} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
@@ -1883,7 +1939,6 @@ function Chess960TutorialBoard() {
                         className={isShuffling ? 'quantum-glitch' : ''}
                     />
                 ))}
-                <Confetti trigger={completed} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>

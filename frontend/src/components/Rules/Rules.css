@@ -750,7 +750,7 @@
 
 .shuffling-board {
     animation: board-glitch 0.2s infinite;
-    filter: sepia(0.5) hue-rotate(180deg);
+    filter: brightness(0.7);
 }
 
 /* Standard Chess Visceral Effects */
