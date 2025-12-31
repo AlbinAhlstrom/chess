@@ -171,20 +171,20 @@
 }
 
 @keyframes ballistic-flight {
-    0%, 33% { 
-        transform: scale(1) rotate(0deg);
+    0% { 
+        transform: scale(1) rotate(0deg) skewY(0deg);
         filter: none;
     }
-    34% {
-        transform: scale(1.4) rotate(5deg);
-        filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.4));
+    33% {
+        transform: scale(1.6) rotate(15deg) skewY(-15deg); /* Pitch up */
+        filter: none;
     }
-    60% {
-        transform: scale(2.2) rotate(20deg);
+    66% {
+        transform: scale(2.2) rotate(35deg) skewY(5deg); /* Level out and start nose dive */
         filter: drop-shadow(-10px 10px 10px rgba(255, 165, 0, 0.7));
     }
     100% { 
-        transform: scale(1) rotate(45deg);
+        transform: scale(1) rotate(60deg) skewY(25deg); /* Nose-dive impact */
         filter: drop-shadow(0 0 20px rgba(255, 69, 0, 1));
     }
 }
