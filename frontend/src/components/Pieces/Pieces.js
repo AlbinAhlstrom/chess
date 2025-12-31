@@ -14,6 +14,7 @@ import GameSidebar from './subcomponents/GameSidebar';
 import NewGameDialog from './subcomponents/NewGameDialog';
 import PlayerNameDisplay from './subcomponents/PlayerNameDisplay';
 import GameOverIndicator from './subcomponents/GameOverIndicator';
+import Confetti from '../Rules/Confetti';
 
 const VARIANTS = [
     { id: 'standard', title: 'Standard', icon: '♟️' },
@@ -1144,6 +1145,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                     winner={winner}
                     isFlipped={isFlipped}
                 />
+                <Confetti trigger={isGameOver && !!winner} />
             </div>
 
             <PlayerNameDisplay 
