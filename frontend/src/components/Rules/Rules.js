@@ -599,7 +599,7 @@ function AntichessTutorialBoard() {
     const [isShaking, setIsShaking] = useState(false);
     const boardRef = useRef(null);
     const canvasRef = useRef(null);
-    const shatterSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/capture.mp3"));
+    const shatterSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/capture.mp3")); // We'll find a better shatter sound or stick to this crisp one
 
     useEffect(() => {
         if (!shatter || !canvasRef.current || !boardRef.current) return;
@@ -619,33 +619,46 @@ function AntichessTutorialBoard() {
             constructor(x, y) {
                 this.x = x;
                 this.y = y;
-                this.size = Math.random() * 8 + 4;
-                this.s = Math.random() * 5 + 2;
+                this.size = Math.random() * 12 + 4;
+                this.s = Math.random() * 6 + 2;
                 this.d = Math.random() * Math.PI * 2;
                 this.rot = Math.random() * Math.PI * 2;
-                this.rotS = (Math.random() - 0.5) * 0.2;
-                this.color = Math.random() > 0.5 ? '#fff' : '#ccc';
-                this.opacity = 1;
+                this.rotS = (Math.random() - 0.5) * 0.3;
+                // Crystalline colors (light blue/white tint)
+                const colors = ['#ffffff', '#e0f7fa', '#b2ebf2', '#81d4fa'];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.opacity = 0.8;
             }
             update() {
                 this.x += Math.cos(this.d) * this.s;
                 this.y += Math.sin(this.d) * this.s;
-                this.s *= 0.95;
+                this.s *= 0.94;
                 this.rot += this.rotS;
-                this.opacity -= 0.02;
+                this.opacity -= 0.015;
             }
             draw() {
+                if (this.opacity <= 0) return;
                 ctx.save();
                 ctx.translate(this.x, this.y);
                 ctx.rotate(this.rot);
-                ctx.globalAlpha = Math.max(0, this.opacity);
+                ctx.globalAlpha = this.opacity;
                 ctx.fillStyle = this.color;
+                ctx.shadowBlur = 5;
+                ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+                
+                // Random shard shapes (triangles/polygons)
                 ctx.beginPath();
                 ctx.moveTo(0, -this.size / 2);
-                ctx.lineTo(this.size / 2, this.size / 2);
-                ctx.lineTo(-this.size / 2, this.size / 2);
+                ctx.lineTo(this.size / 2, this.size / 4);
+                ctx.lineTo(-this.size / 3, this.size / 2);
                 ctx.closePath();
                 ctx.fill();
+                
+                // Add a "shine" highlight
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
                 ctx.restore();
             }
         }
@@ -756,12 +769,20 @@ function AntichessTutorialBoard() {
                     <div key={`${file}-${rank}`} className={`tutorial-square ${(rank + file) % 2 === 1 ? 'black-square' : 'white-square'}`} />
                 )))}
                 {selected && <HighlightSquare file={selected.file} rank={selected.rank} color="rgba(255, 255, 0, 0.5)" />}
-                {legalMoves.map((m, i) => <LegalMoveDot key={i} file={m.file} rank={m.rank} />)}
-                {pieces.map(p => (
-                    <Piece key={p.id} piece={p.type} file={p.file} rank={p.rank} 
-                           onDragStartCallback={handlePieceDragStart} onDropCallback={handlePieceDrop} />
-                ))}
-                {shatter && <canvas ref={canvasRef} className="explosion-canvas" />}
+                {pieces.map(p => {
+                    const isForced = !completed && !shatter && p.color === 'w' && p.type === 'P'; // In this tutorial setup, the pawn is forced
+                    return (
+                        <Piece 
+                            key={p.id} 
+                            piece={p.type} 
+                            file={p.file} 
+                            rank={p.rank} 
+                            onDragStartCallback={handlePieceDragStart} 
+                            onDropCallback={handlePieceDrop}
+                            className={isForced ? 'forced-capture' : ''}
+                        />
+                    );
+                })}
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
