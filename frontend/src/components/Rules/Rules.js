@@ -1330,6 +1330,8 @@ function HordeTutorialBoard() {
     const [selected, setSelected] = useState(null);
     const [legalMoves, setLegalMoves] = useState([]);
     const boardRef = useRef(null);
+    const moveSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-check.mp3"));
+    const victorySound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/game-end.mp3"));
 
     const getSquareFromCoords = (clientX, clientY) => {
         if (!boardRef.current) return null;
@@ -1367,7 +1369,8 @@ function HordeTutorialBoard() {
             setSelected(null);
             setLegalMoves([]);
             setCompleted(true);
-            setMessage("CHECKMATE! The King has no escape. White wins!");
+            victorySound.current.play().catch(() => {});
+            setMessage("CHECKMATE! The King is overrun by the horde. White wins!");
         } else if (clickedPiece && clickedPiece.color === 'b') {
             return;
         } else {
@@ -1393,7 +1396,8 @@ function HordeTutorialBoard() {
             setSelected(null);
             setLegalMoves([]);
             setCompleted(true);
-            setMessage("CHECKMATE! The King has no escape. White wins!");
+            victorySound.current.play().catch(() => {});
+            setMessage("CHECKMATE! The King is overrun by the horde. White wins!");
         }
     };
 
@@ -1418,8 +1422,15 @@ function HordeTutorialBoard() {
                 {selected && <HighlightSquare file={selected.file} rank={selected.rank} color="rgba(255, 255, 0, 0.5)" />}
                 {legalMoves.map((m, i) => <LegalMoveDot key={i} file={m.file} rank={m.rank} />)}
                 {pieces.map(p => (
-                    <Piece key={p.id} piece={p.type} file={p.file} rank={p.rank} 
-                           onDragStartCallback={handlePieceDragStart} onDropCallback={handlePieceDrop} />
+                    <Piece 
+                        key={p.id} 
+                        piece={p.type} 
+                        file={p.file} 
+                        rank={p.rank} 
+                        onDragStartCallback={handlePieceDragStart} 
+                        onDropCallback={handlePieceDrop}
+                        className={p.color === 'w' ? (completed ? 'horde-pawn-victory' : 'horde-pawn') : ''}
+                    />
                 ))}
             </div>
             <div className="tutorial-controls">

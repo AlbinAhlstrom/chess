@@ -689,6 +689,28 @@
     animation: board-extreme-shake 0.5s infinite;
 }
 
+/* Horde Necrotic Swarm Effects */
+@keyframes horde-breath {
+    0% { filter: drop-shadow(0 0 2px rgba(0, 255, 0, 0.2)); transform: scale(1); }
+    50% { filter: drop-shadow(0 0 8px rgba(0, 255, 0, 0.5)); transform: scale(1.02); }
+    100% { filter: drop-shadow(0 0 2px rgba(0, 255, 0, 0.2)); transform: scale(1); }
+}
+
+@keyframes horde-roar {
+    0% { filter: drop-shadow(0 0 5px rgba(0, 255, 0, 0.8)) brightness(1); transform: scale(1); }
+    50% { filter: drop-shadow(0 0 25px rgba(0, 255, 0, 1)) brightness(2); transform: scale(1.2); }
+    100% { filter: drop-shadow(0 0 5px rgba(0, 255, 0, 0.8)) brightness(1); transform: scale(1.1); }
+}
+
+.piece.horde-pawn {
+    animation: horde-breath 3s infinite ease-in-out;
+}
+
+.piece.horde-pawn-victory {
+    animation: horde-roar 0.3s infinite ease-in-out;
+    z-index: 1000 !important;
+}
+
 /* Combined Atomic Explosion Styles */
 .mushroom-cloud-container {
     position: absolute;
