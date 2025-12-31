@@ -140,6 +140,8 @@ function AtomicTutorialBoard() {
     const [isShaking, setIsShaking] = useState(false);
     const boardRef = useRef(null);
     const canvasRef = useRef(null);
+    const explosionSound = useRef(new Audio("/sounds/atomic_explosion.mp3"));
+    const launchSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/castle.mp3"));
 
     // Particle System based on requested snippet
     useEffect(() => {
@@ -282,6 +284,7 @@ function AtomicTutorialBoard() {
             setTimeout(() => {
                 setIsPreparing(false);
                 setIsFlying(true);
+                launchSound.current.play().catch(() => {});
                 setMessage("Incoming atom bomb!");
                 
                 // Phase 2: Move the knight in state to trigger flight
@@ -291,6 +294,7 @@ function AtomicTutorialBoard() {
                 setTimeout(() => {
                     setIsFlying(false);
                     setIsShaking(true);
+                    explosionSound.current.play().catch(() => {});
                     setExplosion({ file: targetFile, rank: targetRank });
 
                     setPieces(prev => prev.filter(p => {

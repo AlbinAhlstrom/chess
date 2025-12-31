@@ -198,8 +198,8 @@
 }
 
 @keyframes vk-tilt-up {
-    from { transform: perspective(1000px) rotateX(0deg) rotateZ(0deg); }
-    to { transform: perspective(1000px) rotateX(-45deg) rotateZ(15deg); }
+    from { transform: perspective(1000px) rotateX(0deg) rotateZ(0deg) translateZ(0); }
+    to { transform: perspective(1000px) rotateX(-45deg) rotateZ(15deg) translateZ(20px); }
 }
 
 .visceral-knight.preparing .vk-inner {
