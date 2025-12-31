@@ -201,7 +201,7 @@ function AtomicTutorialBoard() {
                     setCompleted(true);
                     setMessage("Notice: The Knight, King, and other pieces exploded. The side Pawns survived!");
                 }, 800);
-            }, 500);
+            }, 400);
          } else {
              setMessage("Move to capture the middle Black Pawn to see the explosion!");
              setPieces(prev => prev.map(p => p.id === 'wk' ? { ...p, file: targetFile, rank: targetRank } : p));
@@ -274,7 +274,7 @@ function AtomicTutorialBoard() {
         setLegalMoves([]);
         setIsFlying(false);
         setIsShaking(false);
-        setMessage("Drag or click the middle Black Pawn!");
+        setMessage("Drag or click the White Knight to capture the middle Black Pawn!");
     };
 
     return (
@@ -968,27 +968,6 @@ function HordeTutorialBoard() {
         setLegalMoves([]);
         setMessage("Horde: As White, your goal is to checkmate the Black King!");
     };
-
-    return (
-        <div className="horde-tutorial">
-            <div className="tutorial-board" ref={boardRef} onClick={handleBoardClick}>
-                {[0, 1, 2, 3].map(rank => [0, 1, 2, 3].map(file => (
-                    <div key={`${file}-${rank}`} className={`tutorial-square ${(rank + file) % 2 === 1 ? 'black-square' : 'white-square'}`} />
-                )))}
-                {selected && <HighlightSquare file={selected.file} rank={selected.rank} color="rgba(255, 255, 0, 0.5)" />}
-                {legalMoves.map((m, i) => <LegalMoveDot key={i} file={m.file} rank={m.rank} />)}
-                {pieces.map(p => (
-                    <Piece key={p.id} piece={p.type} file={p.file} rank={p.rank} 
-                           onDragStartCallback={handlePieceDragStart} onDropCallback={handlePieceDrop} />
-                ))}
-            </div>
-            <div className="tutorial-controls">
-                <p>{message}</p>
-                {completed && <button onClick={reset}>Reset Tutorial</button>}
-            </div>
-        </div>
-    );
-}
 
     return (
         <div className="horde-tutorial">
