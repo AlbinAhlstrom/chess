@@ -15,6 +15,7 @@ import NewGameDialog from './subcomponents/NewGameDialog';
 import PlayerNameDisplay from './subcomponents/PlayerNameDisplay';
 import GameOverIndicator from './subcomponents/GameOverIndicator';
 import Confetti from '../Rules/Confetti';
+import SoundManager from '../../helpers/soundManager';
 
 const VARIANTS = [
     { id: 'standard', title: 'Standard', icon: '♟️' },
@@ -151,20 +152,6 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     const [timers, setTimers] = useState(null); // {w: seconds, b: seconds}
     const [turn, setTurn] = useState('w');
     
-    // Sounds
-    const moveSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-self.mp3"));
-    const captureSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/capture.mp3"));
-    const castleSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/castle.mp3"));
-    const checkSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-check.mp3"));
-    const gameStartSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/game-start.mp3"));
-    const promotionSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/promote.mp3"));
-    const illegalSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/illegal.mp3"));
-    const explosionSound = useRef(new Audio("/sounds/atomic_explosion.mp3"));
-    const dropSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/premove.mp3")); // Clean pop sound
-    const strikeSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-check.mp3")); 
-    const turboSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/castle.mp3")); // Whoosh-like
-    const shatterSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/capture.mp3")); 
-    
     // Timer formatting helper
     const formatTime = (seconds) => {
         if (seconds === null || seconds === undefined) return "";
@@ -254,8 +241,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                     if (pieceMoved?.toLowerCase() === 'k') {
                         setTurboSquare(toSq);
                         setShowTurbo(true);
-                        turboSound.current.currentTime = 0;
-                        turboSound.current.play().catch(e => {});
+                        SoundManager.play('whoosh');
                         setTimeout(() => setShowTurbo(false), 600);
                     }
                 }
@@ -267,8 +253,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                         const cleanSAN = lastSAN.replace(/[+#]/g, '');
                         setShatterSquare(cleanSAN.slice(-2));
                         setShowShatter(true);
-                        shatterSound.current.currentTime = 0;
-                        shatterSound.current.play().catch(e => {});
+                        SoundManager.play('shatter');
                         setTimeout(() => setShowShatter(false), 800);
                     }
                 }
@@ -279,8 +264,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                     const targetSq = lastMoveUCI.split('@')[1];
                     setDropSquare(targetSq);
                     setShowDropWarp(true);
-                    dropSound.current.currentTime = 0;
-                    dropSound.current.play().catch(e => {});
+                    SoundManager.play('clink');
                     setTimeout(() => {
                         setShowDropWarp(false);
                         setDropSquare(null);
@@ -298,15 +282,13 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                             const grid = fenToPosition(message.fen);
                             const kingChar = counts[0] > prevCounts[0] ? 'k' : 'K'; // White checked -> black king affected? No, counts[0] is white checks.
                             // counts[0] = checks by White (against black king). 
-                            // So if counts[0] increased, black king was struck.
                             
                             for (let r = 0; r < 8; r++) {
                                 for (let c = 0; c < 8; c++) {
                                     if (grid[r][c] === kingChar) {
                                         setStrikeSquare(coordsToAlgebraic(c, r));
                                         setShowStrike(true);
-                                        strikeSound.current.currentTime = 0;
-                                        strikeSound.current.play().catch(e => {});
+                                        SoundManager.play('strike');
                                         setTimeout(() => setShowStrike(false), 800);
                                         break;
                                     }
@@ -330,10 +312,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                 if (explosionSq) {
                     setExplosionSquare(explosionSq);
                     setShowExplosion(true);
-                    if (explosionSound.current) {
-                        explosionSound.current.currentTime = 0;
-                        explosionSound.current.play().catch(e => console.error("Error playing explosion sound:", e));
-                    }
+                    SoundManager.play('explosion');
                     setTimeout(() => {
                         setShowExplosion(false);
                         setExplosionSquare(null);
@@ -354,7 +333,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
             } else if (message.type === "error") {
                 console.error("WebSocket error:", message.message);
                 if (message.message.toLowerCase().includes("check") && lastNotifiedFen.current) {
-                    illegalSound.current.play().catch(e => console.error("Error playing illegal move sound:", e));
+                    SoundManager.play('illegal');
                     const currentFen = lastNotifiedFen.current;
                     const isWhite = currentFen.split(' ')[1] === 'w';
                     const grid = fenToPosition(currentFen);
@@ -391,7 +370,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
             setFen(initialFen);
             setFenHistory([initialFen]);
             setViewedIndex(0);
-            gameStartSound.current.play().catch(e => console.error("Error playing game start sound:", e));
+            SoundManager.play('gameStart');
             const route = computer ? `/computer-game/${newGameId}` : `/game/${newGameId}`;
             navigate(route, { replace: true });
         } catch (error) {
@@ -529,16 +508,16 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                 const currentCount = countPieces(fen);
 
                 if (inCheck) {
-                    checkSound.current.play().catch(e => console.error("Error playing check sound:", e));
+                    SoundManager.play('check');
                 } else if (isPromoting.current) {
-                    promotionSound.current.play().catch(e => console.error("Error playing promotion sound:", e));
+                    SoundManager.play('promote');
                     isPromoting.current = false;
                 } else if (isCastling) {
-                    castleSound.current.play().catch(e => console.error("Error playing castle sound:", e));
+                    SoundManager.play('castle');
                 } else if (currentCount < prevCount) {
-                     captureSound.current.play().catch(e => console.error("Error playing capture sound:", e));
+                     SoundManager.play('capture');
                 } else {
-                     moveSound.current.play().catch(e => console.error("Error playing move sound:", e));
+                     SoundManager.play('move');
                 }
             }
             onFenChange(viewedFen);

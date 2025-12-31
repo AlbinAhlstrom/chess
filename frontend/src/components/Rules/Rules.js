@@ -4,6 +4,7 @@ import Piece from '../Pieces/Piece';
 import LegalMoveDot from '../LegalMoveDot/LegalMoveDot';
 import HighlightSquare from '../HighlightSquare/HighlightSquare';
 import Confetti from './Confetti';
+import SoundManager from '../../helpers/soundManager';
 import './Rules.css';
 
 const VARIANT_RULES = {
@@ -147,9 +148,6 @@ function AtomicTutorialBoard() {
     const [launchPuff, setLaunchPuff] = useState(null); // { file, rank }
     const boardRef = useRef(null);
     const canvasRef = useRef(null);
-    const explosionSound = useRef(new Audio("/sounds/atomic_explosion.mp3"));
-    const launchSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/castle.mp3"));
-    const lockSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-check.mp3"));
 
     // Particle System based on requested snippet
     useEffect(() => {
@@ -346,12 +344,11 @@ function AtomicTutorialBoard() {
                 setIsIgnition(false);
                 setIsFlying(true);
                 setAnimatingKnight({ file: targetFile, rank: targetRank }); // Set destination for CSS transition
-                launchSound.current.play().catch(() => {});
+                SoundManager.play('whoosh');
                 
                 // Triple beep sequence
                 const playBeep = () => {
-                    lockSound.current.currentTime = 0;
-                    lockSound.current.play().catch(() => {});
+                    SoundManager.play('strike');
                 };
                 
                 setTimeout(playBeep, 50);
@@ -370,7 +367,7 @@ function AtomicTutorialBoard() {
                     setIsFlashing(false); // Stop flashing on impact
                     setAnimatingKnight(null); // Clear animating knight
                     setIsShaking(true);
-                    explosionSound.current.play().catch(() => {});
+                    SoundManager.play('explosion');
                     setExplosion({ file: targetFile, rank: targetRank });
                     setScorchMark({ file: targetFile, rank: targetRank });
 
@@ -605,11 +602,10 @@ function AntichessTutorialBoard() {
     const [isProcessing, setIsProcessing] = useState(false);
     const boardRef = useRef(null);
     const canvasRef = useRef(null);
-    const shatterSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/capture.mp3"));
 
     useEffect(() => {
         if (!shatter || !canvasRef.current || !boardRef.current) return;
-        shatterSound.current.play().catch(() => {});
+        SoundManager.play('shatter');
 
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
@@ -839,9 +835,6 @@ function CrazyhouseTutorialBoard() {
     const [pocketingPiece, setPocketingPiece] = useState(null); // { type, file, rank }
     const [pocketArrival, setPocketArrival] = useState(false);
     const boardRef = useRef(null);
-    const captureSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/capture.mp3"));
-    const dropSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/premove.mp3"));
-    const clinkSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-check.mp3"));
 
     const getSquareFromCoords = (clientX, clientY) => {
         if (!boardRef.current) return null;
@@ -872,7 +865,7 @@ function CrazyhouseTutorialBoard() {
                 setSelectedReserve(null);
                 setWarpPieceId(dropId);
                 setCompleted(true);
-                dropSound.current.play().catch(() => {});
+                SoundManager.play('clink');
                 setMessage("Excellent! You dropped a piece from your reserve onto the board. This is the heart of Crazyhouse!");
                 
                 // Clear warp effect after animation
@@ -898,14 +891,14 @@ function CrazyhouseTutorialBoard() {
             ));
             setSelected(null);
             setLegalMoves([]);
-            captureSound.current.play().catch(() => {});
+            SoundManager.play('capture');
             
             // Wait for flight animation (0.5s)
             setTimeout(() => {
                 setReserve(['B']);
                 setPocketingPiece(null);
                 setPocketArrival(true);
-                clinkSound.current.play().catch(() => {});
+                SoundManager.play('clink');
                 setTimeout(() => setPocketArrival(false), 300);
                 setMessage("Bishop captured! It's now in your reserve. Click it in the tray, then click an empty square to drop it!");
             }, 500);
@@ -934,13 +927,13 @@ function CrazyhouseTutorialBoard() {
             ));
             setSelected(null);
             setLegalMoves([]);
-            captureSound.current.play().catch(() => {});
+            SoundManager.play('capture');
             
             setTimeout(() => {
                 setReserve(['B']);
                 setPocketingPiece(null);
                 setPocketArrival(true);
-                clinkSound.current.play().catch(() => {});
+                SoundManager.play('clink');
                 setTimeout(() => setPocketArrival(false), 300);
                 setMessage("Bishop captured! It's now in your reserve. Click it in the tray, then click an empty square to drop it!");
             }, 500);
@@ -1026,7 +1019,6 @@ function KOTHTutorialBoard() {
     const [victoryAura, setVictoryAura] = useState(false);
     const [isShaking, setIsShaking] = useState(false);
     const boardRef = useRef(null);
-    const moveSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-check.mp3"));
 
     const centerSquares = [
         { file: 1, rank: 1 }, { file: 2, rank: 1 },
@@ -1081,7 +1073,7 @@ function KOTHTutorialBoard() {
                     setTimeout(() => setIsShaking(false), 500);
                     setMessage("THE SUMMIT REACHED! In King of the Hill, the center is an instant victory.");
                 } else {
-                    moveSound.current.play().catch(() => {});
+                    SoundManager.play('move');
                     setMessage("Good move! Keep climbing toward the center summit.");
                 }
             } else {
@@ -1129,7 +1121,7 @@ function KOTHTutorialBoard() {
                     setTimeout(() => setIsShaking(false), 500);
                     setMessage("THE SUMMIT REACHED! In King of the Hill, the center is an instant victory.");
                 } else {
-                    moveSound.current.play().catch(() => {});
+                    SoundManager.play('move');
                     setMessage("Good move! Keep climbing toward the center summit.");
                 }
             }
@@ -1195,7 +1187,6 @@ function RacingKingsTutorialBoard() {
     const [legalMoves, setLegalMoves] = useState([]);
     const [turboTrail, setTurboTrail] = useState(null); // { file, rank }
     const boardRef = useRef(null);
-    const zoomSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/castle.mp3"));
 
     const getSquareFromCoords = (clientX, clientY) => {
         if (!boardRef.current) return null;
@@ -1241,7 +1232,7 @@ function RacingKingsTutorialBoard() {
                 setTurboTrail(oldPos);
                 setSelected(null);
                 setLegalMoves([]);
-                zoomSound.current.play().catch(() => {});
+                SoundManager.play('whoosh');
                 
                 setTimeout(() => setTurboTrail(null), 500);
 
@@ -1295,7 +1286,7 @@ function RacingKingsTutorialBoard() {
                 setTurboTrail(oldPos);
                 setSelected(null);
                 setLegalMoves([]);
-                zoomSound.current.play().catch(() => {});
+                SoundManager.play('whoosh');
                 
                 setTimeout(() => setTurboTrail(null), 500);
 
@@ -1365,7 +1356,6 @@ function HordeTutorialBoard() {
     const [selected, setSelected] = useState(null);
     const [legalMoves, setLegalMoves] = useState([]);
     const boardRef = useRef(null);
-    const moveSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-check.mp3"));
 
     const getSquareFromCoords = (clientX, clientY) => {
         if (!boardRef.current) return null;
@@ -1389,13 +1379,13 @@ function HordeTutorialBoard() {
         if (clickedPiece && clickedPiece.color === 'w') {
             setSelected(sq);
             const moves = [];
-            if (sq.file === 1 && sq.rank === 1) {
-                moves.push({ file: 1, rank: 0 }); // Key move for mate
-            }
-            setLegalMoves(moves);
-            return;
-        }
-
+                            if (sq.file === 1 && sq.rank === 1) {
+                                moves.push({ file: 1, rank: 0 }); // Key move for mate
+                            }
+                            setLegalMoves(moves);
+                            SoundManager.play('move');
+                            return;
+                        }
         if (selected && selected.file === 1 && selected.rank === 1 && sq.file === 1 && sq.rank === 0) {
             setPieces(prev => prev.map(p => 
                 (p.file === 1 && p.rank === 1) ? { ...p, file: 1, rank: 0 } : p
@@ -1487,7 +1477,6 @@ function ThreeCheckTutorialBoard() {
     const [checkFlash, setCheckFlash] = useState(false);
     const [strikeSquare, setStrikeSquare] = useState(null); // { file, rank }
     const boardRef = useRef(null);
-    const strikeSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-check.mp3"));
 
     const getSquareFromCoords = (clientX, clientY) => {
         if (!boardRef.current) return null;
@@ -1547,7 +1536,7 @@ function ThreeCheckTutorialBoard() {
                     setChecks(nextChecks);
                     setCheckFlash(true);
                     setStrikeSquare({ file: king.file, rank: king.rank });
-                    strikeSound.current.play().catch(() => {});
+                    SoundManager.play('strike');
                     
                     setTimeout(() => {
                         setCheckFlash(false);
@@ -1609,7 +1598,7 @@ function ThreeCheckTutorialBoard() {
                     setChecks(nextChecks);
                     setCheckFlash(true);
                     setStrikeSquare({ file: king.file, rank: king.rank });
-                    strikeSound.current.play().catch(() => {});
+                    SoundManager.play('strike');
                     
                     setTimeout(() => {
                         setCheckFlash(false);
@@ -1691,7 +1680,6 @@ function StandardTutorialBoard() {
     const [selected, setSelected] = useState(null);
     const [legalMoves, setLegalMoves] = useState([]);
     const boardRef = useRef(null);
-    const moveSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-check.mp3"));
 
     const getSquareFromCoords = (clientX, clientY) => {
         if (!boardRef.current) return null;
@@ -1744,9 +1732,10 @@ function StandardTutorialBoard() {
                 
                 if (sq.file === 2 && sq.rank === 0) {
                     setCompleted(true);
+                    SoundManager.play('slam');
                     setMessage("CHECKMATE! The Rook delivers the final blow. Victory!");
                 } else {
-                    moveSound.current.play().catch(() => {});
+                    SoundManager.play('move');
                     setMessage("Good move, keep pushing the King into the corner!");
                 }
             } else if (clickedPiece && clickedPiece.color === 'b') {
@@ -1857,12 +1846,10 @@ function Chess960TutorialBoard() {
     const [message, setMessage] = useState("Chess960: The starting positions of pieces are randomized!");
     const [isShuffling, setIsShuffling] = useState(false);
     const [completed, setCompleted] = useState(false);
-    const shuffleSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/castle.mp3"));
-    const lockSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-check.mp3"));
     
     const randomize = () => {
         setIsShuffling(true);
-        shuffleSound.current.play().catch(() => {});
+        SoundManager.play('whoosh');
         
         // Randomize 10 times quickly for visual glitch effect
         let count = 0;
@@ -1879,7 +1866,7 @@ function Chess960TutorialBoard() {
                 clearInterval(interval);
                 setIsShuffling(false);
                 setCompleted(true);
-                lockSound.current.play().catch(() => {});
+                SoundManager.play('lock');
                 setMessage("POSITION LOCKED! In a full game, there are 960 possible starting positions.");
             }
         }, 60);
