@@ -1126,7 +1126,6 @@ function KOTHTutorialBoard() {
                     setCompleted(true);
                     setVictoryAura(true);
                     setIsShaking(true);
-                    victorySound.current.play().catch(() => {});
                     setTimeout(() => setIsShaking(false), 500);
                     setMessage("THE SUMMIT REACHED! In King of the Hill, the center is an instant victory.");
                 } else {
@@ -1302,7 +1301,6 @@ function RacingKingsTutorialBoard() {
 
                 if (sq.rank === 0) {
                     setCompleted(true);
-                    victorySound.current.play().catch(() => {});
                     setMessage("FINISH LINE CROSSED! You win the race. Remember, checks are never allowed!");
                 }
             }
@@ -1431,7 +1429,6 @@ function HordeTutorialBoard() {
             setSelected(null);
             setLegalMoves([]);
             setCompleted(true);
-            victorySound.current.play().catch(() => {});
             setMessage("CHECKMATE! The King is overrun by the horde. White wins!");
         }
     };
