@@ -316,17 +316,33 @@ function AtomicTutorialBoard() {
             setAnimatingKnight({ file: knight.file, rank: knight.rank });
             setPieces(prev => prev.filter(p => p.id !== 'wk')); // Remove original knight immediately
             setIsPreparing(true);
+            setIsIgnition(true);
             setSelected(null);
             setLegalMoves([]);
 
             // Phase 1: Tilt in place (250ms)
             setTimeout(() => {
                 setIsPreparing(false);
+                setIsIgnition(false);
                 setIsFlying(true);
-                setLaunchPuff({ file: knight.file, rank: knight.rank });
                 setAnimatingKnight({ file: targetFile, rank: targetRank }); // Set destination for CSS transition
                 launchSound.current.play().catch(() => {});
-                lockSound.current.play().catch(() => {});
+                
+                // Trigger Target Flash and Beeps 1/3 through flight
+                setTimeout(() => {
+                    setIsFlashing(true);
+                    
+                    // Triple beep sequence
+                    const playBeep = () => {
+                        lockSound.current.currentTime = 0;
+                        lockSound.current.play().catch(() => {});
+                    };
+                    
+                    playBeep();
+                    setTimeout(playBeep, 80);
+                    setTimeout(playBeep, 160);
+                }, 133);
+
                 setMessage("Incoming atom bomb!");
                 
                 // Clear puff after 1s
