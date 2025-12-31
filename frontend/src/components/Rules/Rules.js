@@ -94,6 +94,32 @@ const VARIANT_RULES = {
     }
 };
 
+function FlyingKnight({ file, rank, isPreparing, isFlying }) {
+    const style = {
+        left: `calc(${file} * 25%)`,
+        top: `calc(${rank} * 25%)`,
+        width: '25%',
+        height: '25%',
+        position: 'absolute',
+        pointerEvents: 'none',
+        zIndex: 1000,
+        '--piece-image': 'url("/images/pieces/N.png")'
+    };
+
+    let className = 'visceral-knight';
+    if (isPreparing) className += ' preparing';
+    if (isFlying) className += ' flying';
+
+    return (
+        <div className={className} style={style}>
+            <div className="vk-inner">
+                <div className="vk-front"></div>
+                <div className="vk-back"></div>
+            </div>
+        </div>
+    );
+}
+
 function AtomicTutorialBoard() {
     const [pieces, setPieces] = useState([
         { id: 'wk', type: 'N', color: 'w', file: 1, rank: 3 }, // Knight at b1 (relative to 4x4)
@@ -402,10 +428,8 @@ function AtomicTutorialBoard() {
 
                 {/* Pieces */}
                 {pieces.map(p => {
-                    let className = '';
-                    if (p.id === 'wk') {
-                        if (isPreparing) className = 'preparing-knight';
-                        else if (isFlying) className = 'flying-knight';
+                    if (p.id === 'wk' && (isPreparing || isFlying)) {
+                        return <FlyingKnight key={p.id} file={p.file} rank={p.rank} isPreparing={isPreparing} isFlying={isFlying} />;
                     }
                     return (
                         <Piece
@@ -415,7 +439,6 @@ function AtomicTutorialBoard() {
                             rank={p.rank}
                             onDragStartCallback={handlePieceDragStart}
                             onDropCallback={handlePieceDrop}
-                            className={className}
                         />
                     );
                 })}

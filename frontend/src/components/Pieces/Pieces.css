@@ -12,6 +12,7 @@
     height: var(--square-size);
     position: absolute;
     background-size: 100%;
+    background-image: var(--piece-image);
     z-index: 10;
     cursor: grab;
     user-select: none;

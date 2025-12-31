@@ -170,13 +170,13 @@
     20%, 40%, 60%, 80% { transform: translate(6px, -6px); }
 }
 
-/* 3D Piece Structure */
-.piece {
-    perspective: 600px;
+/* Visceral Knight (Atomic Tutorial) */
+.visceral-knight {
+    perspective: 1000px;
     transform-style: preserve-3d;
 }
 
-.piece-inner {
+.vk-inner {
     width: 100%;
     height: 100%;
     position: relative;
@@ -184,51 +184,51 @@
     transition: transform 0.1s;
 }
 
-.piece-front, .piece-back {
+.vk-front, .vk-back {
     position: absolute;
     width: 100%;
     height: 100%;
-    backface-visibility: visible; /* Let's see it spin */
     background-size: 100%;
+    background-image: var(--piece-image);
+    backface-visibility: visible;
 }
 
-.piece-back {
-    transform: rotateY(180deg);
+.vk-back {
+    transform: rotateY(180deg) translateZ(1px); /* Slightly offset to avoid flickering */
 }
 
-@keyframes tilt-up {
-    from { transform: rotateX(0deg); }
-    to { transform: rotateX(-45deg); }
+@keyframes vk-tilt-up {
+    from { transform: perspective(1000px) rotateX(0deg) rotateZ(0deg); }
+    to { transform: perspective(1000px) rotateX(-45deg) rotateZ(15deg); }
 }
 
-.piece.preparing-knight .piece-inner {
-    animation: tilt-up 0.4s ease-out forwards;
+.visceral-knight.preparing .vk-inner {
+    animation: vk-tilt-up 0.4s ease-out forwards;
 }
 
-@keyframes ballistic-spin {
-    0% { transform: rotateX(-45deg); }
-    100% { transform: rotateX(360deg) rotateY(360deg); } /* Full 3D tumble */
+@keyframes vk-ballistic-spin {
+    0% { transform: perspective(1000px) rotateX(-45deg) rotateZ(15deg); }
+    100% { transform: perspective(1000px) rotateX(315deg) rotateY(360deg) rotateZ(15deg); } /* Continuous 3D tumble */
 }
 
-@keyframes ballistic-path {
+@keyframes vk-ballistic-path {
     0% { transform: scale(1.1); filter: none; }
-    50% { transform: scale(2.5); filter: drop-shadow(0 0 15px rgba(255, 165, 0, 0.8)); }
+    50% { transform: scale(2.4); filter: drop-shadow(0 0 15px rgba(255, 165, 0, 0.8)); }
     100% { transform: scale(1); filter: drop-shadow(0 0 30px rgba(255, 69, 0, 1)); }
 }
 
-.piece.flying-knight {
+.visceral-knight.flying {
     transition: left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
                 top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-    animation: ballistic-path 0.4s ease-in-out forwards;
-    z-index: 1000 !important;
+    animation: vk-ballistic-path 0.4s ease-in-out forwards;
 }
 
-.piece.flying-knight .piece-inner {
-    animation: ballistic-spin 0.4s linear infinite;
+.visceral-knight.flying .vk-inner {
+    animation: vk-ballistic-spin 0.4s linear infinite;
 }
 
-/* Rocket Exhaust Trail */
-.piece.flying-knight::after {
+/* Rocket Exhaust Trail for Visceral Knight */
+.visceral-knight.flying::after {
     content: '';
     position: absolute;
     top: 50%;
