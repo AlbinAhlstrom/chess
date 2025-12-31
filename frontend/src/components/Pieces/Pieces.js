@@ -156,7 +156,6 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     const captureSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/capture.mp3"));
     const castleSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/castle.mp3"));
     const checkSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-check.mp3"));
-    const gameEndSound = useRef(new Audio("/sounds/win-sound.wav"));
     const gameStartSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/game-start.mp3"));
     const promotionSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/promote.mp3"));
     const illegalSound = useRef(new Audio("https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/illegal.mp3"));
@@ -344,10 +343,6 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                 setSelectedSquare(null);
                 setLegalMoves([]);
                 if (highlightRef.current) highlightRef.current.style.display = 'none';
-
-                if (message.status === "checkmate" || message.status === "draw" || message.status === "game_over" || message.status === "timeout") {
-                    gameEndSound.current.play().catch(e => console.error("Error playing game end sound:", e));
-                }
             } else if (message.type === "takeback_offered") {
                 setTakebackOffer({ by_user_id: message.by_user_id });
             } else if (message.type === "draw_offered") {
