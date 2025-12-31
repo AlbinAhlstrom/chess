@@ -208,12 +208,15 @@
 
 @keyframes vk-ballistic-spin {
     0% { transform: perspective(1000px) rotateX(-45deg) rotateZ(15deg); }
-    100% { transform: perspective(1000px) rotateX(315deg) rotateY(360deg) rotateZ(15deg); }
+    33% { transform: perspective(1000px) rotateX(-90deg) rotateZ(30deg); } /* Steep vertical climb */
+    66% { transform: perspective(1000px) rotateX(0deg) rotateZ(60deg); } /* Level at peak */
+    100% { transform: perspective(1000px) rotateX(90deg) rotateZ(90deg); } /* Vertical impact */
 }
 
 @keyframes vk-ballistic-path {
-    0% { transform: scale(1.1); filter: none; }
-    50% { transform: scale(2.4); filter: drop-shadow(0 0 15px rgba(255, 165, 0, 0.8)); }
+    0%, 66% { transform: scale(1.1); filter: none; }
+    67% { filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5)); }
+    85% { transform: scale(2.4); filter: drop-shadow(-10px 10px 15px rgba(255, 165, 0, 0.8)); }
     100% { transform: scale(1); filter: drop-shadow(0 0 30px rgba(255, 69, 0, 1)); }
 }
 
@@ -224,7 +227,7 @@
 }
 
 .visceral-knight.flying .vk-inner {
-    animation: vk-ballistic-spin 0.4s linear infinite;
+    animation: vk-ballistic-spin 0.4s ease-in-out forwards;
 }
 
 /* Rocket Exhaust Trail for Visceral Knight */
