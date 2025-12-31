@@ -27,8 +27,8 @@ const Confetti = ({ trigger }) => {
                     origin: { x: 0.5, y: 1.1 },
                     angle: randomInRange(75, 105), // Narrower upward cone
                     spread: randomInRange(40, 80),
-                    gravity: 1.5,
-                    startVelocity: randomInRange(45, 75)
+                    gravity: 1.2,
+                    startVelocity: randomInRange(70, 100)
                 });
             }, 250);
 
