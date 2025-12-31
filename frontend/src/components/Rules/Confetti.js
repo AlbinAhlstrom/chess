@@ -12,7 +12,8 @@ const Confetti = ({ trigger }) => {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext("2d", { alpha: true });
         const COUNT = 1100;
-        const SPEED = 20.75;
+        const SPEED = 1.2; // Adjusted for physics-based loop
+        const GRAVITY = 0.15;
         const palette = [
             [255, 214, 102], [255, 107, 107], [116, 185, 255], [120, 224, 143], [235, 235, 235]
         ];
@@ -78,41 +79,60 @@ const Confetti = ({ trigger }) => {
             return spr;
         };
 
-        const makePiece = (init) => {
+        const makePiece = () => {
             const z = Math.random();
             const layer = z < 0.5 ? 0 : z < 0.85 ? 1 : 2;
             const hero = layer === 2 && Math.random() < 0.35;
             const ultra = layer === 2 && Math.random() < 0.05;
             const floaty = Math.random() < 0.22;
-            const insaneFlip = Math.random() < 0.06;
-            const fastFlip = !insaneFlip && Math.random() < 0.22;
             const base = layer === 0 ? rand(2, 4) : layer === 1 ? rand(4, 7) : ultra ? rand(34, 55) : hero ? rand(18, 28) : rand(12, 20);
-            const x = rand(-140, w + 140);
-            // Starting position: init pieces scattered, new pieces always from top
-            const y = init ? rand(-h, h) : rand(-260, -60); 
-            const vy = layer === 0 ? rand(0.35, 0.85) : layer === 1 ? rand(0.7, 1.35) : rand(1.05, 2.0);
-            const vx = layer === 0 ? rand(0.1, 0.28) : layer === 1 ? rand(0.16, 0.42) : rand(0.22, 0.62);
+            
+            // Start at bottom center
+            const x = w / 2 + rand(-20, 20);
+            const y = h + 50;
+
+            // Upward burst velocity with cone spread
+            // Angle between -70 and -110 degrees (upwards)
+            const angle = rand(-Math.PI * 0.4, -Math.PI * 0.6); 
+            // Velocity to reach top of screen: v^2 = 2gh. For h=h, v = sqrt(2*0.15*h)
+            const power = Math.sqrt(2 * GRAVITY * h) * rand(0.9, 1.2);
+            
+            const vx = Math.cos(angle) * power;
+            const vy = Math.sin(angle) * power;
+
             const rgb = pick(palette);
             const r = Math.round(rgb[0] * 0.72), g = Math.round(rgb[1] * 0.72), b = Math.round(rgb[2] * 0.72);
             const aspect = floaty ? rand(1.15, 1.75) : rand(1.0, 1.55);
             const bw = Math.max(2, Math.round(base * rand(0.85, 1.25))), bh = Math.max(3, Math.round(bw * aspect));
-            const flipSpeed = insaneFlip ? rand(0.14, 0.26) : fastFlip ? rand(0.06, 0.12) : rand(0.02, 0.05);
+            const flipSpeed = rand(0.02, 0.2);
             const blur = ultra ? 3 : 0;
-            return { x, y, layer, hero, ultra, floaty, spr: getSprite(r, g, b, bw, bh, blur), vx, vy, rot: rand(0, Math.PI * 2), vr: rand(-0.02, 0.02) * (layer + 1), sway: rand(0, Math.PI * 2), swaySpeed: rand(0.01, 0.02), drift: rand(0.2, 0.6), flip: rand(0, Math.PI * 2), flipSpeed, dead: false };
+
+            return { 
+                x, y, vx, vy, 
+                layer, hero, ultra, floaty, 
+                spr: getSprite(r, g, b, bw, bh, blur), 
+                rot: rand(0, Math.PI * 2), 
+                vr: rand(-0.1, 0.1), 
+                sway: rand(0, Math.PI * 2), 
+                swaySpeed: rand(0.01, 0.05), 
+                drift: rand(0.5, 2), 
+                flip: rand(0, Math.PI * 2), 
+                flipSpeed, 
+                dead: false 
+            };
         };
 
-        piecesRef.current = Array.from({ length: COUNT }, () => makePiece(true));
+        // Create initial burst
+        piecesRef.current = Array.from({ length: COUNT }, () => makePiece());
 
         let last = performance.now();
-        let startTime = performance.now();
-        const spawnDuration = 2500; // Stop spawning new pieces after 2.5s for a "brief shower"
 
         const loop = (now) => {
-            const dt = Math.min(0.033, (now - last) / 1000);
+            const dt = Math.min(0.033, (now - last) / 1000) * 60; // Normalize to ~60fps
             last = now;
             ctx.clearRect(0, 0, w, h);
-            const t = now * 0.001;
-            const wind = 0.5 + Math.sin(t * 0.35) * 0.18 + mxRef.current * 0.3;
+            
+            const wind = mxRef.current * 0.5;
 
             let aliveCount = 0;
             for (let i = 0; i < piecesRef.current.length; i++) {
@@ -120,31 +140,32 @@ const Confetti = ({ trigger }) => {
                 if (p.dead) continue;
                 aliveCount++;
 
-                const depth = p.layer === 0 ? 0.55 : p.layer === 1 ? 0.85 : 1.0;
-                p.sway += p.swaySpeed * 60 * dt * SPEED;
-                p.flip += p.flipSpeed * 60 * dt * SPEED;
-                const floatDrift = Math.sin(p.sway) * p.drift * (p.floaty ? 1.15 : 1.0);
-                const fall = p.floaty ? 0.52 + 0.24 * Math.sin(p.sway * 0.9) : 0.85;
-                p.x += (wind * depth + floatDrift + p.vx) * 60 * dt * SPEED;
-                p.y += p.vy * fall * 60 * dt * SPEED;
-                p.rot += p.vr * 60 * dt * SPEED;
-
-                if (p.x < -300) p.x = w + 300;
-                if (p.x > w + 300) p.x = -300;
+                // Physics
+                p.vy += GRAVITY * dt;
+                p.vx += wind * dt;
                 
-                if (p.y > h + 340) {
-                    if (now - startTime < spawnDuration) {
-                        piecesRef.current[i] = makePiece(false);
-                    } else {
-                        p.dead = true;
-                    }
+                // Air resistance / Drift
+                p.vx *= Math.pow(0.99, dt);
+                
+                p.x += p.vx * dt * SPEED;
+                p.y += p.vy * dt * SPEED;
+                
+                p.rot += p.vr * dt;
+                p.flip += p.flipSpeed * dt;
+                p.sway += p.swaySpeed * dt;
+
+                // Lateral sway
+                const swayX = Math.sin(p.sway) * p.drift;
+                
+                if (p.y > h + 100 && p.vy > 0) {
+                    p.dead = true;
                 }
 
                 ctx.save();
-                ctx.translate(p.x, p.y);
+                ctx.translate(p.x + swayX, p.y);
                 ctx.rotate(p.rot);
-                ctx.scale(0.06 + 0.94 * Math.abs(Math.sin(p.flip)), 1);
-                ctx.globalAlpha = p.layer === 0 ? 0.16 : p.layer === 1 ? 0.42 : p.ultra ? 0.95 : p.hero ? 0.9 : 0.72;
+                ctx.scale(Math.abs(Math.sin(p.flip)), 1);
+                ctx.globalAlpha = p.layer === 0 ? 0.2 : p.layer === 1 ? 0.5 : p.ultra ? 0.95 : 0.8;
                 ctx.drawImage(p.spr.img, -p.spr.ox, -p.spr.oy);
                 ctx.restore();
             }
