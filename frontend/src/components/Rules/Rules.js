@@ -95,19 +95,6 @@ const VARIANT_RULES = {
     }
 };
 
-function WinnerSound({ completed }) {
-    const soundRef = useRef(new Audio("/sounds/win-sound.wav"));
-    
-    useEffect(() => {
-        if (completed) {
-            soundRef.current.currentTime = 0;
-            soundRef.current.play().catch(() => {});
-        }
-    }, [completed]);
-
-    return <Confetti trigger={completed} />;
-}
-
 function FlyingKnight({ file, rank, isPreparing, isFlying }) {
     const style = {
         left: `calc(${file} * 25%)`,
@@ -591,7 +578,7 @@ function AtomicTutorialBoard() {
                         <canvas ref={canvasRef} className="explosion-canvas" />
                     </>
                 )}
-                <WinnerSound completed={completed} />
+                <Confetti trigger={completed} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
@@ -827,7 +814,7 @@ function AntichessTutorialBoard() {
                     );
                 })}
                 {shatter && <canvas ref={canvasRef} className="explosion-canvas" />}
-                <WinnerSound completed={completed} />
+                <Confetti trigger={completed} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
@@ -998,7 +985,7 @@ function CrazyhouseTutorialBoard() {
                         }}
                     />
                 )}
-                <WinnerSound completed={completed} />
+                <Confetti trigger={completed} />
             </div>
             
             <div className="reserve-tray" style={{ position: 'relative' }}>
@@ -1188,7 +1175,7 @@ function KOTHTutorialBoard() {
                         <div className="victory-pillar"></div>
                     </div>
                 )}
-                <WinnerSound completed={completed} />
+                <Confetti trigger={completed} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
@@ -1359,7 +1346,7 @@ function RacingKingsTutorialBoard() {
                     <Piece key={p.id} piece={p.type} file={p.file} rank={p.rank} 
                            onDragStartCallback={handlePieceDragStart} onDropCallback={handlePieceDrop} />
                 ))}
-                <WinnerSound completed={completed} />
+                <Confetti trigger={completed} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
@@ -1480,7 +1467,7 @@ function HordeTutorialBoard() {
                         className={p.color === 'w' ? (completed ? 'horde-pawn-victory' : 'horde-pawn') : ''}
                     />
                 ))}
-                <WinnerSound completed={completed} />
+                <Confetti trigger={completed} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
@@ -1686,7 +1673,7 @@ function ThreeCheckTutorialBoard() {
                         <div className="strike-line"></div>
                     </div>
                 )}
-                <WinnerSound completed={completed} />
+                <Confetti trigger={completed} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
@@ -1853,7 +1840,7 @@ function StandardTutorialBoard() {
                     <div className="standard-shockwave" style={{ left: '0%', top: '0%' }}></div>
                 )}
                 
-                <WinnerSound completed={completed} />
+                <Confetti trigger={completed} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
@@ -1916,7 +1903,7 @@ function Chess960TutorialBoard() {
                         className={isShuffling ? 'quantum-glitch' : ''}
                     />
                 ))}
-                <WinnerSound completed={completed} />
+                <Confetti trigger={completed} />
             </div>
             <div className="tutorial-controls">
                 <p>{message}</p>
