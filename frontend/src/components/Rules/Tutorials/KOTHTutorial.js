@@ -164,7 +164,7 @@ function KOTHTutorialBoard() {
                 {pieces.map(p => (
                     <Piece key={p.id} piece={p.type} file={p.file} rank={p.rank} 
                            onDragStartCallback={handlePieceDragStart} onDropCallback={handlePieceDrop}
-                           className={p.id === 'wk' && victoryAura ? 'koth-aura' : ''} />
+                           className={`${p.id === 'wk' && victoryAura ? 'koth-aura' : ''} ${!completed && p.id === 'wk' ? 'forced-move' : ''}`} />
                 ))}
                 
                 {victoryAura && (

@@ -158,7 +158,7 @@ function CrazyhouseTutorialBoard() {
                 {pieces.map(p => (
                     <Piece key={p.id} piece={p.type} file={p.file} rank={p.rank} 
                            onDragStartCallback={handlePieceDragStart} onDropCallback={handlePieceDrop}
-                           className={p.id === warpPieceId ? 'drop-warp' : ''} />
+                           className={`${p.id === warpPieceId ? 'drop-warp' : ''} ${!completed && p.color === 'w' ? 'forced-move' : ''}`} />
                 ))}
                 
                 {pocketingPiece && (
@@ -180,7 +180,7 @@ function CrazyhouseTutorialBoard() {
                 <div className="reserve-slots">
                     {reserve.map((type, i) => (
                         <div key={i} 
-                             className={`reserve-piece ${selectedReserve === i ? 'selected' : ''}`}
+                             className={`reserve-piece ${selectedReserve === i ? 'selected' : ''} ${!completed ? 'forced-move' : ''}`}
                              onClick={() => {
                                  setSelectedReserve(i);
                                  setMessage("Piece selected from reserve. Now click any empty square on the board!");

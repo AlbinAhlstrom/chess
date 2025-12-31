@@ -546,8 +546,8 @@
     background-blend-mode: overlay;
 }
 
-/* Forced Capture Hunger Pulse */
-@keyframes forced-capture-jitter {
+/* Forced Move Hunger Pulse */
+@keyframes forced-move-jitter {
     0% { transform: translate(0, 0) scale(1); filter: brightness(1); }
     25% { transform: translate(-1px, 1px) scale(1.02); filter: brightness(1.2); }
     50% { transform: translate(1px, -1px) scale(1.01); filter: brightness(1.3); }
@@ -555,8 +555,8 @@
     100% { transform: translate(0, 0) scale(1); filter: brightness(1); }
 }
 
-.piece.forced-capture {
-    animation: forced-capture-jitter 0.4s infinite;
+.piece.forced-move {
+    animation: forced-move-jitter 0.4s infinite;
     cursor: pointer;
     box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.4);
     border-radius: 4px;

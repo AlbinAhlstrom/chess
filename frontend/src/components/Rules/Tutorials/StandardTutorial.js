@@ -162,7 +162,7 @@ function StandardTutorialBoard() {
                         rank={p.rank} 
                         onDragStartCallback={handlePieceDragStart} 
                         onDropCallback={handlePieceDrop}
-                        className={completed ? (p.color === 'w' ? 'victory-gold' : 'royal-collapse') : (selected && selected.file === p.file && selected.rank === p.rank ? 'piece-lift' : '')}
+                        className={`${completed ? (p.color === 'w' ? 'victory-gold' : 'royal-collapse') : (selected && selected.file === p.file && selected.rank === p.rank ? 'piece-lift' : '')} ${!completed && p.color === 'w' ? 'forced-move' : ''}`}
                     />
                 ))}
                 

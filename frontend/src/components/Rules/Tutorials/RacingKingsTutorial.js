@@ -170,7 +170,8 @@ function RacingKingsTutorialBoard() {
                 {legalMoves.map((m, i) => <LegalMoveDot key={i} file={m.file} rank={m.rank} />)}
                 {pieces.map(p => (
                     <Piece key={p.id} piece={p.type} file={p.file} rank={p.rank} 
-                           onDragStartCallback={handlePieceDragStart} onDropCallback={handlePieceDrop} />
+                           onDragStartCallback={handlePieceDragStart} onDropCallback={handlePieceDrop}
+                           className={!completed && p.id === 'wk' ? 'forced-move' : ''} />
                 ))}
                 <Confetti trigger={completed && !hasPlayedConfetti.current} />
             </div>

@@ -432,6 +432,7 @@ function AtomicTutorialBoard() {
                         rank={p.rank}
                         onDragStartCallback={handlePieceDragStart}
                         onDropCallback={handlePieceDrop}
+                        className={!completed && p.id === 'wk' ? 'forced-move' : ''}
                     />
                 ))}
 

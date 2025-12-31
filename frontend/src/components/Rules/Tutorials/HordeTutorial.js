@@ -119,7 +119,7 @@ function HordeTutorialBoard() {
                         rank={p.rank} 
                         onDragStartCallback={handlePieceDragStart} 
                         onDropCallback={handlePieceDrop}
-                        className={p.color === 'w' ? (completed ? 'horde-pawn-victory' : 'horde-pawn') : ''}
+                        className={`${p.color === 'w' ? (completed ? 'horde-pawn-victory' : 'horde-pawn') : ''} ${!completed && p.color === 'w' ? 'forced-move' : ''}`}
                     />
                 ))}
                 <Confetti trigger={completed && !hasPlayedConfetti.current} />

@@ -199,7 +199,7 @@ function ThreeCheckTutorialBoard() {
                 {pieces.map(p => (
                     <Piece key={p.id} piece={p.type} file={p.file} rank={p.rank} 
                            onDragStartCallback={handlePieceDragStart} onDropCallback={handlePieceDrop}
-                           className={p.id === 'bk' && checkFlash ? 'check-pulse' : ''} />
+                           className={`${p.id === 'bk' && checkFlash ? 'check-pulse' : ''} ${!completed && p.id === 'wq' ? 'forced-move' : ''}`} />
                 ))}
                 
                 {strikeSquare && (

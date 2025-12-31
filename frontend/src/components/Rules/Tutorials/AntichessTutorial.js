@@ -233,7 +233,7 @@ function AntichessTutorialBoard() {
                             rank={p.rank} 
                             onDragStartCallback={handlePieceDragStart} 
                             onDropCallback={handlePieceDrop}
-                            className={isForced ? 'forced-capture' : ''}
+                            className={isForced ? 'forced-move' : ''}
                         />
                     );
                 })}
