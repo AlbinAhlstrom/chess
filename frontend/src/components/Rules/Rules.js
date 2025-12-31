@@ -110,6 +110,7 @@ function AtomicTutorialBoard() {
     const [selected, setSelected] = useState(null); // { file, rank }
     const [legalMoves, setLegalMoves] = useState([]);
     const [isFlying, setIsFlying] = useState(false);
+    const [isPreparing, setIsPreparing] = useState(false);
     const [isShaking, setIsShaking] = useState(false);
     const boardRef = useRef(null);
     const canvasRef = useRef(null);
@@ -245,45 +246,49 @@ function AtomicTutorialBoard() {
          const targetPiece = pieces.find(p => p.file === targetFile && p.rank === targetRank);
          
          if (targetPiece && targetPiece.color === 'b') {
-            setMessage("Incoming atom bomb!");
+            setMessage("Preparing for launch...");
             
-            setIsFlying(true);
+            setIsPreparing(true);
             setSelected(null);
             setLegalMoves([]);
-            
-            // 1. Move the knight in state to trigger CSS transition
-            setPieces(prev => prev.map(p => p.id === 'wk' ? { ...p, file: targetFile, rank: targetRank } : p));
 
-            // 2. Wait for flight animation to finish (0.4s)
+            // Phase 1: Tilt in place (400ms)
             setTimeout(() => {
-                setIsFlying(false);
-                setIsShaking(true);
-                setExplosion({ file: targetFile, rank: targetRank });
+                setIsPreparing(false);
+                setIsFlying(true);
+                setMessage("Incoming atom bomb!");
+                
+                // Phase 2: Move the knight in state to trigger flight
+                setPieces(prev => prev.map(p => p.id === 'wk' ? { ...p, file: targetFile, rank: targetRank } : p));
 
-                // Remove pieces immediately after impact
-                setPieces(prev => prev.filter(p => {
-                    const pdx = Math.abs(p.file - targetFile);
-                    const pdy = Math.abs(p.rank - targetRank);
-                    
-                    if (p.id === 'wk') return false; 
-                    if (p.file === targetFile && p.rank === targetRank) return false;
-                    
-                    if (pdx <= 1 && pdy <= 1) {
-                        if (p.type === 'p') return true; 
-                        return false; 
-                    }
-                    return true;
-                }));
-
-                // Clear shake after a moment
-                setTimeout(() => setIsShaking(false), 300);
-
-                // Clear explosion after its animation (0.8s)
+                // Wait for flight animation to finish (0.4s)
                 setTimeout(() => {
-                    setExplosion(null);
-                    setCompleted(true);
-                    setMessage("Notice: The Knight, King, and other pieces exploded. The side Pawns survived!");
-                }, 800);
+                    setIsFlying(false);
+                    setIsShaking(true);
+                    setExplosion({ file: targetFile, rank: targetRank });
+
+                    setPieces(prev => prev.filter(p => {
+                        const pdx = Math.abs(p.file - targetFile);
+                        const pdy = Math.abs(p.rank - targetRank);
+                        
+                        if (p.id === 'wk') return false; 
+                        if (p.file === targetFile && p.rank === targetRank) return false;
+                        
+                        if (pdx <= 1 && pdy <= 1) {
+                            if (p.type === 'p') return true; 
+                            return false; 
+                        }
+                        return true;
+                    }));
+
+                    setTimeout(() => setIsShaking(false), 300);
+
+                    setTimeout(() => {
+                        setExplosion(null);
+                        setCompleted(true);
+                        setMessage("Notice: The Knight, King, and other pieces exploded. The side Pawns survived!");
+                    }, 800);
+                }, 400);
             }, 400);
          } else {
              setMessage("Move to capture the middle Black Pawn to see the explosion!");
@@ -294,7 +299,7 @@ function AtomicTutorialBoard() {
     };
 
     const handleBoardClick = (e) => {
-        if (completed || explosion || isFlying || isShaking) return;
+        if (completed || explosion || isFlying || isShaking || isPreparing) return;
         const sq = getSquareFromCoords(e.clientX, e.clientY);
         if (!sq) return;
 
@@ -321,7 +326,7 @@ function AtomicTutorialBoard() {
     };
 
     const handlePieceDragStart = ({ file, rank, piece }) => {
-        if (completed || explosion || isFlying || isShaking) return;
+        if (completed || explosion || isFlying || isShaking || isPreparing) return;
         // piece is "N" (White Knight type)
         if (piece !== 'N') return; 
 
@@ -330,7 +335,7 @@ function AtomicTutorialBoard() {
     };
 
     const handlePieceDrop = ({ clientX, clientY }) => {
-        if (completed || explosion || isFlying || isShaking) return;
+        if (completed || explosion || isFlying || isShaking || isPreparing) return;
         const sq = getSquareFromCoords(clientX, clientY);
         
         if (sq && selected) {
@@ -356,6 +361,7 @@ function AtomicTutorialBoard() {
         setSelected(null);
         setLegalMoves([]);
         setIsFlying(false);
+        setIsPreparing(false);
         setIsShaking(false);
         setMessage("Drag or click the White Knight to capture the middle Black Pawn!");
     };
@@ -395,17 +401,24 @@ function AtomicTutorialBoard() {
                 ))}
 
                 {/* Pieces */}
-                {pieces.map(p => (
-                    <Piece
-                        key={p.id}
-                        piece={p.type}
-                        file={p.file}
-                        rank={p.rank}
-                        onDragStartCallback={handlePieceDragStart}
-                        onDropCallback={handlePieceDrop}
-                        className={p.id === 'wk' && isFlying ? 'flying-knight' : ''}
-                    />
-                ))}
+                {pieces.map(p => {
+                    let className = '';
+                    if (p.id === 'wk') {
+                        if (isPreparing) className = 'preparing-knight';
+                        else if (isFlying) className = 'flying-knight';
+                    }
+                    return (
+                        <Piece
+                            key={p.id}
+                            piece={p.type}
+                            file={p.file}
+                            rank={p.rank}
+                            onDragStartCallback={handlePieceDragStart}
+                            onDropCallback={handlePieceDrop}
+                            className={className}
+                        />
+                    );
+                })}
 
                 {/* Combined Explosion Effects */}
                 {explosion && (

@@ -170,22 +170,32 @@
     20%, 40%, 60%, 80% { transform: translate(6px, -6px); }
 }
 
+@keyframes tilt-up {
+    from { transform: scale(1) rotate(0deg) skewY(0deg); }
+    to { transform: scale(1.1) rotate(15deg) skewY(-25deg); }
+}
+
+.piece.preparing-knight {
+    animation: tilt-up 0.4s ease-out forwards;
+    z-index: 1000 !important;
+}
+
 @keyframes ballistic-flight {
     0% { 
-        transform: scale(1) rotate(0deg) skewY(0deg);
+        transform: scale(1.1) rotate(15deg) skewY(-25deg);
         filter: none;
     }
     33% {
-        transform: scale(1.6) rotate(15deg) skewY(-15deg); /* Pitch up */
-        filter: none;
+        transform: scale(1.8) rotate(35deg) skewY(-45deg); /* Steep takeoff */
+        filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.4));
     }
     66% {
-        transform: scale(2.2) rotate(35deg) skewY(5deg); /* Level out and start nose dive */
-        filter: drop-shadow(-10px 10px 10px rgba(255, 165, 0, 0.7));
+        transform: scale(2.4) rotate(60deg) skewY(0deg); /* High peak, leveling out */
+        filter: drop-shadow(-15px 15px 15px rgba(255, 165, 0, 0.8));
     }
     100% { 
-        transform: scale(1) rotate(60deg) skewY(25deg); /* Nose-dive impact */
-        filter: drop-shadow(0 0 20px rgba(255, 69, 0, 1));
+        transform: scale(1) rotate(90deg) skewY(45deg); /* Vertical nose-dive impact */
+        filter: drop-shadow(0 0 30px rgba(255, 69, 0, 1));
     }
 }
 
