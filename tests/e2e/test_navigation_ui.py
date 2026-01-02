@@ -19,7 +19,7 @@ def test_history_navigation_ui(page: Page, frontend_url: str):
     page.set_viewport_size({"width": 375, "height": 667})
     page.on("console", lambda msg: print(f"BROWSER CONSOLE [{msg.type}]: {msg.text}"))
     page.on("request", lambda request: print(f"REQUEST: {request.method} {request.url}"))
-    page.on("requestfailed", lambda request: print(f"REQUEST FAILED: {request.url} - {request.failure.error_text}"))
+    page.on("requestfailed", lambda request: print(f"REQUEST FAILED: {request.url} - {request.failure}"))
     page.on("response", lambda response: print(f"RESPONSE: {response.status} {response.url}"))
     
     print(f"Navigating to {frontend_url}/otb")
