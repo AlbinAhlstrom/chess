@@ -32,7 +32,7 @@ export function HistoryDisplay({
                         className="nav-btn" 
                         onClick={onStepBackward} 
                         title="Previous"
-                        disabled={viewedIndex <= 0}
+                        disabled={viewedIndex === 0}
                     >
                         <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
                             <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/>
@@ -42,7 +42,7 @@ export function HistoryDisplay({
                         className="nav-btn" 
                         onClick={onStepForward} 
                         title="Next"
-                        disabled={viewedIndex === -1 || viewedIndex >= moveHistory.length}
+                        disabled={viewedIndex === -1}
                     >
                         <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
                             <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>

@@ -711,6 +711,11 @@
         font-size: 12px;
         --button-icon-size: 14px; /* Scale down the icons */
     }
+
+    /* Remove redundant undo/back button on mobile */
+    .game-controls .control-button:first-child {
+        display: none;
+    }
 }
 
 /* Explosion Animation */
