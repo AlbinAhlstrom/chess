@@ -186,8 +186,11 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
             <div className="pieces" ref={ref} 
                 onClick={(e) => { handleSquareClick(e); if (isMenuOpen) setIsMenuOpen(false); }}
                 onTouchStart={(e) => { 
-                    if (e.cancelable) e.preventDefault(); 
-                    handleSquareClick(e); 
+                    if (e.cancelable) e.preventDefault();
+                    const touch = e.touches[0];
+                    if (touch) {
+                        handleSquareClick({ clientX: touch.clientX, clientY: touch.clientY });
+                    }
                     if (isMenuOpen) setIsMenuOpen(false); 
                 }}
             >

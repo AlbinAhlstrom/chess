@@ -26,9 +26,6 @@ function Piece({
     });
 
     const handleInteraction = (e) => {
-        if (canMove) {
-            e.stopPropagation();
-        }
         startDrag(e);
     };
 
