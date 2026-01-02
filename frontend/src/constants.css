@@ -7,8 +7,6 @@
     --highlight-dark-square: #D4C25E;
     --last-move-highlight: rgba(255, 255, 100, 0.4);
     --selection-highlight: rgba(255, 255, 100, 0.6);
-    --drag-hover-light-border: #F6F3DF;
-    --drag-hover-dark-border: #77AB5F;
     --legal-move-dot-color: #6CA054;
     --legal-move-dot-size: 30%;
     --king-check-flash-color: #D36135;

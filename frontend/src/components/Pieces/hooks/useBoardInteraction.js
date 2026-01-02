@@ -6,7 +6,6 @@ export function useBoardInteraction(isFlipped, position, allPossibleMoves, canMo
     const [legalMoves, setLegalMoves] = useState([]);
     const dragStartSelectionState = useRef(false);
     const ref = useRef(null);
-    const highlightRef = useRef(null);
 
     // Clear selection when position changes (move made)
     useEffect(() => {
@@ -106,8 +105,6 @@ export function useBoardInteraction(isFlipped, position, allPossibleMoves, canMo
     }, [calculateSquare, position, selectedSquare, legalMoves, updateLegalMoves, onMoveAttempt]);
 
     const handleManualDrop = useCallback(({ clientX, clientY, file, rank }) => {
-        if (highlightRef.current) highlightRef.current.style.display = 'none';
-        
         const squareData = calculateSquare({ clientX, clientY });
         if (!squareData) return;
         const { algebraic: toSquare } = squareData;
@@ -136,38 +133,13 @@ export function useBoardInteraction(isFlipped, position, allPossibleMoves, canMo
     }, [calculateSquare, allPossibleMoves, onMoveAttempt, handleSquareClick]);
 
     const handlePieceDragHover = useCallback((clientX, clientY) => {
-        if (!highlightRef.current) return;
-        
-        if (!clientX || !clientY) {
-            highlightRef.current.style.display = 'none';
-            return;
-        }
-        const squareData = calculateSquare({ clientX, clientY });
-        if (!squareData) return;
-        const { file, rank } = squareData;
-        
-        if (file >= 0 && file <= 7 && rank >= 0 && rank <= 7) {
-            highlightRef.current.style.display = 'block';
-            
-            let displayFile = isFlipped ? 7 - file : file;
-            let displayRank = isFlipped ? 7 - rank : rank;
-
-            highlightRef.current.style.left = `calc(${displayFile} * var(--square-size))`;
-            highlightRef.current.style.top = `calc(${displayRank} * var(--square-size))`;
-            
-            const isDark = (file + rank) % 2 !== 0;
-            highlightRef.current.style.border = isDark 
-                ? '5px solid var(--drag-hover-dark-border)' 
-                : '5px solid var(--drag-hover-light-border)';
-        } else {
-            highlightRef.current.style.display = 'none';
-        }
-    }, [calculateSquare, isFlipped]);
+        // No-op: Visual hover highlight removed
+    }, []);
 
     return {
         selectedSquare, setSelectedSquare,
         legalMoves, setLegalMoves,
-        ref, highlightRef,
+        ref,
         handleSquareClick,
         handlePieceDragStart,
         handlePieceDragHover,

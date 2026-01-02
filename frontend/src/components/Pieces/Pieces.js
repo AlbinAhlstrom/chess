@@ -130,7 +130,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     const {
         selectedSquare, setSelectedSquare,
         legalMoves, setLegalMoves,
-        ref, highlightRef,
+        ref,
         handleSquareClick,
         handlePieceDragStart,
         handlePieceDragHover,
