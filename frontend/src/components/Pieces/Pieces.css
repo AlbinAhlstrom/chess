@@ -202,8 +202,8 @@
 .variants-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 8px;
+    margin-bottom: 15px;
     width: 100%;
 }
 
@@ -215,29 +215,32 @@
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid transparent;
     cursor: pointer;
-    padding: 10px 2px;
-    border-radius: 6px;
+    padding: 6px 4px;
+    border-radius: 4px;
     transition: all 0.2s;
     color: var(--history-text-color);
     display: flex;
-    flex-direction: column;
+    flex-direction: row; /* Changed to row for icon + text */
     align-items: center;
     justify-content: center;
     gap: 6px;
-    font-size: 12px;
-    height: 100%;
-    min-height: 80px;
+    font-size: 13px;
+    height: auto;
+    min-height: 36px; /* Significantly reduced */
     box-sizing: border-box;
     word-break: break-word;
+    white-space: nowrap; /* Prevent wrapping if possible */
 }
 
-@media (max-width: 500px) {
+@media (max-width: 600px) {
     .variants-grid {
-        gap: 5px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
     }
     .variant-select-btn {
-        font-size: 10px;
-        min-height: 70px;
+        font-size: 12px;
+        min-height: 32px;
+        padding: 4px;
     }
 }
 
