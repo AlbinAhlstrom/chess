@@ -1,18 +1,15 @@
 import pytest
-from backend.main import app
-from fastapi.testclient import TestClient
-from backend.database import async_session, User, GameModel
-from sqlalchemy import select
+from backend import database
+from backend.database import User, GameModel
 import uuid
-import datetime
 import json
+import datetime
 
 @pytest.mark.asyncio
-async def test_game_history(client):
-    # Manually insert a user and games
+async def test_get_game_history_success(client):
     user_id = str(uuid.uuid4())
-    
-    async with async_session() as session:
+    # Setup test data
+    async with database.async_session() as session:
         async with session.begin():
             u = User(google_id=user_id, email=f"test_{user_id}@test.com", name="Test User", username=f"user_{user_id[:8]}")
             session.add(u)

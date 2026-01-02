@@ -16,9 +16,13 @@ export function usePieceDrag({
     const isDragging = useRef(false);
 
     const handlePointerDown = (e) => {
-        // Prevent default to ensure pointer capture works reliably and scrolling is prevented
-        e.preventDefault();
-        e.stopPropagation();
+        if (e.button !== 0 && e.pointerType === 'mouse') return; // Only left click for mouse
+
+        // Only prevent default for touch to stop scrolling
+        if (e.pointerType === 'touch' && e.cancelable) {
+            e.preventDefault();
+        }
+        e.stopPropagation(); // Stop propagation to board
 
         const node = e.target;
         node.setPointerCapture(e.pointerId);
@@ -43,8 +47,7 @@ export function usePieceDrag({
         const dist = Math.hypot(e.clientX - startX, e.clientY - startY);
 
         if (!isDragging.current) {
-            // Threshold for Drag vs Tap
-            if (dist > 8) {
+            if (dist > 5) { // Sensitivity threshold
                 isDragging.current = true;
                 
                 if (onDragStartCallback) {
@@ -67,7 +70,6 @@ export function usePieceDrag({
                 document.body.appendChild(ghost);
                 ghostRef.current = ghost;
                 
-                // Hide original
                 e.target.style.opacity = "0";
                 document.body.style.cursor = "grabbing";
             }
@@ -86,26 +88,30 @@ export function usePieceDrag({
 
         const node = e.target;
         node.releasePointerCapture(e.pointerId);
+        
+        // Cleanup Drag State
+        node.style.opacity = "1";
+        document.body.style.cursor = "default";
+        if (ghostRef.current) {
+            ghostRef.current.remove();
+            ghostRef.current = null;
+        }
 
         if (isDragging.current) {
-            // Drop Logic
-            node.style.opacity = "1";
-            document.body.style.cursor = "default";
+            // Check if dropped back on start square (approximate via callback or simple client check?)
+            // Actually, best to let the parent determine "same square" via onDropCallback return or logic.
+            // But the requirement says "counts as clicking". 
+            // We'll delegate to onDropCallback, but pass a flag or let handleManualDrop handle the logic.
             
-            if (ghostRef.current) {
-                ghostRef.current.remove();
-                ghostRef.current = null;
-            }
-
             if (onDropCallback) {
                 onDropCallback({ clientX: e.clientX, clientY: e.clientY, piece, file: realFile, rank: realRank });
             }
             if (onDragHoverCallback) onDragHoverCallback(null);
             if (onDragEndCallback) onDragEndCallback();
         } else {
-            // Tap Logic
+            // Was a Tap
             if (onPieceClick) {
-                onPieceClick({ clientX: e.clientX, clientY: e.clientY });
+                onPieceClick({ clientX: e.clientX, clientY: e.clientY, file: realFile, rank: realRank });
             }
         }
 

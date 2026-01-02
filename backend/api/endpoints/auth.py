@@ -5,7 +5,8 @@ from sqlalchemy import select
 import traceback
 
 from backend.core.config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URI, FRONTEND_URL, IS_PROD
-from backend.database import async_session, User
+from backend import database
+from backend.database import User
 
 router = APIRouter()
 

@@ -33,6 +33,7 @@ function Piece({
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
+            onClick={(e) => e.stopPropagation()}
             data-piece={piece}
             data-square={squareStr}
         />

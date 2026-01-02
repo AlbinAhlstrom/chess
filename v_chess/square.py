@@ -35,6 +35,10 @@ class Square:
                 if len(arg) != 2: raise ValueError(f"Invalid length of {arg=}")
                 file_char = arg[0].lower()
                 rank_char = arg[1]
+                if not ("a" <= file_char <= "h"):
+                    raise ValueError(f"Invalid file char: {file_char}")
+                if not rank_char.isdigit():
+                    raise ValueError(f"Invalid rank char: {rank_char}")
                 _col = ord(file_char) - ord("a")
                 _row = 8 - int(rank_char)
             elif isinstance(arg, tuple) and len(arg) == 2:

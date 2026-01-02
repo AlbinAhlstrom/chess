@@ -6,7 +6,8 @@ from sqlalchemy import select
 
 from v_chess.game import Game
 from v_chess.rules.standard import StandardRules
-from backend.database import async_session, GameModel
+from backend import database
+from backend.database import GameModel
 from backend.state import quick_match_queue, seeks, games, game_variants, RULES_MAP
 from backend.socket_manager import manager
 from backend.services.game_service import get_player_info, save_game_to_db
@@ -28,7 +29,7 @@ async def match_players():
             v_match = (p1["variant"] == s["variant"]) or (p1["variant"] == "random") or (s["variant"] == "random")
             
             if v_match and p1["time_control"] == s["time_control"]:
-                async with async_session() as session:
+                async with database.async_session() as session:
                     s_rating_info = await get_player_info(session, s["user_id"], s["variant"])
                     s_rating = s_rating_info["rating"]
                 
@@ -105,7 +106,7 @@ async def match_players():
                 if random.choice([True, False]): white_id, black_id = p1["user_id"], p2["user_id"]
                 else: white_id, black_id = p2["user_id"], p1["user_id"]
                 
-            async with async_session() as session:
+            async with database.async_session() as session:
                 async with session.begin():
                     model = GameModel(
                         id=game_id, variant=variant, fen=game.state.fen, 

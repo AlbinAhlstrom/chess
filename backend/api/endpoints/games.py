@@ -4,7 +4,8 @@ from uuid import uuid4
 import json
 import random
 
-from backend.database import async_session, GameModel
+from backend import database
+from backend.database import GameModel
 from backend.schemas import NewGameRequest, GameRequest, LegalMovesRequest
 from backend.services.game_service import get_game, get_player_info
 from backend.state import games, game_variants, RULES_MAP
@@ -37,7 +38,7 @@ async def new_game(req: NewGameRequest, request: Request):
             if play_as == "white": white_id, black_id = user_id, "computer"
             else: white_id, black_id = "computer", user_id
         
-        async with async_session() as session:
+        async with database.async_session() as session:
             async with session.begin():
                 model = GameModel(
                     id=game_id, variant=variant, fen=game.state.fen, 
@@ -62,7 +63,7 @@ async def get_game_fens(game_id: str):
 async def get_game_state(game_id: str):
     game = await get_game(game_id)
     variant = game_variants.get(game_id, "standard")
-    async with async_session() as session:
+    async with database.async_session() as session:
         model = (await session.execute(select(GameModel).where(GameModel.id == game_id))).scalar_one_or_none()
         human_id = model.white_player_id if model and model.black_player_id == "computer" else (model.black_player_id if model else None)
         human_rating = 1500

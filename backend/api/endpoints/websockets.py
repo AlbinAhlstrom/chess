@@ -10,7 +10,8 @@ from v_chess.game import Game
 from v_chess.move import Move
 from v_chess.square import Square
 from v_chess.enums import Color
-from backend.database import async_session, GameModel
+from backend import database
+from backend.database import GameModel
 from backend.socket_manager import manager
 from backend.state import games, game_variants, seeks, quick_match_queue, pending_takebacks, RULES_MAP
 from backend.services.game_service import get_game, get_player_info, save_game_to_db, trigger_ai_move
@@ -50,7 +51,7 @@ async def lobby_websocket(websocket: WebSocket):
             elif message["type"] == "join_quick_match":
                 if not current_user_id: continue
                 variant = message.get("variant", "standard")
-                async with async_session() as session:
+                async with database.async_session() as session:
                     rating_info = await get_player_info(session, current_user_id, variant)
                     user_rating = rating_info["rating"]
                 quick_match_queue[:] = [p for p in quick_match_queue if p["user_id"] != current_user_id]
@@ -76,7 +77,7 @@ async def lobby_websocket(websocket: WebSocket):
                     else:
                         if random.choice([True, False]): white_id, black_id = seeker_id, joiner_id
                         else: white_id, black_id = joiner_id, seeker_id
-                    async with async_session() as session:
+                    async with database.async_session() as session:
                         async with session.begin():
                             model = GameModel(
                                 id=game_id, variant=variant, fen=game.state.fen, 
@@ -97,7 +98,7 @@ async def lobby_websocket(websocket: WebSocket):
 async def game_websocket(websocket: WebSocket, game_id: str):
     await manager.connect(websocket, game_id)
     game = await get_game(game_id)
-    async with async_session() as session:
+    async with database.async_session() as session:
         model = (await session.execute(select(GameModel).where(GameModel.id == game_id))).scalar_one_or_none()
         white_id, black_id = (model.white_player_id, model.black_player_id) if model else (None, None)
     
@@ -121,43 +122,50 @@ async def game_websocket(websocket: WebSocket, game_id: str):
             data = await websocket.receive_text()
             message = json.loads(data)
             if message["type"] == "move":
-                async with async_session() as session:
-                    model = (await session.execute(select(GameModel).where(GameModel.id == game_id))).scalar_one_or_none()
-                    white_id, black_id = (model.white_player_id, model.black_player_id) if model else (None, None)
-                
-                is_white_turn, is_black_turn = game.state.turn == Color.WHITE, game.state.turn == Color.BLACK
-                if (is_white_turn and white_id == "computer") or (is_black_turn and black_id == "computer"):
-                    asyncio.create_task(trigger_ai_move(game_id, game)); continue
-                
-                if is_white_turn and white_id and white_id != "computer" and user_id != white_id: continue
-                if is_black_turn and black_id and black_id != "computer" and user_id != black_id: continue
+                try:
+                    async with database.async_session() as session:
+                        model = (await session.execute(select(GameModel).where(GameModel.id == game_id))).scalar_one_or_none()
+                        white_id, black_id = (model.white_player_id, model.black_player_id) if model else (None, None)
+                    
+                    is_white_turn, is_black_turn = game.state.turn == Color.WHITE, game.state.turn == Color.BLACK
+                    if (is_white_turn and white_id == "computer") or (is_black_turn and black_id == "computer"):
+                        asyncio.create_task(trigger_ai_move(game_id, game)); continue
+                    
+                    if is_white_turn and white_id and white_id != "computer" and user_id != white_id: continue
+                    if is_black_turn and black_id and black_id != "computer" and user_id != black_id: continue
 
-                move_uci = message["uci"]
-                if "@" not in move_uci:
-                    start_sq, end_sq = Square(move_uci[:2]), Square(move_uci[2:4])
-                    piece = game.state.board.get_piece(start_sq)
-                    if piece and piece.fen.lower() == "p" and len(move_uci) == 4 and end_sq.is_promotion_row(piece.color): move_uci += "q"
-                
-                move_obj = Move(move_uci, player_to_move=game.state.turn)
-                game.take_turn(move_obj, offer_draw=message.get("offer_draw", False))
-                rating_diffs = await save_game_to_db(game_id)
-                if game_id in pending_takebacks: del pending_takebacks[game_id]
-                await manager.broadcast(game_id, json.dumps({"type": "takeback_cleared"}))
-                await manager.broadcast(game_id, json.dumps({"type": "draw_cleared"}))
+                    move_uci = message["uci"]
+                    if "@" not in move_uci:
+                        if len(move_uci) < 4:
+                            raise ValueError("UCI move too short")
+                        start_sq, end_sq = Square(move_uci[:2]), Square(move_uci[2:4])
+                        piece = game.state.board.get_piece(start_sq)
+                        if piece and piece.fen.lower() == "p" and len(move_uci) == 4 and end_sq.is_promotion_row(piece.color): move_uci += "q"
+                    
+                    move_obj = Move(move_uci, player_to_move=game.state.turn)
+                    game.take_turn(move_obj, offer_draw=message.get("offer_draw", False))
+                    rating_diffs = await save_game_to_db(game_id)
+                    if game_id in pending_takebacks: del pending_takebacks[game_id]
+                    
+                    game_state_msg = {
+                        "type": "game_state", "fen": game.state.fen, "turn": game.state.turn.value, 
+                        "is_over": game.is_over, "in_check": game.rules.is_check(), "winner": game.winner, 
+                        "move_history": game.move_history, "uci_history": game.uci_history,
+                        "clocks": {c.value: t for c, t in game.get_current_clocks().items()} if game.clocks else None, 
+                        "rating_diffs": rating_diffs,
+                        "explosion_square": str(game.state.explosion_square) if getattr(game.state, 'explosion_square', None) else None,
+                        "is_drop": move_obj.is_drop
+                    }
+                    await manager.broadcast(game_id, json.dumps({"type": "takeback_cleared", "game_state": game_state_msg}))
+                    await manager.broadcast(game_id, json.dumps({"type": "draw_cleared", "game_state": game_state_msg}))
+                    await manager.broadcast(game_id, json.dumps(game_state_msg))
 
-                await manager.broadcast(game_id, json.dumps({
-                    "type": "game_state", "fen": game.state.fen, "turn": game.state.turn.value, 
-                    "is_over": game.is_over, "in_check": game.rules.is_check(), "winner": game.winner, 
-                    "move_history": game.move_history, "uci_history": game.uci_history,
-                    "clocks": {c.value: t for c, t in game.get_current_clocks().items()} if game.clocks else None, 
-                    "rating_diffs": rating_diffs,
-                    "explosion_square": str(game.state.explosion_square) if getattr(game.state, 'explosion_square', None) else None,
-                    "is_drop": move_obj.is_drop
-                }))
-
-                if not game.is_over:
-                    if (game.state.turn == Color.WHITE and white_id == "computer") or (game.state.turn == Color.BLACK and black_id == "computer"):
-                        asyncio.create_task(trigger_ai_move(game_id, game))
+                    if not game.is_over:
+                        if (game.state.turn == Color.WHITE and white_id == "computer") or (game.state.turn == Color.BLACK and black_id == "computer"):
+                            asyncio.create_task(trigger_ai_move(game_id, game))
+                except Exception as e:
+                    await websocket.send_text(json.dumps({"type": "error", "message": str(e)}))
+                    continue
             elif message["type"] == "undo":
                 if (white_id is None and black_id is None) or (user_id in [white_id, black_id]):
                     game.undo_move(); await save_game_to_db(game_id)

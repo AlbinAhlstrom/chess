@@ -3,6 +3,13 @@ import json
 from backend.main import app
 from fastapi.testclient import TestClient
 
+def wait_for_game_state(ws):
+    """Wait for and return the next game_state message, skipping noise."""
+    while True:
+        msg = ws.receive_json()
+        if msg["type"] == "game_state":
+            return msg
+
 def test_atomic_explosion_broadcast(client):
     """
     Test that a capture in Atomic chess correctly broadcasts the explosion_square.
@@ -15,7 +22,7 @@ def test_atomic_explosion_broadcast(client):
     # 2. Connect to the WebSocket
     with client.websocket_connect(f"/ws/{game_id}") as ws:
         # Receive initial state
-        initial_msg = ws.receive_json()
+        initial_msg = wait_for_game_state(ws)
         assert initial_msg["type"] == "game_state"
 
         # 3. Setup a capture scenario (Scholar's mate attempt or similar)
@@ -23,11 +30,11 @@ def test_atomic_explosion_broadcast(client):
         moves = ["e2e4", "e7e5", "d1h5", "g7g6"]
         for move in moves:
             ws.send_json({"type": "move", "uci": move})
-            ws.receive_json() # Ignore intermediate states
+            wait_for_game_state(ws) # Ignore intermediate states
 
         # 4. Perform the capture
         ws.send_json({"type": "move", "uci": "h5e5"})
-        capture_msg = ws.receive_json()
+        capture_msg = wait_for_game_state(ws)
 
         # 5. Assert explosion detection
         assert capture_msg["type"] == "game_state"
@@ -42,17 +49,17 @@ def test_atomic_pawn_capture_e4d5(client):
     game_id = create_res.json()["game_id"]
 
     with client.websocket_connect(f"/ws/{game_id}") as ws:
-        ws.receive_json() # init
+        wait_for_game_state(ws) # init
 
         # Setup: e2e4, d7d5
         ws.send_json({"type": "move", "uci": "e2e4"})
-        ws.receive_json()
+        wait_for_game_state(ws)
         ws.send_json({"type": "move", "uci": "d7d5"})
-        ws.receive_json()
+        wait_for_game_state(ws)
 
         # Capture: e4d5
         ws.send_json({"type": "move", "uci": "e4d5"})
-        msg = ws.receive_json()
+        msg = wait_for_game_state(ws)
 
         assert msg["type"] == "game_state"
         assert "x" in msg["move_history"][-1]
@@ -66,10 +73,10 @@ def test_standard_move_no_explosion(client):
     game_id = create_res.json()["game_id"]
 
     with client.websocket_connect(f"/ws/{game_id}") as ws:
-        ws.receive_json() # init
+        wait_for_game_state(ws) # init
 
         ws.send_json({"type": "move", "uci": "e2e4"})
-        msg = ws.receive_json()
+        msg = wait_for_game_state(ws)
 
         assert msg["type"] == "game_state"
         assert msg["explosion_square"] is None
@@ -85,11 +92,11 @@ def test_crazyhouse_drop_broadcast(client):
     game_id = create_res.json()["game_id"]
 
     with client.websocket_connect(f"/ws/{game_id}") as ws:
-        ws.receive_json() # init
+        wait_for_game_state(ws) # init
 
         # 2. Perform a drop move: P@e4
         ws.send_json({"type": "move", "uci": "P@e4"})
-        msg = ws.receive_json()
+        msg = wait_for_game_state(ws)
 
         assert msg["type"] == "game_state"
         assert msg["is_drop"] is True
@@ -102,13 +109,14 @@ def test_threecheck_strike_broadcast(client):
     game_id = create_res.json()["game_id"]
 
     with client.websocket_connect(f"/ws/{game_id}") as ws:
-        ws.receive_json() # init
+        wait_for_game_state(ws) # init
 
         # e2e4, e7e5, d1h5, d8h4, h5xf7+ (Check)
         moves = ["e2e4", "e7e5", "d1h5", "d8h4", "h5f7"]
+        last_msg = None
         for move in moves:
             ws.send_json({"type": "move", "uci": move})
-            last_msg = ws.receive_json()
+            last_msg = wait_for_game_state(ws)
 
         assert last_msg["type"] == "game_state"
         # Check FEN suffix for +1+0
@@ -123,12 +131,12 @@ def test_racingkings_turbo_logic(client):
     game_id = create_res.json()["game_id"]
 
     with client.websocket_connect(f"/ws/{game_id}") as ws:
-        ws.receive_json() # init
+        wait_for_game_state(ws) # init
 
         # Move White King: h1h2 (if h1 is king) or h2h3
         # In FEN "8/8/8/8/8/8/krbnNBRK/qrbnNBRQ", h2(row 6, col 7) is King 'K'.
         ws.send_json({"type": "move", "uci": "h2h3"})
-        msg = ws.receive_json()
+        msg = wait_for_game_state(ws)
 
         assert msg["type"] == "game_state"
         assert msg["uci_history"][-1] == "h2h3"
@@ -141,16 +149,16 @@ def test_antichess_shatter_logic(client):
     game_id = create_res.json()["game_id"]
 
     with client.websocket_connect(f"/ws/{game_id}") as ws:
-        ws.receive_json() # init
+        wait_for_game_state(ws) # init
 
         # e2e4, d7d5, e4xd5 (Mandatory capture often in Antichess)
         ws.send_json({"type": "move", "uci": "e2e4"})
-        ws.receive_json()
+        wait_for_game_state(ws)
         ws.send_json({"type": "move", "uci": "d7d5"})
-        ws.receive_json()
+        wait_for_game_state(ws)
         
         ws.send_json({"type": "move", "uci": "e4d5"})
-        msg = ws.receive_json()
+        msg = wait_for_game_state(ws)
 
         assert msg["type"] == "game_state"
         assert "x" in msg["move_history"][-1]

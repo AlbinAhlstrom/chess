@@ -1,7 +1,9 @@
 import pytest
 import asyncio
 import json
-from backend.main import quick_match_queue, match_players, manager
+from backend.state import quick_match_queue
+from backend.services.matchmaking_service import match_players
+from backend.socket_manager import manager
 
 @pytest.mark.anyio
 @pytest.mark.parametrize("anyio_backend", ["asyncio"])

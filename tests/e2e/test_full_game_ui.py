@@ -32,13 +32,13 @@ def test_full_game_ui(page: Page, frontend_url: str):
     # Set a decent size for desktop play
     page.set_viewport_size({"width": 1280, "height": 720})
     page.on("console", lambda msg: print(f"BROWSER CONSOLE: {msg.text}"))
-    page.goto(f"{frontend_url}/otb", timeout=60000)
+    page.goto(f"{frontend_url}/otb", timeout=5000)
     
     print("Waiting for redirect to /game/...")
-    page.wait_for_url(re.compile(r".*/game/.*"), timeout=20000)
+    page.wait_for_url(re.compile(r".*/game/.*"), timeout=5000)
     
     print("Board loading...")
-    page.wait_for_selector(".board", timeout=10000)
+    page.wait_for_selector(".board", timeout=5000)
     
     # Fool's Mate Sequence
     moves = [
@@ -55,15 +55,15 @@ def test_full_game_ui(page: Page, frontend_url: str):
         
     print("Verifying checkmate result in history...")
     history = page.locator(".move-history")
-    expect(history).to_contain_text("0-1", timeout=10000)
+    expect(history).to_contain_text("0-1", timeout=5000)
 
 def test_undo_ui(page: Page, frontend_url: str):
     """Tests the Undo button which is available in OTB mode."""
     print(f"Navigating to {frontend_url}/otb")
-    page.goto(f"{frontend_url}/otb", timeout=60000)
+    page.goto(f"{frontend_url}/otb", timeout=5000)
     
-    page.wait_for_url(re.compile(r".*/game/.*"), timeout=20000)
-    page.wait_for_selector(".board", timeout=10000)
+    page.wait_for_url(re.compile(r".*/game/.*"), timeout=5000)
+    page.wait_for_selector(".board", timeout=5000)
     
     # Make a move
     print("Making a move...")

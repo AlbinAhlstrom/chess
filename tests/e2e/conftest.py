@@ -1,5 +1,6 @@
 import pytest
 import os
+from playwright.sync_api import Page
 
 @pytest.fixture
 def frontend_url():
@@ -14,6 +15,9 @@ def browser_type_launch_args(browser_type_launch_args):
     }
 
 @pytest.fixture(autouse=True)
-def setup_test_db():
-    # Override root async fixture with a sync no-op for E2E
-    pass
+
+def set_default_timeout(page: Page):
+
+    page.set_default_timeout(5000)
+
+    yield

@@ -1,6 +1,7 @@
 from sqlalchemy import select
 import traceback
-from backend.database import async_session, User
+from backend import database
+from backend.database import User
 
 async def ensure_user_in_db(user_session):
     if not user_session:
@@ -11,7 +12,7 @@ async def ensure_user_in_db(user_session):
         return None
         
     try:
-        async with async_session() as session:
+        async with database.async_session() as session:
             async with session.begin():
                 stmt = select(User).where(User.google_id == google_id)
                 result = await session.execute(stmt)

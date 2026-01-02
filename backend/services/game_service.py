@@ -10,7 +10,8 @@ from uuid import uuid4
 from v_chess.game import Game
 from v_chess.move import Move
 from v_chess.enums import Color
-from backend.database import async_session, GameModel, User, Rating
+from backend import database
+from backend.database import GameModel, User, Rating
 from backend.rating import update_game_ratings
 from backend.engine import engine_manager
 from backend.state import games, game_variants, RULES_MAP
@@ -22,7 +23,7 @@ async def save_game_to_db(game_id: str):
     if not game or not variant:
         return None
 
-    async with async_session() as session:
+    async with database.async_session() as session:
         async with session.begin():
             stmt = select(GameModel).where(GameModel.id == game_id)
             result = await session.execute(stmt)
@@ -66,7 +67,7 @@ async def save_game_to_db(game_id: str):
 
 async def get_game(game_id: str) -> Game:
     if game_id not in games:
-        async with async_session() as session:
+        async with database.async_session() as session:
             stmt = select(GameModel).where(GameModel.id == game_id)
             result = await session.execute(stmt)
             model = result.scalar_one_or_none()
@@ -120,7 +121,7 @@ async def trigger_ai_move(game_id: str, game: Game):
     
     user_rating = 1500
     try:
-        async with async_session() as session:
+        async with database.async_session() as session:
             model = (await session.execute(select(GameModel).where(GameModel.id == game_id))).scalar_one_or_none()
             if model:
                 human_id = model.white_player_id if model.black_player_id == "computer" else model.black_player_id

@@ -3,7 +3,8 @@ from sqlalchemy import select, or_, and_, desc
 from typing import Optional
 import re
 
-from backend.database import async_session, User, Rating, GameModel
+from backend import database
+from backend.database import User, Rating, GameModel
 from backend.schemas import SetUsernameRequest, UserSettingsRequest
 from backend.services.user_service import ensure_user_in_db
 from backend.services.game_service import get_player_info
@@ -37,7 +38,7 @@ async def set_username(req: SetUsernameRequest, request: Request):
         raise HTTPException(status_code=400, detail="Username can only contain letters, numbers, underscores, and hyphens")
 
     google_id = user_session.get("id")
-    async with async_session() as session:
+    async with database.async_session() as session:
         async with session.begin():
             stmt = select(User).where(User.username == username)
             existing = (await session.execute(stmt)).scalar_one_or_none()
@@ -62,7 +63,7 @@ async def update_user_settings(req: UserSettingsRequest, request: Request):
         raise HTTPException(status_code=401, detail="Not authenticated")
     
     google_id = user_session.get("id")
-    async with async_session() as session:
+    async with database.async_session() as session:
         async with session.begin():
             stmt = select(User).where(User.google_id == google_id)
             result = await session.execute(stmt)
@@ -83,7 +84,7 @@ async def update_user_settings(req: UserSettingsRequest, request: Request):
 
 @router.get("/ratings/{user_id}")
 async def get_user_ratings(user_id: str):
-    async with async_session() as session:
+    async with database.async_session() as session:
         stmt = select(Rating).where(Rating.user_id == user_id)
         result = await session.execute(stmt)
         ratings = result.scalars().all()
@@ -99,7 +100,7 @@ async def get_user_profile(user_id: str, request: Request):
     if user_session and str(user_session.get("id")) == user_id:
         await ensure_user_in_db(user_session)
 
-    async with async_session() as session:
+    async with database.async_session() as session:
         stmt = select(User).where(User.google_id == user_id)
         result = await session.execute(stmt)
         user = result.scalar_one_or_none()
@@ -129,7 +130,7 @@ async def get_user_profile(user_id: str, request: Request):
 async def get_user_games(
     user_id: str, skip: int = 0, limit: int = 50, variant: Optional[str] = None, result: Optional[str] = None
 ):
-    async with async_session() as session:
+    async with database.async_session() as session:
         filters = [
             or_(GameModel.white_player_id == user_id, GameModel.black_player_id == user_id),
             GameModel.is_over == True
@@ -184,7 +185,7 @@ async def get_user_games(
 
 @router.get("/leaderboard/{variant}")
 async def get_leaderboard(variant: str):
-    async with async_session() as session:
+    async with database.async_session() as session:
         stmt = (
             select(Rating, User)
             .join(User, Rating.user_id == User.google_id)

@@ -405,6 +405,8 @@ function StandardTutorialBoard() {
                         rank={p.rank} 
                         onDragStartCallback={handlePieceDragStart} 
                         onDropCallback={handlePieceDrop}
+                        onPieceClick={handleBoardClick}
+                        canMove={p.color === 'w'}
                         className={`${completed ? (p.color === 'w' ? 'victory-gold' : 'royal-collapse') : ''} ${!completed && !failed && p.color === 'w' ? 'forced-move' : ''}`}
                     />
                 ))}

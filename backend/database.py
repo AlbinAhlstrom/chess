@@ -1,15 +1,46 @@
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import String, Text, Boolean, Float, DateTime, func, ForeignKey
+from sqlalchemy import String, Text, Boolean, Float, DateTime, func, ForeignKey, event
 import os
 import datetime
 from typing import Optional
 
-DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite+aiosqlite:///./chess.db")
-print(f"DEBUG: backend.database using DATABASE_URL={DATABASE_URL}")
+def get_database_url():
+    return os.environ.get("DATABASE_URL", "sqlite+aiosqlite:///./chess.db")
 
-engine = create_async_engine(DATABASE_URL, echo=False)
+engine = create_async_engine(
+    get_database_url(), 
+    echo=False,
+    connect_args={"timeout": 5}
+)
+
+@event.listens_for(engine.sync_engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA synchronous=NORMAL")
+    cursor.close()
+
 async_session = async_sessionmaker(engine, expire_on_commit=False)
+
+def setup_database(url: str):
+    """Reconfigure database with a new URL (useful for tests)."""
+    global engine, async_session
+    engine = create_async_engine(
+        url, 
+        echo=False,
+        connect_args={"timeout": 5}
+    )
+    
+    @event.listens_for(engine.sync_engine, "connect")
+    def set_sqlite_pragma_new(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.close()
+        
+    async_session = async_sessionmaker(engine, expire_on_commit=False)
+    return engine
 
 class Base(DeclarativeBase):
     pass

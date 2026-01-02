@@ -1,13 +1,12 @@
 import pytest
 from sqlalchemy import select
-from backend.database import async_session, User, Rating
-from backend.main import app
-from fastapi.testclient import TestClient
+from backend import database
+from backend.database import User, Rating
 
 @pytest.mark.anyio
-async def test_get_leaderboard():
-    # Setup: Add users and ratings
-    async with async_session() as session:
+async def test_get_leaderboard(client):
+    # Setup test data
+    async with database.async_session() as session:
         async with session.begin():
             # Check if users already exist
             u1 = (await session.execute(select(User).where(User.google_id == "leader-1"))).scalar_one_or_none()
@@ -35,14 +34,13 @@ async def test_get_leaderboard():
             else:
                 r2.rating = 1800.0 # Reset for test
 
-    with TestClient(app) as client:
-        response = client.get("/api/leaderboard/standard")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["variant"] == "standard"
-        assert len(data["leaderboard"]) >= 2
-        # Verify sorting
-        assert data["leaderboard"][0]["name"] == "Top Player"
-        assert data["leaderboard"][0]["rating"] == 2000
-        assert data["leaderboard"][1]["name"] == "Second Player"
-        assert data["leaderboard"][1]["rating"] == 1800
+    response = client.get("/api/leaderboard/standard")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["variant"] == "standard"
+    assert len(data["leaderboard"]) >= 2
+    # Verify sorting
+    assert data["leaderboard"][0]["name"] == "Top Player"
+    assert data["leaderboard"][0]["rating"] == 2000
+    assert data["leaderboard"][1]["name"] == "Second Player"
+    assert data["leaderboard"][1]["rating"] == 1800

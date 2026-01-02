@@ -1,7 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
 from backend.main import app
-from backend.database import async_session, User, GameModel
+from backend import database
+from backend.database import User, GameModel
 import uuid
 import json
 
@@ -19,13 +20,20 @@ async def test_game_result_history_checkmate(client):
         moves = ["f2f3", "e7e5", "g2g4", "d8h4"]
         for uci in moves:
             ws.send_json({"type": "move", "uci": uci})
-            # Receive broadcast
-            msg = ws.receive_json()
-            if uci == "d8h4":
-                # Check history in message
-                history = msg["move_history"]
-                assert history[-1] == "0-1"
-                assert history[-2].endswith("#") # Checkmate suffix
+            
+            # Drain until we get the state for this move
+            while True:
+                msg = ws.receive_json()
+                if msg.get("type") == "game_state":
+                    # Check if this state corresponds to the current move (last move in history matches)
+                    # Or just check if it's the checkmate move
+                    if uci == "d8h4":
+                        history = msg.get("move_history")
+                        if history[-1] == "0-1":
+                            assert history[-2].endswith("#")
+                            break
+                        else: continue # Might be an intermediate state
+                    break # Not the mate move, just continue to next move
 
 @pytest.mark.asyncio
 async def test_game_result_history_resign(client):
@@ -69,8 +77,11 @@ async def test_game_result_history_draw_agreement(client):
         
         # Send draw accept (simulating agreement, as offer just broadcasts)
         ws.send_json({"type": "draw_accept"})
-        msg = ws.receive_json()
         
-        history = msg["move_history"]
-        assert history[-1] == "1/2-1/2"
+        while True:
+            msg = ws.receive_json()
+            if msg.get("type") == "game_state":
+                history = msg.get("move_history")
+                if history and history[-1] == "1/2-1/2":
+                    break
 
