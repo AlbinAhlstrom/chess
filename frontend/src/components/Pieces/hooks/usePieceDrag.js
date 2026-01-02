@@ -8,11 +8,18 @@ export function usePieceDrag({
     onDragStartCallback,
     onDragEndCallback,
     onDropCallback,
-    onDragHoverCallback
+    onDragHoverCallback,
+    onPieceClick // New callback for tap/click detection
 }) {
     const ghostRef = useRef(null);
 
     const startDrag = (e) => {
+        // Prevent default touch behavior to stop scrolling while dragging/tapping pieces
+        if (e.type.startsWith('touch') && e.cancelable) e.preventDefault();
+        
+        // Stop propagation to prevent the board's background handler from firing
+        e.stopPropagation();
+
         const clientX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
         const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
         const startX = clientX;
@@ -90,6 +97,11 @@ export function usePieceDrag({
                 }
                 if (onDragHoverCallback) onDragHoverCallback(null);
                 if (onDragEndCallback) onDragEndCallback();
+            } else {
+                // If no drag occurred, it's a click/tap
+                if (onPieceClick) {
+                    onPieceClick({ clientX: endX, clientY: endY });
+                }
             }
         };
 

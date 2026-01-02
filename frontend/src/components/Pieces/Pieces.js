@@ -186,6 +186,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
             <div className="pieces" ref={ref} 
                 onClick={(e) => { handleSquareClick(e); if (isMenuOpen) setIsMenuOpen(false); }}
                 onTouchStart={(e) => { 
+                    // Handle touches on empty squares
                     if (e.cancelable) e.preventDefault();
                     const touch = e.touches[0];
                     if (touch) {
@@ -216,6 +217,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                         onDragStartCallback={handlePieceDragStart} 
                         onDropCallback={handleManualDrop} 
                         onDragHoverCallback={handlePieceDragHover}
+                        onPieceClick={handleSquareClick}
                         canMove={canMovePiece(pieceType === pieceType.toUpperCase() ? 'w' : 'b')}
                     />
                 ) : null))}
