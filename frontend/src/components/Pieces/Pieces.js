@@ -184,7 +184,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
             <PlayerNameDisplay isOpponent={true} isFlipped={isFlipped} player={topPlayer} ratingDiff={topDiff} takebackOffer={takebackOffer} user={user} timers={timers} turn={turn} formatTime={formatTime} matchmaking={matchmaking} />
 
             <div className="pieces" ref={ref} 
-                onClick={(e) => { handleSquareClick(e); if (isMenuOpen) setIsMenuOpen(false); }}
+                onPointerUp={(e) => { handleSquareClick(e); if (isMenuOpen) setIsMenuOpen(false); }}
             >
                 <PromotionManager isPromotionDialogOpen={isPromotionDialogOpen} promotionColor={fen?.split(' ')[1] === 'w' ? 'w' : 'b'} handlePromotion={handlePromotion} handleCancelPromotion={() => setPromotionDialogOpen(false)} />
                 {isImportDialogOpen && <ImportDialog onImport={(f, v) => { setImportDialogOpen(false); initializeGame(f, v); }} onCancel={() => setImportDialogOpen(false)} />}

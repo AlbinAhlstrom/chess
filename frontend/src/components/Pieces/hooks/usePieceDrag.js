@@ -86,6 +86,8 @@ export function usePieceDrag({
     const handlePointerUp = (e) => {
         if (!startData.current || e.pointerId !== startData.current.pointerId) return;
 
+        e.stopPropagation(); // Prevent bubbling to board
+        
         const node = e.target;
         node.releasePointerCapture(e.pointerId);
         
