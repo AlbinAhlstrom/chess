@@ -678,7 +678,7 @@
         left: 0;
         transform: none;
         margin-left: 0;
-        margin-top: 35px;
+        margin-top: 5px; /* Small gap from player name */
         width: 100%;
         flex-direction: column;
         align-items: center;
@@ -687,6 +687,13 @@
         box-sizing: border-box;
         border-top: 1px solid #3c3934;
         background: #262421;
+    }
+
+    .player-name {
+        position: relative;
+        top: auto;
+        width: 100%;
+        margin-top: 5px;
     }
 
     .move-history {
