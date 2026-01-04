@@ -7,6 +7,19 @@
     touch-action: none; /* Prevent scrolling/zooming on board */
 }
 
+@keyframes screen-shake {
+    0% { transform: translate(0, 0); }
+    20% { transform: translate(calc(-2px * var(--shake-intensity, 1)), calc(1px * var(--shake-intensity, 1))); }
+    40% { transform: translate(calc(2px * var(--shake-intensity, 1)), calc(-1px * var(--shake-intensity, 1))); }
+    60% { transform: translate(calc(-2px * var(--shake-intensity, 1)), calc(-1px * var(--shake-intensity, 1))); }
+    80% { transform: translate(calc(2px * var(--shake-intensity, 1)), calc(1px * var(--shake-intensity, 1))); }
+    100% { transform: translate(0, 0); }
+}
+
+.pieces.shake {
+    animation: screen-shake 0.1s linear;
+}
+
 .piece {
     width: var(--square-size);
     height: var(--square-size);
@@ -903,7 +916,7 @@
 @keyframes shard-scatter {
     0% { transform: translate(-50%, -50%) rotate(0deg) scale(1); opacity: 1; }
     100% { 
-        transform: translate(calc(cos(var(--i) * 45deg) * 100px), calc(sin(var(--i) * 45deg) * 100px)) rotate(360deg) scale(0); 
+        transform: translate(calc(cos(var(--angle)) * var(--dist)), calc(sin(var(--angle)) * var(--dist))) rotate(var(--rot, 360deg)) scale(0); 
         opacity: 0; 
     }
 }

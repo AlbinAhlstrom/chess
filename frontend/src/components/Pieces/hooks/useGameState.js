@@ -39,6 +39,7 @@ export function useGameState(urlGameId, variant, computer, navigate) {
     const [showTurbo, setShowTurbo] = useState(false);
     const [shatterSquare, setShatterSquare] = useState(null);
     const [showShatter, setShowShatter] = useState(false);
+    const [shake, setShake] = useState(0);
 
     useEffect(() => {
         fenHistoryRef.current = fenHistory;
@@ -137,11 +138,12 @@ export function useGameState(urlGameId, variant, computer, navigate) {
         turboSquare, setTurboSquare,
         showTurbo, setShowTurbo,
         shatterSquare, setShatterSquare,
-        showShatter, setShowShatter
+        showShatter, setShowShatter,
+        shake, setShake
     }), [
         explosionSquare, showExplosion, dropSquare, showDropWarp, 
         checkCounts, strikeSquare, showStrike, turboSquare, 
-        showTurbo, shatterSquare, showShatter
+        showTurbo, shatterSquare, showShatter, shake
     ]);
 
     return {

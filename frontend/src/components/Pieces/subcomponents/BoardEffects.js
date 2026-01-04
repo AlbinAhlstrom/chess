@@ -141,9 +141,22 @@ export function BoardEffects({
                     top: `calc(${displayRank} * var(--square-size))`,
                 }}
             >
-                {[...Array(8)].map((_, i) => (
-                    <div key={i} className="shard" style={{ '--i': i }}></div>
-                ))}
+                {[...Array(12)].map((_, i) => {
+                    const angle = Math.random() * 360;
+                    const dist = 40 + Math.random() * 80;
+                    const rot = (Math.random() - 0.5) * 720;
+                    return (
+                        <div 
+                            key={i} 
+                            className="shard" 
+                            style={{ 
+                                '--angle': `${angle}deg`,
+                                '--dist': `${dist}px`,
+                                '--rot': `${rot}deg`
+                            }}
+                        ></div>
+                    );
+                })}
             </div>
         );
     };

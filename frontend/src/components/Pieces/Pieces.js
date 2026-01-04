@@ -179,12 +179,17 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     const topDiff = isFlipped ? (ratingDiffs?.white_diff) : (ratingDiffs?.black_diff);
     const bottomDiff = isFlipped ? (ratingDiffs?.black_diff) : (ratingDiffs?.white_diff);
 
+    const { shake } = effects;
+
     return (
         <>
             <PlayerNameDisplay isOpponent={true} isFlipped={isFlipped} player={topPlayer} ratingDiff={topDiff} takebackOffer={takebackOffer} user={user} timers={timers} turn={turn} formatTime={formatTime} matchmaking={matchmaking} />
 
-            <div className="pieces" ref={ref} 
+            <div 
+                className={`pieces ${shake > 0 ? 'shake' : ''}`} 
+                ref={ref} 
                 onPointerUp={(e) => { handleSquareClick(e); if (isMenuOpen) setIsMenuOpen(false); }}
+                style={shake > 0 ? { '--shake-intensity': shake } : {}}
             >
                 <PromotionManager isPromotionDialogOpen={isPromotionDialogOpen} promotionColor={fen?.split(' ')[1] === 'w' ? 'w' : 'b'} handlePromotion={handlePromotion} handleCancelPromotion={() => setPromotionDialogOpen(false)} />
                 {isImportDialogOpen && <ImportDialog onImport={(f, v) => { setImportDialogOpen(false); initializeGame(f, v); }} onCancel={() => setImportDialogOpen(false)} />}

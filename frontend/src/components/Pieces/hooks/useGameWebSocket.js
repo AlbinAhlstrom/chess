@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import SoundManager from '../../../helpers/soundManager';
 import { getWsBase } from '../../../api';
+import { fenToPosition, algebraicToCoords } from '../../../helpers';
 
 export function useGameWebSocket({
     gameId,
@@ -29,7 +30,8 @@ export function useGameWebSocket({
         refs.current = {
             currentVariant, setFen, setFenHistory, setViewedIndex,
             setInCheck, setMoveHistory, setWinner, setIsGameOver, setTurn,
-            setTimers, setRatingDiffs, setLastMove, setTakebackOffer, setDrawOffer, effects
+            setTimers, setRatingDiffs, setLastMove, setTakebackOffer, setDrawOffer, effects,
+            fen: refs.current.fen // keep the current fen ref
         };
     });
 
@@ -57,11 +59,13 @@ export function useGameWebSocket({
             const { 
                 setFen, setFenHistory, setViewedIndex, setInCheck, setMoveHistory,
                 setWinner, setIsGameOver, setTurn, setTimers, setRatingDiffs,
-                setLastMove, setTakebackOffer, setDrawOffer, currentVariant, effects
+                setLastMove, setTakebackOffer, setDrawOffer, currentVariant, effects, fen: currentFen
             } = refs.current;
 
             if (message.type === "game_state") {
+                const prevFen = currentFen;
                 setFen(message.fen);
+                refs.current.fen = message.fen; // Update the ref immediately for next message
                 setFenHistory(prev => (prev[prev.length - 1] !== message.fen ? [...prev, message.fen] : prev));
                 setViewedIndex(-1);
                 setInCheck(message.in_check);
@@ -73,9 +77,47 @@ export function useGameWebSocket({
                 if (message.rating_diffs) setRatingDiffs(message.rating_diffs);
                 
                 const uciHistory = message.uci_history || [];
+                const moveHistory = message.move_history || [];
                 if (uciHistory.length > 0) {
-                    const last = uciHistory[uciHistory.length - 1];
-                    setLastMove({ from: last.substring(0, 2), to: last.substring(2, 4) });
+                    const lastUci = uciHistory[uciHistory.length - 1];
+                    const lastSan = moveHistory[moveHistory.length - 1];
+                    setLastMove({ from: lastUci.substring(0, 2), to: lastUci.substring(2, 4) });
+
+                    // Juice: Shatter and Shake on Capture
+                    let intensity = 0;
+                    if (lastSan && (lastSan.includes('+') || lastSan.includes('#'))) {
+                        intensity = 1.0;
+                    }
+
+                    if (lastSan && lastSan.includes('x')) {
+                        let capturedPieceVal = 0.2; // Default pawn
+                        
+                        if (prevFen) {
+                            const targetSquare = lastUci.substring(2, 4);
+                            const { file, rank } = algebraicToCoords(targetSquare);
+                            const oldPosition = fenToPosition(prevFen);
+                            const capturedPieceChar = oldPosition[rank][file]?.toLowerCase();
+                            
+                            if (capturedPieceChar === 'q') capturedPieceVal = 1.0;
+                            else if (capturedPieceChar === 'r') capturedPieceVal = 0.6;
+                            else if (capturedPieceChar === 'b' || capturedPieceChar === 'n') capturedPieceVal = 0.4;
+                            else if (capturedPieceChar === 'k') capturedPieceVal = 1.0; // Variant captures
+                        }
+                        
+                        intensity = Math.max(intensity, capturedPieceVal);
+                        
+                        const targetSquare = lastUci.substring(2, 4);
+                        effects.setShatterSquare(targetSquare);
+                        effects.setShowShatter(true);
+                    }
+
+                    if (intensity > 0) {
+                        effects.setShake(intensity);
+                        setTimeout(() => {
+                            effects.setShowShatter(false);
+                            effects.setShake(0);
+                        }, 500);
+                    }
                 }
 
                 // Handle variant specific effects
