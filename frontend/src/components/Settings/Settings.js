@@ -4,6 +4,7 @@ import './Settings.css';
 // Subcomponents
 import { GamePreferences } from './subcomponents/GamePreferences';
 import { TimeControlSettings } from './subcomponents/TimeControlSettings';
+import { MatchmakingSettings } from './subcomponents/MatchmakingSettings';
 
 // Hooks
 import { useSettings } from './hooks/useSettings';
@@ -21,6 +22,8 @@ function Settings() {
         setDefaultIncrement,
         timeControlEnabled,
         setTimeControlEnabled,
+        ratingRange,
+        setRatingRange,
         saving,
         saveSettings
     } = useSettings();
@@ -38,16 +41,25 @@ function Settings() {
                 />
 
                 {user && (
-                    <TimeControlSettings 
-                        timeControlEnabled={timeControlEnabled}
-                        setTimeControlEnabled={setTimeControlEnabled}
-                        defaultTime={defaultTime}
-                        setDefaultTime={setDefaultTime}
-                        defaultIncrement={defaultIncrement}
-                        setDefaultIncrement={setDefaultIncrement}
-                        saveSettings={saveSettings}
-                        saving={saving}
-                    />
+                    <>
+                        <TimeControlSettings 
+                            timeControlEnabled={timeControlEnabled}
+                            setTimeControlEnabled={setTimeControlEnabled}
+                            defaultTime={defaultTime}
+                            setDefaultTime={setDefaultTime}
+                            defaultIncrement={defaultIncrement}
+                            setDefaultIncrement={setDefaultIncrement}
+                            saveSettings={saveSettings}
+                            saving={saving}
+                        />
+
+                        <MatchmakingSettings 
+                            ratingRange={ratingRange}
+                            setRatingRange={setRatingRange}
+                            saveSettings={saveSettings}
+                            saving={saving}
+                        />
+                    </>
                 )}
 
                 <section className='settings-section'>

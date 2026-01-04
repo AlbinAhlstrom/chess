@@ -52,7 +52,6 @@ function Lobby() {
     const [selectedVariant, setSelectedVariant] = useState("standard");
     const [selectedColor, setSelectedColor] = useState("random");
     const [gameMode, setGameMode] = useState("quick");
-    const [ratingRange, setRatingRange] = useState(200);
     
     const [isTimeControlEnabled, setIsTimeControlEnabled] = useState(true);
     const [startingTime, setStartingTime] = useState(10);
@@ -85,7 +84,7 @@ function Lobby() {
                 sendSocketMessage({ type: "leave_quick_match" });
                 setIsQuickMatching(false);
             } else {
-                sendSocketMessage({ type: "join_quick_match", variant: selectedVariant, time_control: tc, range: ratingRange });
+                sendSocketMessage({ type: "join_quick_match", variant: selectedVariant, time_control: tc });
                 setIsQuickMatching(true);
             }
         } else if (gameMode === 'lobby') {
@@ -112,7 +111,7 @@ function Lobby() {
                     onSwitchToRandom={() => {
                         sendSocketMessage({ type: "leave_quick_match" });
                         setSelectedVariant('random');
-                        sendSocketMessage({ type: "join_quick_match", variant: 'random', time_control: isTimeControlEnabled ? { limit: startingTime * 60, increment: increment } : null, range: ratingRange });
+                        sendSocketMessage({ type: "join_quick_match", variant: 'random', time_control: isTimeControlEnabled ? { limit: startingTime * 60, increment: increment } : null });
                     }}
                 />
             )}
@@ -137,14 +136,6 @@ function Lobby() {
                 {gameMode === 'lobby' && <SeekList seeks={seeks} selectedVariant={selectedVariant} user={user} onCancelSeek={(id) => sendSocketMessage({ type: "cancel_seek", seek_id: id })} onJoinSeek={(id) => sendSocketMessage({ type: "join_seek", seek_id: id, user })} />}
 
                 <div className="lobby-actions">
-                    {gameMode === 'quick' && (
-                        <div className="quick-match-section">
-                            <div className="range-selector">
-                                <label>Rating Range: ±{ratingRange}</label>
-                                <input type="range" min="50" max="1000" step="50" value={ratingRange} onChange={(e) => setRatingRange(parseInt(e.target.value))} disabled={isQuickMatching} />
-                            </div>
-                        </div>
-                    )}
                     <button onClick={handlePlay} className={`play-main-button ${isQuickMatching ? 'matching' : ''}`}>
                         {isQuickMatching ? <><span className="spinner"></span> Cancel Matching</> : <>{(!user && (gameMode === 'quick' || gameMode === 'lobby')) ? 'Login to Play' : (gameMode === 'lobby' ? 'Create Lobby' : `Play ${GAME_MODES.find(m => m.id === gameMode).title.replace('\n', ' ')}`)}</>}
                     </button>

@@ -58,6 +58,7 @@ class User(Base):
     default_time: Mapped[float] = mapped_column(Float, default=10.0)
     default_increment: Mapped[float] = mapped_column(Float, default=0.0)
     default_time_control_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    rating_range: Mapped[int] = mapped_column(Float, default=500.0)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, server_default=func.now())
 
 class Rating(Base):

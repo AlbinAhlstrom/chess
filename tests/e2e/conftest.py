@@ -18,7 +18,7 @@ def wait_for_port(port, timeout=30):
     return False
 
 @pytest.fixture(scope="session", autouse=True)
-def e2e_environment():
+def e2e_environment(tmp_path_factory):
     """
     Sets up the full E2E environment:
     1. Creates a temporary test database.
@@ -27,8 +27,9 @@ def e2e_environment():
     4. Cleans up everything after tests finish.
     """
     # 1. Database Setup
-    test_db_file = f"e2e_test_{uuid.uuid4().hex}.db"
-    db_url = f"sqlite+aiosqlite:///./{test_db_file}"
+    temp_dir = tmp_path_factory.mktemp("e2e_db")
+    test_db_file = str(temp_dir / "chess.db")
+    db_url = f"sqlite+aiosqlite:///{test_db_file}"
     os.environ["DATABASE_URL"] = db_url
     print(f"\n[E2E Setup] Using temporary DB: {test_db_file}")
 
@@ -55,8 +56,7 @@ def e2e_environment():
         stdout, stderr = backend_proc.communicate()
         print(f"Backend STDOUT: {stdout.decode()}")
         print(f"Backend STDERR: {stderr.decode()}")
-        if os.path.exists(test_db_file):
-            os.remove(test_db_file)
+        # DB file is in temp dir, pytest handles cleanup
         pytest.fail("Backend failed to start on port 8000")
 
     # 3. Start Frontend
@@ -78,8 +78,7 @@ def e2e_environment():
         stdout, stderr = frontend_proc.communicate()
         print(f"Frontend STDOUT: {stdout.decode()}")
         print(f"Frontend STDERR: {stderr.decode()}")
-        if os.path.exists(test_db_file):
-            os.remove(test_db_file)
+        # DB file is in temp dir, pytest handles cleanup
         pytest.fail("Frontend failed to start on port 3000")
 
     print("[E2E Setup] Environment Ready!")
@@ -103,13 +102,7 @@ def e2e_environment():
     except subprocess.TimeoutExpired:
         backend_proc.kill()
 
-    # Clean DB
-    if os.path.exists(test_db_file):
-        try:
-            os.remove(test_db_file)
-            print(f"[E2E Teardown] Removed DB: {test_db_file}")
-        except PermissionError:
-             print(f"[E2E Teardown] Warning: Could not remove {test_db_file} (still in use?)")
+    # DB cleanup handled by pytest tmp_path_factory
 
 @pytest.fixture
 def frontend_url():

@@ -6,10 +6,12 @@ from hypothesis import strategies as st
 from fastapi.testclient import TestClient
 from sqlalchemy import event
 
+import tempfile
+
 # Force a separate test database before importing app
-# Use a unique file in tests/ dir for the whole session
+# Use a unique file in the system temp dir for the whole session
 test_db_name = f"test_chess_{uuid.uuid4().hex}.db"
-test_db_path = os.path.join(os.path.dirname(__file__), test_db_name)
+test_db_path = os.path.join(tempfile.gettempdir(), test_db_name)
 print(f"DEBUG: tests/conftest.py setting DATABASE_URL to sqlite+aiosqlite:///{test_db_path}")
 os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{test_db_path}"
 
@@ -92,12 +94,13 @@ def setup_test_db(request):
 
 def pytest_sessionfinish(session, exitstatus):
     """Cleanup the session database file after all tests are done."""
-    if os.path.exists(test_db_path):
-        try:
-            os.remove(test_db_path)
-            print(f"DEBUG: Cleaned up session DB at {test_db_path}")
-        except Exception as e:
-            print(f"DEBUG: Failed to cleanup session DB: {e}")
+    for path in [test_db_path, test_db_path + "-shm", test_db_path + "-wal"]:
+        if os.path.exists(path):
+            try:
+                os.remove(path)
+                print(f"DEBUG: Cleaned up session DB file at {path}")
+            except Exception as e:
+                print(f"DEBUG: Failed to cleanup session DB file {path}: {e}")
 
 @pytest.fixture(scope="module")
 def client():

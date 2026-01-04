@@ -8,6 +8,7 @@ class UserSettingsRequest(BaseModel):
     default_time: float
     default_increment: float
     default_time_control_enabled: bool
+    rating_range: float
 
 class NewGameRequest(BaseModel):
     variant: str = "standard"

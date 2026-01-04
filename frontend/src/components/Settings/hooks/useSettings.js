@@ -15,6 +15,7 @@ export function useSettings() {
     const [defaultTime, setDefaultTime] = useState(10);
     const [defaultIncrement, setDefaultIncrement] = useState(0);
     const [timeControlEnabled, setTimeControlEnabled] = useState(true);
+    const [ratingRange, setRatingRange] = useState(500);
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
@@ -24,6 +25,7 @@ export function useSettings() {
                 setDefaultTime(data.user.default_time || 10);
                 setDefaultIncrement(data.user.default_increment || 0);
                 setTimeControlEnabled(data.user.default_time_control_enabled !== undefined ? data.user.default_time_control_enabled : true);
+                setRatingRange(data.user.rating_range || 500);
             }
         });
     }, []);
@@ -32,7 +34,8 @@ export function useSettings() {
         const settings = {
             default_time: updatedFields.defaultTime !== undefined ? updatedFields.defaultTime : defaultTime,
             default_increment: updatedFields.defaultIncrement !== undefined ? updatedFields.defaultIncrement : defaultIncrement,
-            default_time_control_enabled: updatedFields.timeControlEnabled !== undefined ? updatedFields.timeControlEnabled : timeControlEnabled
+            default_time_control_enabled: updatedFields.timeControlEnabled !== undefined ? updatedFields.timeControlEnabled : timeControlEnabled,
+            rating_range: updatedFields.ratingRange !== undefined ? updatedFields.ratingRange : ratingRange
         };
         
         setSaving(true);
@@ -68,6 +71,8 @@ export function useSettings() {
         setDefaultIncrement,
         timeControlEnabled,
         setTimeControlEnabled,
+        ratingRange,
+        setRatingRange,
         saving,
         saveSettings
     };

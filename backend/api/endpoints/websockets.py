@@ -52,12 +52,17 @@ async def lobby_websocket(websocket: WebSocket):
                 if not current_user_id: continue
                 variant = message.get("variant", "standard")
                 async with database.async_session() as session:
+                    # Fetch user setting
+                    stmt = select(database.User).where(database.User.google_id == current_user_id)
+                    user = (await session.execute(stmt)).scalar_one_or_none()
+                    user_range = float(user.rating_range) if user else 500.0
+
                     rating_info = await get_player_info(session, current_user_id, variant)
                     user_rating = rating_info["rating"]
                 quick_match_queue[:] = [p for p in quick_match_queue if p["user_id"] != current_user_id]
                 quick_match_queue.append({
                     "user_id": current_user_id, "variant": variant, "time_control": message.get("time_control"),
-                    "rating": user_rating, "range": message.get("range", 200), "joined_at": asyncio.get_event_loop().time()
+                    "rating": user_rating, "range": user_range, "joined_at": asyncio.get_event_loop().time()
                 })
             elif message["type"] == "leave_quick_match":
                 if current_user_id: quick_match_queue[:] = [p for p in quick_match_queue if p["user_id"] != current_user_id]

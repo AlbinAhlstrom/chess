@@ -22,6 +22,7 @@ async def me(request: Request):
             user_session["default_time"] = float(db_user.default_time)
             user_session["default_increment"] = float(db_user.default_increment)
             user_session["default_time_control_enabled"] = bool(db_user.default_time_control_enabled)
+            user_session["rating_range"] = float(db_user.rating_range)
     return {"user": user_session}
 
 @router.post("/user/set_username")
@@ -74,10 +75,12 @@ async def update_user_settings(req: UserSettingsRequest, request: Request):
             user.default_time = req.default_time
             user.default_increment = req.default_increment
             user.default_time_control_enabled = req.default_time_control_enabled
+            user.rating_range = req.rating_range
             
             user_session["default_time"] = float(user.default_time)
             user_session["default_increment"] = float(user.default_increment)
             user_session["default_time_control_enabled"] = bool(user.default_time_control_enabled)
+            user_session["rating_range"] = float(user.rating_range)
             request.session["user"] = user_session
             
     return {"status": "success"}

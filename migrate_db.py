@@ -105,6 +105,10 @@ def migrate(db_file):
             print(f"Adding default_time_control_enabled column to {db_file}...")
             cursor.execute("ALTER TABLE users ADD COLUMN default_time_control_enabled BOOLEAN DEFAULT 1")
 
+        if "rating_range" not in user_columns:
+            print(f"Adding rating_range column to {db_file}...")
+            cursor.execute("ALTER TABLE users ADD COLUMN rating_range FLOAT DEFAULT 500.0")
+
         # Data Migration: Give all current users the kickstarter badge
         print(f"Ensuring all users have kickstarter badges in {db_file}...")
         cursor.execute("UPDATE users SET supporter_badge = 'kickstarter' WHERE supporter_badge IS NULL")
