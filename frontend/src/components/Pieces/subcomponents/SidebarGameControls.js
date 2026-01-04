@@ -58,7 +58,7 @@ export function SidebarGameControls({
                     ) : (
                         <button 
                             onClick={showAbort ? onResign : takebackAction} 
-                            title={showAbort ? "Abort Game" : (matchmaking ? (takebackOffer ? "Waiting..." : "Offer Takeback") : "Undo")} 
+                            title={showAbort ? "Abort Game" : (matchmaking ? (takebackOffer ? "Waiting..." : "Offer Takeback") : "Undo Move")} 
                             className={`control-button ${takebackOffer ? 'waiting' : ''}`} 
                             disabled={!!takebackOffer}
                         >
