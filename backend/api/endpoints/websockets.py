@@ -23,7 +23,7 @@ router = APIRouter()
 async def lobby_websocket(websocket: WebSocket):
     await manager.connect_lobby(websocket)
     user_session = websocket.scope.get("session", {}).get("user")
-    current_user_id = str(user_session.get("id")) if user_session else None
+    current_user_id = str(user_session.get("id")) if user_session else websocket.scope.get("session", {}).get("guest_id")
     try:
         await websocket.send_text(json.dumps({"type": "seeks", "seeks": list(seeks.values())}))
         while True:
@@ -108,7 +108,7 @@ async def game_websocket(websocket: WebSocket, game_id: str):
         white_id, black_id = (model.white_player_id, model.black_player_id) if model else (None, None)
     
     user_session = websocket.scope.get("session", {}).get("user")
-    user_id = str(user_session.get("id")) if user_session else None
+    user_id = str(user_session.get("id")) if user_session else websocket.scope.get("session", {}).get("guest_id")
     
     await manager.broadcast(game_id, json.dumps({
         "type": "game_state", "fen": game.state.fen, "turn": game.state.turn.value, 

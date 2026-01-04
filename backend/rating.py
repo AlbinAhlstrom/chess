@@ -76,8 +76,8 @@ async def update_game_ratings(session, game_model, winner_color: str | None):
     is_computer_game = game_model.white_player_id == "computer" or game_model.black_player_id == "computer"
 
     async def get_rating_obj(user_id, variant):
-        if user_id == "computer":
-            return None # Handle computer separately
+        if user_id == "computer" or user_id.startswith("guest_"):
+            return None # Handle computer and guests separately
         stmt = select(Rating).where(Rating.user_id == user_id, Rating.variant == variant)
         res = await session.execute(stmt)
         obj = res.scalar_one_or_none()
@@ -90,14 +90,20 @@ async def update_game_ratings(session, game_model, winner_color: str | None):
     white_rating_obj = await get_rating_obj(game_model.white_player_id, game_model.variant)
     black_rating_obj = await get_rating_obj(game_model.black_player_id, game_model.variant)
 
-    # Use actual values or player's rating for computer
-    w_r = white_rating_obj.rating if white_rating_obj else round(black_rating_obj.rating / 50) * 50
-    w_rd = white_rating_obj.rd if white_rating_obj else 350.0
-    w_v = white_rating_obj.volatility if white_rating_obj else 0.06
+    # Use actual values or player's rating for computer/guest
+    if white_rating_obj:
+        w_r, w_rd, w_v = white_rating_obj.rating, white_rating_obj.rd, white_rating_obj.volatility
+    else:
+        w_r = round(black_rating_obj.rating / 50) * 50 if black_rating_obj else 1500.0
+        w_rd = 350.0
+        w_v = 0.06
 
-    b_r = black_rating_obj.rating if black_rating_obj else round(white_rating_obj.rating / 50) * 50
-    b_rd = black_rating_obj.rd if black_rating_obj else 350.0
-    b_v = black_rating_obj.volatility if black_rating_obj else 0.06
+    if black_rating_obj:
+        b_r, b_rd, b_v = black_rating_obj.rating, black_rating_obj.rd, black_rating_obj.volatility
+    else:
+        b_r = round(white_rating_obj.rating / 50) * 50 if white_rating_obj else 1500.0
+        b_rd = 350.0
+        b_v = 0.06
 
     w_p = Glicko2Player(w_r, w_rd, w_v)
     b_p = Glicko2Player(b_r, b_rd, b_v)

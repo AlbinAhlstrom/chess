@@ -2,6 +2,7 @@ from fastapi import APIRouter, Request, HTTPException
 from sqlalchemy import select, or_, and_, desc
 from typing import Optional
 import re
+import uuid
 
 from backend import database
 from backend.database import User, Rating, GameModel
@@ -23,7 +24,25 @@ async def me(request: Request):
             user_session["default_increment"] = float(db_user.default_increment)
             user_session["default_time_control_enabled"] = bool(db_user.default_time_control_enabled)
             user_session["rating_range"] = float(db_user.rating_range)
-    return {"user": user_session}
+        return {"user": user_session}
+    
+    # Guest logic
+    guest_id = request.session.get("guest_id")
+    if not guest_id:
+        guest_id = f"guest_{uuid.uuid4().hex[:12]}"
+        request.session["guest_id"] = guest_id
+    
+    return {
+        "user": {
+            "id": guest_id,
+            "username": f"Guest_{guest_id[-4:]}",
+            "is_guest": True,
+            "default_time": 10.0,
+            "default_increment": 0.0,
+            "default_time_control_enabled": True,
+            "rating_range": 500.0
+        }
+    }
 
 @router.post("/user/set_username")
 async def set_username(req: SetUsernameRequest, request: Request):

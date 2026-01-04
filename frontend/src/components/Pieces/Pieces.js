@@ -16,6 +16,7 @@ import PlayerNameDisplay from './subcomponents/PlayerNameDisplay';
 import GameOverIndicator from './subcomponents/GameOverIndicator';
 import { BoardEffects } from './subcomponents/BoardEffects';
 import { PromotionManager } from './subcomponents/PromotionManager';
+import GuestSignInPrompt from './subcomponents/GuestSignInPrompt';
 
 // Hooks
 import { useUserSession } from './hooks/useUserSession';
@@ -87,6 +88,21 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     const [isImportDialogOpen, setImportDialogOpen] = useState(false);
     const [promotionMove, setPromotionMove] = useState(null);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [showGuestPrompt, setShowGuestPrompt] = useState(false);
+
+    // Guest Sign-in Prompt
+    useEffect(() => {
+        if (isGameOver && user?.is_guest) {
+            const dontAsk = localStorage.getItem('dontAskGuestSignIn');
+            if (!dontAsk) {
+                // Delay slightly for dramatic effect (after confetti/game over indicator)
+                const timer = setTimeout(() => setShowGuestPrompt(true), 2000);
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [isGameOver, user]);
+
+    // Screen Shake: Trigger on captures or check
 
     const setFlippedCombined = useCallback((val) => {
         setIsFlippedLocal(val);
@@ -223,6 +239,16 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
 
                 <GameOverIndicator isGameOver={isGameOver} position={position} winner={winner} isFlipped={isFlipped} />
                 <Confetti trigger={isGameOver && !!winner} />
+
+                {showGuestPrompt && (
+                    <GuestSignInPrompt 
+                        onDismiss={() => setShowGuestPrompt(false)}
+                        onDontAskAgain={() => {
+                            localStorage.setItem('dontAskGuestSignIn', 'true');
+                            setShowGuestPrompt(false);
+                        }}
+                    />
+                )}
             </div>
 
             <PlayerNameDisplay isOpponent={false} isFlipped={isFlipped} player={bottomPlayer} ratingDiff={bottomDiff} takebackOffer={takebackOffer} user={user} timers={timers} turn={turn} formatTime={formatTime} matchmaking={matchmaking} />

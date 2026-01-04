@@ -28,7 +28,7 @@ async def new_game(req: NewGameRequest, request: Request):
         games[game_id], game_variants[game_id] = game, variant
         
         user_session = request.session.get("user")
-        user_id = str(user_session.get("id")) if user_session else None
+        user_id = str(user_session.get("id")) if user_session else request.session.get("guest_id")
         
         white_id, black_id = None, None
         if req.is_computer:
