@@ -19,6 +19,9 @@ export function useLobby(navigate) {
                     // Convert list to dict for easier lookup
                     const ratingMap = {};
                     rData.ratings.forEach(r => ratingMap[r.variant] = Math.round(r.rating));
+                    if (rData.overall) {
+                        ratingMap['random'] = Math.round(rData.overall);
+                    }
                     setRatings(ratingMap);
                 }).catch(err => console.error("Failed to fetch ratings:", err));
             }
