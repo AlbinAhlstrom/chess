@@ -14,7 +14,7 @@ import { ColorSelector } from './subcomponents/ColorSelector';
 import { useLobby } from './hooks/useLobby';
 
 const VARIANTS = [
-    { id: 'standard', title: 'Standard', icon: '♟️' },
+    { id: 'random', title: 'Random', icon: '❓' },
     { id: 'antichess', title: 'Antichess', icon: '🚫' },
     { id: 'atomic', title: 'Atomic', icon: '⚛️' },
     { id: 'chess960', title: 'Chess960', icon: '🎲' },
@@ -23,7 +23,7 @@ const VARIANTS = [
     { id: 'kingofthehill', title: 'King of the Hill', icon: '⛰️' },
     { id: 'racingkings', title: 'Racing Kings', icon: '🏎️' },
     { id: 'threecheck', title: 'Three Check', icon: '3️⃣' },
-    { id: 'random', title: 'Random', icon: '❓' },
+    { id: 'standard', title: 'Standard', icon: '♟️' },
 ];
 
 const STARTING_TIME_VALUES = [
