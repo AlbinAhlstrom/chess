@@ -109,7 +109,7 @@
         display: none;
     }
 
-    .opponent-name {
+    .profile-opponent-name {
         font-size: 0.8rem;
         max-width: 90px;
         overflow: hidden;
@@ -510,7 +510,7 @@ input:checked + .slider:before {
     color: #666;
 }
 
-.opponent-name {
+.profile-opponent-name {
     color: white;
     font-weight: 500;
 }

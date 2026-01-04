@@ -51,7 +51,9 @@ export function GameHistory({
                                 <div className='game-vs'>
                                     <span className={`result-indicator ${game.result}`}>{game.result.toUpperCase()}</span>
                                     <span className='vs-text'>vs</span>
-                                    <span className='opponent-name'>{game.opponent.name}</span>
+                                                                        <span className='profile-opponent-name'>
+                                                                            {game.opponent.name}
+                                                                        </span>
                                 </div>
                             </div>
                             <div className='game-item-right'>
