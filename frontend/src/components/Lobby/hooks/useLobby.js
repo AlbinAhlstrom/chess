@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { getWsBase, getMe, getUserRatings } from '../../../api';
 
-export function useLobby(navigate) {
+export function useLobby(navigate, seekId = null) {
     const [seeks, setSeeks] = useState([]);
     const [user, setUser] = useState(null);
     const [ratings, setRatings] = useState({});
     const [isQuickMatching, setIsQuickMatching] = useState(false);
     const [elapsedTime, setElapsedTime] = useState(0);
+    const [isConnected, setIsConnected] = useState(false);
     const socketRef = useRef(null);
     const userRef = useRef(null);
+    const joinAttemptedRef = useRef(false);
 
     useEffect(() => {
         getMe().then(data => {
@@ -46,6 +48,8 @@ export function useLobby(navigate) {
             if (!isMounted) return;
             socket = new WebSocket(`${getWsBase()}/lobby`);
             socketRef.current = socket;
+            socket.onopen = () => setIsConnected(true);
+            socket.onclose = () => setIsConnected(false);
             socket.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 if (data.type === "seeks") setSeeks(data.seeks);
@@ -65,6 +69,14 @@ export function useLobby(navigate) {
             socket?.close();
         };
     }, [navigate]);
+
+    useEffect(() => {
+        if (seekId && user && isConnected && !joinAttemptedRef.current) {
+            console.log("Auto-joining seek:", seekId);
+            socketRef.current.send(JSON.stringify({ type: "join_seek", seek_id: seekId, user }));
+            joinAttemptedRef.current = true;
+        }
+    }, [seekId, user, isConnected]);
 
     const sendSocketMessage = (data) => {
         if (socketRef.current?.readyState === WebSocket.OPEN) {

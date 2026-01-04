@@ -34,6 +34,7 @@ function App() {
           <Routes>
             <Route path="/" element={user ? <Navigate to="/create-game" replace /> : <LandingPage />} />
             <Route path="/create-game" element={<Lobby />} />
+            <Route path="/join/:seekId" element={<Lobby />} />
             <Route path="/otb" element={<GameBoardWrapper variant="standard" />} />
             <Route path="/otb/:variant" element={<GameBoardWrapper />} />
             <Route path="/matchmaking-game/:gameId" element={<GameBoardWrapper matchmaking={true} />} />

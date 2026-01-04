@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { getAuthLinks, createGame } from '../../api';
 import './Lobby.css';
 import '../Pieces/Pieces.css'; 
@@ -45,9 +45,10 @@ const GAME_MODES = [
 
 function Lobby() {
     const navigate = useNavigate();
+    const { seekId } = useParams();
     const { 
         seeks, user, ratings, isQuickMatching, setIsQuickMatching, elapsedTime, sendSocketMessage 
-    } = useLobby(navigate);
+    } = useLobby(navigate, seekId);
 
     const [selectedVariant, setSelectedVariant] = useState("standard");
     const [selectedColor, setSelectedColor] = useState("random");
