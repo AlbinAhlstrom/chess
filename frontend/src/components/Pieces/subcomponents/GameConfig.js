@@ -14,6 +14,7 @@ function GameConfig({
     increment, 
     setIncrement, 
     INCREMENT_VALUES,
+    ratings = {},
     showColorSelect = false,
     gameMode = 'lobby'
 }) {
@@ -27,6 +28,11 @@ function GameConfig({
                         onClick={() => setSelectedVariant(v.id)}
                     >
                         <span>{v.icon} {v.title}</span>
+                        {ratings && ratings[v.id] && (
+                            <span style={{ color: '#888', fontSize: '0.9em', marginLeft: '6px' }}>
+                                ({ratings[v.id]})
+                            </span>
+                        )}
                     </button>
                 ))}
             </div>

@@ -46,7 +46,7 @@ const GAME_MODES = [
 function Lobby() {
     const navigate = useNavigate();
     const { 
-        seeks, user, isQuickMatching, setIsQuickMatching, elapsedTime, sendSocketMessage 
+        seeks, user, ratings, isQuickMatching, setIsQuickMatching, elapsedTime, sendSocketMessage 
     } = useLobby(navigate);
 
     const [selectedVariant, setSelectedVariant] = useState("standard");
@@ -118,7 +118,23 @@ function Lobby() {
             
             <div className="create-seek-panel">
                 <h2>Variant</h2>
-                <GameConfig VARIANTS={VARIANTS} selectedVariant={selectedVariant} setSelectedVariant={setSelectedVariant} selectedColor={selectedColor} setSelectedColor={setSelectedColor} isTimeControlEnabled={isTimeControlEnabled} setIsTimeControlEnabled={setIsTimeControlEnabled} startingTime={startingTime} setStartingTime={setStartingTime} STARTING_TIME_VALUES={STARTING_TIME_VALUES} increment={increment} setIncrement={setIncrement} INCREMENT_VALUES={INCREMENT_VALUES} showColorSelect={false} gameMode={gameMode} />
+                <GameConfig 
+                    VARIANTS={VARIANTS}
+                    selectedVariant={selectedVariant}
+                    setSelectedVariant={setSelectedVariant}
+                    selectedColor={selectedColor}
+                    setSelectedColor={setSelectedColor}
+                    isTimeControlEnabled={isTimeControlEnabled}
+                    setIsTimeControlEnabled={setIsTimeControlEnabled}
+                    startingTime={startingTime}
+                    setStartingTime={setStartingTime}
+                    STARTING_TIME_VALUES={STARTING_TIME_VALUES}
+                    increment={increment}
+                    setIncrement={setIncrement}
+                    INCREMENT_VALUES={INCREMENT_VALUES}
+                    ratings={ratings}
+                    gameMode={gameMode}
+                />
 
                 <div className="divider" />
                 <h2>Game Mode</h2>

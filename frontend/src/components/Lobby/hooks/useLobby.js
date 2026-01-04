@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { getWsBase, getMe } from '../../../api';
+import { getWsBase, getMe, getUserRatings } from '../../../api';
 
 export function useLobby(navigate) {
     const [seeks, setSeeks] = useState([]);
     const [user, setUser] = useState(null);
+    const [ratings, setRatings] = useState({});
     const [isQuickMatching, setIsQuickMatching] = useState(false);
     const [elapsedTime, setElapsedTime] = useState(0);
     const socketRef = useRef(null);
@@ -13,6 +14,14 @@ export function useLobby(navigate) {
         getMe().then(data => {
             setUser(data.user);
             userRef.current = data.user;
+            if (data.user && data.user.id) {
+                getUserRatings(data.user.id).then(rData => {
+                    // Convert list to dict for easier lookup
+                    const ratingMap = {};
+                    rData.ratings.forEach(r => ratingMap[r.variant] = Math.round(r.rating));
+                    setRatings(ratingMap);
+                }).catch(err => console.error("Failed to fetch ratings:", err));
+            }
         }).catch(err => console.error("Failed to fetch user in Lobby hook:", err));
     }, []);
 
@@ -61,6 +70,6 @@ export function useLobby(navigate) {
     };
 
     return {
-        seeks, user, isQuickMatching, setIsQuickMatching, elapsedTime, sendSocketMessage
+        seeks, user, ratings, isQuickMatching, setIsQuickMatching, elapsedTime, sendSocketMessage
     };
 }
