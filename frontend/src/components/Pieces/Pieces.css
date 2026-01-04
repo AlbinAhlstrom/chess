@@ -647,6 +647,14 @@
 
 /* Mobile Responsiveness */
 @media (max-width: 850px) {
+    .player-name-display {
+        font-size: 12px;
+        padding: 0 5px;
+        width: 100%;
+        left: 0;
+        box-sizing: border-box;
+    }
+
     .time-control-row {
         flex-wrap: nowrap;
         gap: 10px;
