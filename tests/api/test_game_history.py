@@ -56,11 +56,25 @@ async def test_get_game_history_success(client):
             )
             session.add(g3)
 
+            # Game 4: Aborted, Standard
+            g4 = GameModel(
+                id=str(uuid.uuid4()),
+                variant="standard",
+                fen="start_fen",
+                move_history="[]",
+                white_player_id=user_id,
+                black_player_id="other_user",
+                is_over=True,
+                winner="aborted",
+                created_at=datetime.datetime.now()
+            )
+            session.add(g4)
+
     # Test Fetch All
     resp = client.get(f"/api/user/{user_id}/games")
     assert resp.status_code == 200
     data = resp.json()
-    assert len(data["games"]) == 3
+    assert len(data["games"]) == 3 # Should still be 3, because g4 is aborted
     
     # Test Filter Variant Standard
     resp = client.get(f"/api/user/{user_id}/games?variant=standard")

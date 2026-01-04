@@ -136,7 +136,8 @@ async def get_user_games(
     async with database.async_session() as session:
         filters = [
             or_(GameModel.white_player_id == user_id, GameModel.black_player_id == user_id),
-            GameModel.is_over == True
+            GameModel.is_over == True,
+            GameModel.winner != "aborted"
         ]
         if variant and variant != "all": filters.append(GameModel.variant == variant)
         if result:

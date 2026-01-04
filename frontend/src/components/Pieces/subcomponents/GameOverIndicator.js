@@ -19,7 +19,7 @@ function GameOverIndicator({ isGameOver, position, winner, isFlipped }) {
     const blackKingSq = getKingSquare('b');
 
     const getStatusColor = (color) => {
-        if (!winner) return 'grey'; // Draw
+        if (!winner || winner === "draw" || winner === "aborted") return 'grey';
         return winner === color ? '#4CAF50' : '#F44336';
     };
 

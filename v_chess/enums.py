@@ -97,6 +97,7 @@ class GameOverReason(BaseLegalityReason):
     KING_EXPLODED = "king exploded"
     KING_TO_EIGHTH_RANK = "king to eighth rank"
     SURRENDER = "surrender"
+    ABORTED = "aborted"
 
 
 STANDARD_REMOVALS = {

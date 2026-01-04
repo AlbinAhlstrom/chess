@@ -75,6 +75,12 @@ class Game:
         result = "1-0" if winner_color == Color.WHITE else "0-1"
         self.move_history.append(result)
 
+    def abort(self):
+        """Game is aborted."""
+        self.game_over_reason_override = GameOverReason.ABORTED
+        self.winner_override = "aborted"
+        self.move_history.append("aborted")
+
     def agree_draw(self):
         """Players agree to a draw."""
         self.game_over_reason_override = GameOverReason.MUTUAL_AGREEMENT

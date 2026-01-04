@@ -125,6 +125,7 @@ async def game_websocket(websocket: WebSocket, game_id: str):
     try:
         while True:
             data = await websocket.receive_text()
+
             message = json.loads(data)
             if message["type"] == "move":
                 try:
@@ -183,7 +184,19 @@ async def game_websocket(websocket: WebSocket, game_id: str):
                     }))
             elif message["type"] == "resign":
                 if user_id in [white_id, black_id] or (not white_id and not black_id):
-                    game.resign(Color.WHITE if user_id == white_id else (Color.BLACK if user_id == black_id else game.state.turn))
+                    # Check for abort condition (no moves made)
+                    if not game.move_history:
+                        game.abort()
+                        # We still save to DB to mark it as over, but rating_diffs will be None/handled by service
+                        # Actually save_game_to_db calculates ratings if winner is set.
+                        # We need to make sure save_game_to_db doesn't calc ratings for "aborted".
+                    else:
+                        resigning_color = game.state.turn
+                        if user_id:
+                            if user_id == white_id: resigning_color = Color.WHITE
+                            elif user_id == black_id: resigning_color = Color.BLACK
+                        game.resign(resigning_color)
+                    
                     rating_diffs = await save_game_to_db(game_id)
                     await manager.broadcast(game_id, json.dumps({
                         "type": "game_state", "fen": game.state.fen, "turn": game.state.turn.value, 

@@ -44,6 +44,15 @@ async def test_game_result_history_resign(client):
     with client.websocket_connect(f"/ws/{game_id}") as ws:
         ws.receive_json() # Initial
         
+        # Make a move to ensure it's not aborted
+        ws.send_json({"type": "move", "uci": "e2e4"})
+        
+        # Wait for move to be processed
+        while True:
+            msg = ws.receive_json()
+            if msg.get("type") == "game_state" and "e4" in msg.get("move_history", []):
+                break
+
         # White resigns
         # Need to simulate user being White. 
         # In test environment, session might be empty or mocked?
@@ -59,8 +68,12 @@ async def test_game_result_history_resign(client):
         
         history = msg["move_history"]
         # If white resigns (default assumption in my fix for anon?), 0-1
-        # Wait, my fix for anon was: game.resign(game.state.turn) -> White starts -> White resigns -> 0-1
-        assert history[-1] == "0-1"
+        # Wait, my fix for anon was: game.resign(game.state.turn) -> Black starts -> Black resigns -> 1-0?
+        # No, turn is Black after e4.
+        # If no user_id, resign uses game.state.turn.
+        # Turn is Black. So Black resigns.
+        # If Black resigns, White wins -> 1-0.
+        assert history[-1] == "1-0"
 
 @pytest.mark.asyncio
 async def test_game_result_history_draw_agreement(client):

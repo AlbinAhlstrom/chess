@@ -36,10 +36,11 @@ async def save_game_to_db(game_id: str):
             rating_diffs = None
             if model:
                 if game.is_over and not model.is_over:
-                    rating_diffs = await update_game_ratings(session, model, game.winner)
-                    if rating_diffs:
-                        model.white_rating_diff = rating_diffs["white_diff"]
-                        model.black_rating_diff = rating_diffs["black_diff"]
+                    if game.winner != "aborted":
+                        rating_diffs = await update_game_ratings(session, model, game.winner)
+                        if rating_diffs:
+                            model.white_rating_diff = rating_diffs["white_diff"]
+                            model.black_rating_diff = rating_diffs["black_diff"]
                 
                 model.fen = game.state.fen
                 model.move_history = json.dumps(game.move_history)
