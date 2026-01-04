@@ -28,13 +28,6 @@ export function HistoryDisplay({
         <>
             <div className="mobile-history-bar">
                 <div className="mobile-history-scroll">
-                    <span 
-                        className={`history-item start-pos ${activeIndex === 0 ? 'active' : ''}`}
-                        onClick={() => onJumpToMove(0)}
-                        ref={activeIndex === 0 ? activeMobileRef : null}
-                    >
-                        Start
-                    </span>
                     {moveHistory.map((move, i) => {
                         const moveIndex = i + 1;
                         const isActive = activeIndex === moveIndex;
@@ -56,6 +49,16 @@ export function HistoryDisplay({
                 <div className="history-nav-controls">
                     <button 
                         className="nav-btn" 
+                        onClick={() => onJumpToMove(0)} 
+                        title="First Move"
+                        disabled={activeIndex === 0}
+                    >
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                            <path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6 1.41-1.41zM6 6h2v12H6V6z"/>
+                        </svg>
+                    </button>
+                    <button 
+                        className="nav-btn" 
                         onClick={onStepBackward} 
                         title="Previous"
                         disabled={activeIndex === 0}
@@ -74,41 +77,97 @@ export function HistoryDisplay({
                             <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
                         </svg>
                     </button>
+                    <button 
+                        className="nav-btn" 
+                        onClick={() => onJumpToMove(-1)} 
+                        title="Last Move"
+                        disabled={viewedIndex === -1}
+                    >
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                            <path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6-1.41 1.41zM16 6h2v12h-2V6z"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
 
             <div className="move-history">
-                <div className="history-header">Moves</div>
-                {moveHistory.reduce((rows, move, index) => {
-                    if (index % 2 === 0) rows.push([move]);
-                    else rows[rows.length - 1].push(move);
-                    return rows;
-                }, []).map((row, i) => {
-                    const whiteMoveIndex = i * 2 + 1;
-                    const blackMoveIndex = i * 2 + 2;
-                    const isWhiteActive = activeIndex === whiteMoveIndex;
-                    const isBlackActive = activeIndex === blackMoveIndex;
+                <div className="history-header">
+                    <span>Moves</span>
+                    <div className="history-nav-controls desktop-only-nav">
+                        <button 
+                            className="nav-btn" 
+                            onClick={() => onJumpToMove(0)} 
+                            title="First Move"
+                            disabled={activeIndex === 0}
+                        >
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                                <path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6 1.41-1.41zM6 6h2v12H6V6z"/>
+                            </svg>
+                        </button>
+                        <button 
+                            className="nav-btn" 
+                            onClick={onStepBackward} 
+                            title="Previous"
+                            disabled={activeIndex === 0}
+                        >
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                                <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/>
+                            </svg>
+                        </button>
+                        <button 
+                            className="nav-btn" 
+                            onClick={onStepForward} 
+                            title="Next"
+                            disabled={viewedIndex === -1}
+                        >
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                            </svg>
+                        </button>
+                        <button 
+                            className="nav-btn" 
+                            onClick={() => onJumpToMove(-1)} 
+                            title="Last Move"
+                            disabled={viewedIndex === -1}
+                        >
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                                <path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6-1.41 1.41zM16 6h2v12h-2V6z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div className="history-list-vertical">
+                    {moveHistory.reduce((rows, move, index) => {
+                        if (index % 2 === 0) rows.push([move]);
+                        else rows[rows.length - 1].push(move);
+                        return rows;
+                    }, []).map((row, i) => {
+                        const whiteMoveIndex = i * 2 + 1;
+                        const blackMoveIndex = i * 2 + 2;
+                        const isWhiteActive = activeIndex === whiteMoveIndex;
+                        const isBlackActive = activeIndex === blackMoveIndex;
 
-                    return (
-                        <div key={i} className="history-row">
-                            <span style={{ color: '#888' }}>{i + 1}.</span>
-                            <span 
-                                className={`history-move ${isWhiteActive ? 'active' : ''}`}
-                                onClick={() => onJumpToMove(whiteMoveIndex)}
-                                ref={isWhiteActive ? activeDesktopRef : null}
-                            >
-                                {row[0]}
-                            </span>
-                            <span 
-                                className={`history-move ${isBlackActive ? 'active' : ''}`}
-                                onClick={() => row[1] && onJumpToMove(blackMoveIndex)}
-                                ref={isBlackActive ? activeDesktopRef : null}
-                            >
-                                {row[1] || ''}
-                            </span>
-                        </div>
-                    );
-                })}
+                        return (
+                            <div key={i} className="history-row">
+                                <span className="move-number">{i + 1}.</span>
+                                <span 
+                                    className={`history-move ${isWhiteActive ? 'active' : ''}`}
+                                    onClick={() => onJumpToMove(whiteMoveIndex)}
+                                    ref={isWhiteActive ? activeDesktopRef : null}
+                                >
+                                    {row[0]}
+                                </span>
+                                <span 
+                                    className={`history-move ${isBlackActive ? 'active' : ''}`}
+                                    onClick={() => row[1] && onJumpToMove(blackMoveIndex)}
+                                    ref={isBlackActive ? activeDesktopRef : null}
+                                >
+                                    {row[1] || ''}
+                                </span>
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
         </>
     );
