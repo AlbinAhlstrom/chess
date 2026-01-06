@@ -14,11 +14,19 @@ from v_chess.state_validators import (
     pawn_count_standard, piece_count_promotion_consistency, castling_rights_consistency,
     en_passant_target_validity, inactive_player_check_safety, atomic_kings_proximity
 )
+from v_chess.special_moves import (
+    PieceMoveGenerator, GlobalMoveGenerator, basic_moves,
+    pawn_promotions, pawn_double_push, standard_castling
+)
 from .standard import StandardRules
 from dataclasses import replace
 
 
 class AtomicRules(StandardRules):
+    @property
+    def name(self) -> str:
+        return "Atomic"
+        
     @property
     def game_over_conditions(self) -> List[Callable[[GameState, "StandardRules"], Optional[GameOverReason]]]:
         return [evaluate_atomic_king_exploded] + super().game_over_conditions
@@ -50,6 +58,21 @@ class AtomicRules(StandardRules):
             en_passant_target_validity,
             inactive_player_check_safety
         ]
+
+    @property
+    def piece_generators(self) -> List[PieceMoveGenerator]:
+        """Returns a list of generators for piece-specific moves."""
+        return [
+            basic_moves,
+            pawn_promotions,
+            pawn_double_push,
+            standard_castling
+        ]
+
+    @property
+    def global_generators(self) -> List[GlobalMoveGenerator]:
+        """Returns a list of generators for moves not originating from board pieces."""
+        return []
 
     def post_move_actions(self, old_state: GameState, move: Move, new_state: GameState) -> GameState:
         moving_piece = old_state.board.get_piece(move.start)

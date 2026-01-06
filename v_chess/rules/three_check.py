@@ -3,13 +3,33 @@ from v_chess.enums import GameOverReason, MoveLegalityReason, BoardLegalityReaso
 from v_chess.game_state import GameState, ThreeCheckGameState
 from v_chess.move import Move
 from v_chess.game_over_conditions import evaluate_three_check_win
+from v_chess.special_moves import (
+    PieceMoveGenerator, GlobalMoveGenerator, basic_moves,
+    pawn_promotions, pawn_double_push, standard_castling
+)
 from .standard import StandardRules
 
 
 class ThreeCheckRules(StandardRules):
+# ...
     @property
     def game_over_conditions(self) -> List[Callable[[GameState, "StandardRules"], Optional[GameOverReason]]]:
         return [evaluate_three_check_win] + super().game_over_conditions
+
+    @property
+    def piece_generators(self) -> List[PieceMoveGenerator]:
+        """Returns a list of generators for piece-specific moves."""
+        return [
+            basic_moves,
+            pawn_promotions,
+            pawn_double_push,
+            standard_castling
+        ]
+
+    @property
+    def global_generators(self) -> List[GlobalMoveGenerator]:
+        """Returns a list of generators for moves not originating from board pieces."""
+        return []
 
     def post_move_actions(self, old_state: GameState, move: Move, new_state: GameState) -> GameState:
         """Updates check counter after a move."""

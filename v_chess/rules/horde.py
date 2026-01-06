@@ -16,19 +16,17 @@ from v_chess.state_validators import (
     piece_count_promotion_consistency, castling_rights_consistency,
     en_passant_target_validity, inactive_player_check_safety
 )
+from v_chess.special_moves import (
+    PieceMoveGenerator, GlobalMoveGenerator, basic_moves,
+    pawn_promotions, pawn_double_push, standard_castling, horde_pawn_double_push
+)
 from .standard import StandardRules
 
 
 class HordeRules(StandardRules):
-
-
     """Rules for Horde chess variant."""
 
-
     @property
-
-
-
     def game_over_conditions(self) -> List[Callable[[GameState, "StandardRules"], Optional[GameOverReason]]]:
         return [evaluate_horde_win] + super().game_over_conditions
 
@@ -61,6 +59,22 @@ class HordeRules(StandardRules):
         ]
 
     @property
+    def piece_generators(self) -> List[PieceMoveGenerator]:
+        """Returns a list of generators for piece-specific moves."""
+        return [
+            basic_moves,
+            pawn_promotions,
+            pawn_double_push,
+            horde_pawn_double_push,
+            standard_castling
+        ]
+
+    @property
+    def global_generators(self) -> List[GlobalMoveGenerator]:
+        """Returns a list of generators for moves not originating from board pieces."""
+        return []
+
+    @property
     def starting_fen(self) -> str:
         """The default starting FEN for Horde."""
         return "rnbqkbnr/pppppppp/8/1PP2PP1/PPPPPPPP/PPPPPPPP/PPPPPPPP/PPPPPPPP w kq - 0 1"
@@ -79,22 +93,3 @@ class HordeRules(StandardRules):
         if reason == self.GameOverReason.ALL_PIECES_CAPTURED:
             return Color.BLACK
         return super().get_winner(state)
-
-    def get_extra_theoretical_moves(self, state: GameState):
-        """Generates all theoretical moves, including Horde-specific pawn pushes."""
-
-        # Horde specific: White pawns on rank 1 can also move 2 steps
-        if state.turn == Color.WHITE:
-            bb = state.board.bitboard
-            mask = bb.pieces[Color.WHITE][Pawn] & 0xFF00000000000000 # Row 7 (Rank 1)
-            while mask:
-                sq_idx = (mask & -mask).bit_length() - 1
-                sq = Square(divmod(sq_idx, 8))
-
-                # Manual double push for Rank 1
-                one_step = sq.get_step(Direction.UP)
-                two_step = one_step.get_step(Direction.UP) if one_step and not one_step.is_none_square else None
-                if two_step and not two_step.is_none_square:
-                    yield Move(sq, two_step)
-
-                mask &= mask - 1

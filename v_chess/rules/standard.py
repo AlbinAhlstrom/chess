@@ -8,19 +8,23 @@ from v_chess.piece import King, Pawn, Piece, Rook, Queen, Bishop, Knight
 from v_chess.square import Square
 from v_chess.game_state import GameState
 from v_chess.game_over_conditions import (
-    evaluate_repetition, evaluate_fifty_move_rule, 
+    evaluate_repetition, evaluate_fifty_move_rule,
     evaluate_checkmate, evaluate_stalemate
 )
 from v_chess.move_validators import (
-    validate_piece_presence, validate_turn, 
-    validate_moveset, validate_friendly_capture, validate_pawn_capture, 
-    validate_path, validate_promotion, validate_standard_castling, 
+    validate_piece_presence, validate_turn,
+    validate_moveset, validate_friendly_capture, validate_pawn_capture,
+    validate_path, validate_promotion, validate_standard_castling,
     validate_king_safety
 )
 from v_chess.state_validators import (
     standard_king_count, pawn_on_backrank,
     pawn_count_standard, piece_count_promotion_consistency, castling_rights_consistency,
     en_passant_target_validity, inactive_player_check_safety
+)
+from v_chess.special_moves import (
+    PieceMoveGenerator, GlobalMoveGenerator, basic_moves,
+    pawn_promotions, pawn_double_push, standard_castling
 )
 from .core import Rules
 
@@ -68,6 +72,21 @@ class StandardRules(Rules):
             en_passant_target_validity,
             inactive_player_check_safety
         ]
+
+    @property
+    def piece_generators(self) -> List[PieceMoveGenerator]:
+        """Returns a list of generators for piece-specific moves."""
+        return [
+            basic_moves,
+            pawn_promotions,
+            pawn_double_push,
+            standard_castling
+        ]
+
+    @property
+    def global_generators(self) -> List[GlobalMoveGenerator]:
+        """Returns a list of generators for moves not originating from board pieces."""
+        return []
 
     def get_winner(self, state: GameState) -> Color | None:
         """Determines the winner of the game."""
@@ -136,51 +155,6 @@ class StandardRules(Rules):
                 return MoveLegalityReason.CASTLING_THROUGH_CHECK
 
         return MoveLegalityReason.LEGAL
-
-    def get_theoretical_moves(self, state: GameState):
-        """Generates all moves possible on an empty board for the current turn."""
-        bb = state.board.bitboard
-        turn = state.turn
-
-        for p_type, mask in bb.pieces[turn].items():
-            temp_mask = mask
-            while temp_mask:
-                sq_idx = (temp_mask & -temp_mask).bit_length() - 1
-                sq = Square(divmod(sq_idx, 8))
-                piece = state.board.get_piece(sq)
-
-                if piece:
-                    # Basic moves and promotions
-                    for end in piece.theoretical_moves(sq):
-                        if isinstance(piece, Pawn) and end.is_promotion_row(turn):
-                            for promo_piece_type in [Queen, Rook, Bishop, Knight]:
-                                yield Move(sq, end, promo_piece_type(turn))
-                        else:
-                            yield Move(sq, end)
-
-                    if isinstance(piece, Pawn):
-                        # Double push
-                        is_start_rank = (sq.row == 6 if turn == Color.WHITE else sq.row == 1)
-                        if is_start_rank:
-                            direction = piece.direction
-                            one_step = sq.get_step(direction)
-                            two_step = one_step.get_step(direction) if one_step and not one_step.is_none_square else None
-                            if two_step and not two_step.is_none_square:
-                                yield Move(sq, two_step)
-
-                    if isinstance(piece, King):
-                        row = 7 if turn == Color.WHITE else 0
-                        if sq == Square(row, 4):
-                            yield Move(sq, Square(row, 6))
-                            yield Move(sq, Square(row, 2))
-
-                temp_mask &= temp_mask - 1
-        
-        # Add variant-specific moves (e.g. drops)
-        yield from self.get_extra_theoretical_moves(state)
-
-    def get_extra_theoretical_moves(self, state: GameState) -> list[Move]:
-        return []
 
     def is_attacking(self, board: Board, piece: Piece, square: Square, piece_square: Square) -> bool:
         """Checks if a piece at a specific square is attacking another square."""
@@ -299,14 +273,14 @@ class StandardRules(Rules):
 
     def apply_move(self, state: GameState, move: Move) -> GameState:
         """Executes a move and returns the new GameState."""
-        
+
         if move.is_drop:
              new_board = state.board.copy()
              new_board.set_piece(move.drop_piece, move.end)
-             
+
              new_halfmove_clock = state.halfmove_clock + 1
              new_fullmove_count = state.fullmove_count + (1 if state.turn == Color.BLACK else 0)
-             
+
              new_state = GameState(
                 board=new_board,
                 turn=state.turn.opposite,
@@ -316,7 +290,7 @@ class StandardRules(Rules):
                 fullmove_count=new_fullmove_count,
                 repetition_count=1
              )
-             
+
              return self.post_move_actions(state, move, new_state)
 
         new_board = state.board.copy()
@@ -372,7 +346,7 @@ class StandardRules(Rules):
             if right:
                 rook_sq = right.expected_rook_square
                 rook = new_board.get_piece(rook_sq)
-                
+
                 # Destination Squares (Fixed for Chess)
                 rank = move.start.row
                 king_dest = Square(rank, 6) # g-file
@@ -380,7 +354,7 @@ class StandardRules(Rules):
                 if right.expected_rook_square.col < move.start.col: # Queenside
                     king_dest = Square(rank, 2) # c-file
                     rook_dest = Square(rank, 3) # d-file
-                
+
                 # Execute Castling
                 # Remove both first to avoid self-collision in 960
                 new_board.remove_piece(move.start)
@@ -423,7 +397,7 @@ class StandardRules(Rules):
         # In castling KxR, target IS rook.
         if isinstance(target, Rook):
             revoke_rook_right(move.end)
-        
+
         # Explicit check for 960 KxR castling target revocation if not caught above
         if is_castling and rook_sq:
              revoke_rook_right(rook_sq)
@@ -443,6 +417,6 @@ class StandardRules(Rules):
             fullmove_count=new_fullmove_count,
             repetition_count=1
         )
-        
+
         # Apply variant hooks
         return self.post_move_actions(state, move, new_state)

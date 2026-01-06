@@ -6,6 +6,10 @@ from v_chess.move import Move
 
 if TYPE_CHECKING:
     from v_chess.game_state import GameState
+    from v_chess.game_over_conditions import GameOverCondition
+    from v_chess.move_validators import MoveValidator
+    from v_chess.state_validators import StateValidator
+    from v_chess.special_moves import PieceMoveGenerator, GlobalMoveGenerator
 
 
 class Rules(ABC):
@@ -42,10 +46,44 @@ class Rules(ABC):
         """Returns a list of board state validators."""
         ...
 
+    @property
     @abstractmethod
-    def get_theoretical_moves(self, state: "GameState") -> list[Move]:
-        """Returns all moves that are theoretically possible on an empty board."""
+    def piece_generators(self) -> List["PieceMoveGenerator"]:
+        """Returns a list of generators for piece-specific moves."""
         ...
+
+    @property
+    @abstractmethod
+    def global_generators(self) -> List["GlobalMoveGenerator"]:
+        """Returns a list of generators for moves not originating from board pieces."""
+        ...
+
+    def get_theoretical_moves(self, state: "GameState") -> list[Move]:
+        """Generates all moves possible on an empty board using modular generators."""
+        moves = []
+        bb = state.board.bitboard
+        turn = state.turn
+
+        # 1. Piece-specific moves
+        for p_type, mask in bb.pieces[turn].items():
+            temp_mask = mask
+            while temp_mask:
+                sq_idx = (temp_mask & -temp_mask).bit_length() - 1
+                from v_chess.square import Square
+                sq = Square(divmod(sq_idx, 8))
+                piece = state.board.get_piece(sq)
+
+                if piece:
+                    for gen in self.piece_generators:
+                        moves.extend(gen(state, sq, piece))
+
+                temp_mask &= temp_mask - 1
+
+        # 2. Global moves (e.g. Drops)
+        for gen in self.global_generators:
+            moves.extend(gen(state))
+
+        return moves
 
     @abstractmethod
     def apply_move(self, state: "GameState", move: Move) -> "GameState":
@@ -101,10 +139,6 @@ class Rules(ABC):
         """Determines the winner of the game."""
         ...
 
-    def get_extra_theoretical_moves(self, state: "GameState") -> list[Move]:
-        """Returns variant-specific theoretical moves (e.g., drops, special pawn moves)."""
-        return []
-
     def post_move_actions(self, old_state: "GameState", move: Move, new_state: "GameState") -> "GameState":
         """Applies variant-specific side effects after a standard board transition.
 
@@ -122,13 +156,11 @@ class Rules(ABC):
 
     def is_game_over(self, state: "GameState") -> bool:
         """Convenience method to check if the game has ended."""
-        cls = getattr(self, "GameOverReason", GameOverReason)
-        return self.get_game_over_reason(state) != cls.ONGOING
+        return self.get_game_over_reason(state) != GameOverReason.ONGOING
 
     def is_legal(self, state: "GameState") -> bool:
         """Convenience method to check the legality of the entire board state."""
-        cls = getattr(self, "BoardLegalityReason", BoardLegalityReason)
-        return self.validate_board_state(state) == cls.VALID
+        return self.validate_board_state(state) == BoardLegalityReason.VALID
     
     def is_check(self, state: "GameState") -> bool:
         """Checks if the current player is in check."""

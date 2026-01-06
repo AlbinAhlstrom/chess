@@ -15,6 +15,10 @@ from v_chess.state_validators import (
     pawn_count_standard, piece_count_promotion_consistency, castling_rights_consistency,
     en_passant_target_validity, inactive_player_check_safety
 )
+from v_chess.special_moves import (
+    PieceMoveGenerator, GlobalMoveGenerator, basic_moves,
+    pawn_promotions, pawn_double_push, chess960_castling
+)
 from .standard import StandardRules
 from dataclasses import replace
 
@@ -34,6 +38,21 @@ class Chess960Rules(StandardRules):
             validate_chess960_castling,
             validate_king_safety
         ]
+
+    @property
+    def piece_generators(self) -> List[PieceMoveGenerator]:
+        """Returns a list of generators for piece-specific moves."""
+        return [
+            basic_moves,
+            pawn_promotions,
+            pawn_double_push,
+            chess960_castling
+        ]
+
+    @property
+    def global_generators(self) -> List[GlobalMoveGenerator]:
+        """Returns a list of generators for moves not originating from board pieces."""
+        return []
 
     @property
     def starting_fen(self) -> str:
@@ -165,19 +184,3 @@ class Chess960Rules(StandardRules):
             curr_col += step
 
         return MoveLegalityReason.LEGAL
-
-    def get_legal_castling_moves(self, state: GameState) -> list[Move]:
-        moves = []
-        for sq, piece in state.board.items():
-            if isinstance(piece, King) and piece.color == state.turn:
-                 for target_col in [6, 2]:
-                     m = Move(sq, Square(sq.row, target_col))
-                     if self.validate_move(state, m) == MoveLegalityReason.LEGAL:
-                         moves.append(m)
-                 # Also add King-to-Rook moves for 960 notation
-                 for r_sq, r_piece in state.board.items():
-                      if isinstance(r_piece, Rook) and r_piece.color == piece.color:
-                           m_kx_r = Move(sq, r_sq)
-                           if self.validate_move(state, m_kx_r) == MoveLegalityReason.LEGAL:
-                                moves.append(m_kx_r)
-        return moves

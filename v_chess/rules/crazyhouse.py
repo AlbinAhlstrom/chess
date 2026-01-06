@@ -19,6 +19,10 @@ from v_chess.state_validators import (
     pawn_count_standard, piece_count_promotion_consistency, castling_rights_consistency,
     en_passant_target_validity, inactive_player_check_safety
 )
+from v_chess.special_moves import (
+    PieceMoveGenerator, GlobalMoveGenerator, basic_moves,
+    pawn_promotions, pawn_double_push, standard_castling, crazyhouse_drops
+)
 from .standard import StandardRules
 from dataclasses import replace
 
@@ -43,33 +47,24 @@ class CrazyhouseRules(StandardRules):
         ]
 
     @property
+    def piece_generators(self) -> List[PieceMoveGenerator]:
+        """Returns a list of generators for piece-specific moves."""
+        return [
+            basic_moves,
+            pawn_promotions,
+            pawn_double_push,
+            standard_castling
+        ]
+
+    @property
+    def global_generators(self) -> List[GlobalMoveGenerator]:
+        """Returns a list of generators for moves not originating from board pieces."""
+        return [crazyhouse_drops]
+
+    @property
     def fen_type(self) -> str:
         """The FEN notation type used."""
         return "crazyhouse"
-
-    def get_extra_theoretical_moves(self, state: GameState) -> list[Move]:
-        """Yields all legal moves including drops from pocket."""
-        moves = []
-        if not isinstance(state, CrazyhouseGameState):
-            return moves
-
-        pocket_idx = 0 if state.turn == Color.WHITE else 1
-        pocket = state.pockets[pocket_idx]
-        if not pocket:
-            return moves
-
-        unique_pieces = {type(p): p for p in pocket}.values()
-
-        # Optimized: Iterate all 64 squares and check occupancy
-        for r in range(8):
-            for c in range(8):
-                sq = Square(r, c)
-                if state.board.get_piece(sq) is None:
-                    for p in unique_pieces:
-                        if isinstance(p, Pawn) and (r == 0 or r == 7):
-                            continue
-                        moves.append(Move(Square(None), sq, None, p, player_to_move=state.turn))
-        return moves
 
     def post_move_actions(self, old_state: GameState, move: Move, new_state: GameState) -> GameState:
         """Updates pockets after a move (capture or drop)."""
