@@ -26,10 +26,6 @@ from .core import Rules
 
 
 class StandardRules(Rules):
-    GameOverReason = GameOverReason
-    MoveLegalityReason = MoveLegalityReason
-    BoardLegalityReason = BoardLegalityReason
-
     @property
     def name(self) -> str:
         """The human-readable name of the variant."""

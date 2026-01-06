@@ -7,10 +7,6 @@ from .standard import StandardRules
 
 
 class KingOfTheHillRules(StandardRules):
-    MoveLegalityReason = MoveLegalityReason.load("KingOfTheHill")
-    BoardLegalityReason = BoardLegalityReason.load("KingOfTheHill")
-    GameOverReason = GameOverReason.load("KingOfTheHill")
-
     @property
     def name(self) -> str:
         return "King of the Hill"

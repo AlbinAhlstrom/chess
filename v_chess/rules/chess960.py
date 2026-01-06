@@ -20,10 +20,6 @@ from dataclasses import replace
 
 
 class Chess960Rules(StandardRules):
-    MoveLegalityReason = MoveLegalityReason.load("Chess960")
-    BoardLegalityReason = BoardLegalityReason.load("Chess960")
-    GameOverReason = GameOverReason.load("Chess960")
-
     @property
     def name(self) -> str:
         return "Chess960"

@@ -18,10 +18,6 @@ from .standard import StandardRules
 
 
 class RacingKingsRules(StandardRules):
-    MoveLegalityReason = MoveLegalityReason.load("RacingKings")
-    BoardLegalityReason = BoardLegalityReason.load("RacingKings")
-    GameOverReason = GameOverReason.load("RacingKings")
-
     @property
     def name(self) -> str:
         return "Racing Kings"

@@ -6,13 +6,13 @@ from v_chess.piece import Pawn, King
 from v_chess.square import Square
 from v_chess.game_over_conditions import evaluate_horde_win
 from v_chess.move_validators import (
-    validate_piece_presence, validate_turn, 
-    validate_moveset, validate_friendly_capture, validate_pawn_capture, 
-    validate_path, validate_promotion, validate_standard_castling, 
+    validate_piece_presence, validate_turn,
+    validate_moveset, validate_friendly_capture, validate_pawn_capture,
+    validate_path, validate_promotion, validate_standard_castling,
     validate_king_safety, validate_horde_pawn
 )
 from v_chess.state_validators import (
-    black_king_count_horde, black_pawn_count_horde, 
+    black_king_count_horde, black_pawn_count_horde,
     piece_count_promotion_consistency, castling_rights_consistency,
     en_passant_target_validity, inactive_player_check_safety
 )
@@ -21,15 +21,11 @@ from .standard import StandardRules
 
 class HordeRules(StandardRules):
     """Rules for Horde chess variant."""
-    MoveLegalityReason = MoveLegalityReason.load("Horde")
-    BoardLegalityReason = BoardLegalityReason.load("Horde")
-    GameOverReason = GameOverReason.load("Horde")
-
     @property
     def name(self) -> str:
         """The human-readable name of the variant."""
         return "Horde"
-        
+
     @property
     def game_over_conditions(self) -> List[Callable[[GameState, "StandardRules"], Optional[GameOverReason]]]:
         return [evaluate_horde_win] + super().game_over_conditions
@@ -84,7 +80,7 @@ class HordeRules(StandardRules):
 
     def get_extra_theoretical_moves(self, state: GameState):
         """Generates all theoretical moves, including Horde-specific pawn pushes."""
-        
+
         # Horde specific: White pawns on rank 1 can also move 2 steps
         if state.turn == Color.WHITE:
             bb = state.board.bitboard

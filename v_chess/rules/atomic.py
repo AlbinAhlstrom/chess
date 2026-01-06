@@ -19,10 +19,6 @@ from dataclasses import replace
 
 
 class AtomicRules(StandardRules):
-    MoveLegalityReason = MoveLegalityReason.load("Atomic")
-    BoardLegalityReason = BoardLegalityReason.load("Atomic")
-    GameOverReason = GameOverReason.load("Atomic")
-
     @property
     def name(self) -> str:
         return "Atomic"

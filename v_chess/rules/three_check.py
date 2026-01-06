@@ -7,10 +7,6 @@ from .standard import StandardRules
 
 
 class ThreeCheckRules(StandardRules):
-    MoveLegalityReason = MoveLegalityReason.load("ThreeCheck")
-    BoardLegalityReason = BoardLegalityReason.load("ThreeCheck")
-    GameOverReason = GameOverReason.load("ThreeCheck")
-
     @property
     def name(self) -> str:
         return "Three-Check"

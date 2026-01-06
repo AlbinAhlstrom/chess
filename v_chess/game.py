@@ -5,9 +5,6 @@ from v_chess.move import Move
 from v_chess.rules import Rules
 from v_chess.exceptions import IllegalMoveException, IllegalBoardException
 from v_chess.enums import MoveLegalityReason, BoardLegalityReason, GameOverReason, Color
-from v_chess.piece import Pawn, King, Queen, Rook, Bishop, Knight
-from v_chess.square import Square
-from v_chess.enums import Direction, CastlingRight
 
 
 class Game:
@@ -24,7 +21,6 @@ class Game:
             time_control: Dictionary defining time limits (e.g., {'limit': 600, 'increment': 0}).
         """
         if rules and state is None:
-            # If rules are provided but no state, use the variant's starting setup
             self.state = GameState.from_fen(rules.starting_fen)
         elif isinstance(state, GameState):
             self.state = state

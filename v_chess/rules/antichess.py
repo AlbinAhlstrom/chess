@@ -17,10 +17,6 @@ from .standard import StandardRules
 
 
 class AntichessRules(StandardRules):
-    MoveLegalityReason = MoveLegalityReason.load("Antichess")
-    BoardLegalityReason = BoardLegalityReason.load("Antichess")
-    GameOverReason = GameOverReason.load("Antichess")
-
     @property
     def name(self) -> str:
         return "Antichess"

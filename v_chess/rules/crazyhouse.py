@@ -25,9 +25,6 @@ from dataclasses import replace
 
 class CrazyhouseRules(StandardRules):
     """Rules for Crazyhouse chess variant."""
-    MoveLegalityReason = MoveLegalityReason.load("Crazyhouse")
-    BoardLegalityReason = BoardLegalityReason.load("Crazyhouse")
-    GameOverReason = GameOverReason.load("Crazyhouse")
 
     @property
     def name(self) -> str:

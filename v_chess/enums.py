@@ -6,42 +6,7 @@ if TYPE_CHECKING:
     from v_chess.square import Square
 
 
-def _v(name: str, members: dict[str, str]) -> StrEnum:
-    return StrEnum(name, members)
-
-
-class BaseLegalityReason(StrEnum):
-    @classmethod
-    def load(cls, variant: str) -> type[StrEnum]:
-        if "Board" in cls.__name__:
-            key, config_dict = "board", BOARD_DISCREPANCIES
-        elif "Move" in cls.__name__:
-            key, config_dict = "move", MOVE_DISCREPANCIES
-        else:
-            key, config_dict = "game_over", GAMEOVER_DISCREPANCIES
-
-        members = {m.name: m.value for m in cls}
-        [members.pop(r, None) for r in STANDARD_REMOVALS.get(key, [])]
-
-        if variant == "Standard":
-            return _v(f"Standard{cls.__name__}", members)
-
-        changes = config_dict.get(variant, {})
-
-        if "add" in changes:
-            for add_key in changes["add"]:
-                if add_key in cls.__members__:
-                    members[add_key] = cls[add_key].value
-                elif isinstance(changes["add"], dict):
-                    members[add_key] = changes["add"][add_key]
-
-        if "remove" in changes:
-            [members.pop(r, None) for r in changes["remove"]]
-
-        return _v(f"{variant}{cls.__name__}", members)
-
-
-class BoardLegalityReason(BaseLegalityReason):
+class BoardLegalityReason(StrEnum):
     VALID = "valid"
     NO_WHITE_KING = "no white king"
     NO_BLACK_KING = "no black king"
@@ -59,7 +24,7 @@ class BoardLegalityReason(BaseLegalityReason):
     KING_IN_CHECK = "king in check"
 
 
-class MoveLegalityReason(BaseLegalityReason):
+class MoveLegalityReason(StrEnum):
     NO_PIECE = "no piece moved."
     WRONG_COLOR = "wrong piece color"
     NO_CASTLING_RIGHT = "no right for castling"
@@ -81,7 +46,7 @@ class MoveLegalityReason(BaseLegalityReason):
     GIVES_CHECK = "move gives check"
 
 
-class GameOverReason(BaseLegalityReason):
+class GameOverReason(StrEnum):
     CHECKMATE = "checkmate"
     STALEMATE = "stalemate"
     REPETITION = "repetition"
@@ -99,44 +64,6 @@ class GameOverReason(BaseLegalityReason):
     ABORTED = "aborted"
 
 
-STANDARD_REMOVALS = {
-    "board": ["KINGS_ADJACENT", "KING_IN_CHECK"],
-    "move": ["MANDATORY_CAPTURE", "CASTLING_DISABLED", "KING_EXPLODED", "GIVES_CHECK"],
-    "game_over": ["ALL_PIECES_CAPTURED", "KING_ON_HILL", "THREE_CHECKS", "KING_EXPLODED", "KING_TO_EIGHTH_RANK"]
-}
-
-
-BOARD_DISCREPANCIES = {
-    "Antichess": {"remove": ["NO_WHITE_KING", "NO_BLACK_KING", "INVALID_CASTLING_RIGHTS", "OPPOSITE_CHECK", "TOO_MANY_CHECKERS"]},
-    "Atomic": {"add": ["KINGS_ADJACENT"]},
-    "Horde": {"remove": ["NO_WHITE_KING", "PAWNS_ON_BACKRANK"]},
-    "RacingKings": {"add": ["KING_IN_CHECK"], "remove": ["INVALID_CASTLING_RIGHTS", "OPPOSITE_CHECK", "TOO_MANY_CHECKERS"]},
-}
-
-
-MOVE_DISCREPANCIES = {
-    "Antichess": {
-        "add": ["MANDATORY_CAPTURE", "CASTLING_DISABLED"],
-        "remove": ["KING_LEFT_IN_CHECK", "NO_CASTLING_RIGHT", "CASTLING_FROM_CHECK", "CASTLING_THROUGH_CHECK"]
-    },
-    "Atomic": {"add": ["KING_EXPLODED"]},
-    "RacingKings": {
-        "add": ["GIVES_CHECK", "CASTLING_DISABLED", "KING_LEFT_IN_CHECK"],
-        "remove": ["NO_CASTLING_RIGHT", "CASTLING_FROM_CHECK", "CASTLING_THROUGH_CHECK"]
-    },
-}
-
-
-GAMEOVER_DISCREPANCIES = {
-    "KingOfTheHill": {"add": ["KING_ON_HILL"]},
-    "ThreeCheck": {"add": ["THREE_CHECKS"]},
-    "Antichess": {"add": ["ALL_PIECES_CAPTURED"], "remove": ["CHECKMATE"]},
-    "Atomic": {"add": ["KING_EXPLODED"]},
-    "Horde": {"add": ["ALL_PIECES_CAPTURED"]},
-    "RacingKings": {"add": ["KING_TO_EIGHTH_RANK"], "remove": ["CHECKMATE"]},
-}
-
-
 class Color(StrEnum):
     """Represents a piece or player color."""
 
@@ -144,7 +71,7 @@ class Color(StrEnum):
     WHITE = "w"
 
     @property
-    def opposite(self) -> Color:
+    def opposite(self) -> "Color":
         """Returns the opposite color."""
         return Color.BLACK if self == Color.WHITE else Color.WHITE
 
@@ -198,17 +125,17 @@ class CastlingRight(StrEnum):
         return Color.WHITE if self.value.isupper() else Color.BLACK
 
     @classmethod
-    def short(cls, color: Color) -> CastlingRight:
+    def short(cls, color: Color) -> "CastlingRight":
         """Returns the short castling right for the given color."""
         return cls.WHITE_SHORT if color == Color.WHITE else cls.BLACK_SHORT
 
     @classmethod
-    def long(cls, color: Color) -> CastlingRight:
+    def long(cls, color: Color) -> "CastlingRight":
         """Returns the long castling right for the given color."""
         return cls.WHITE_LONG if color == Color.WHITE else cls.BLACK_LONG
 
     @classmethod
-    def from_fen(cls, fen_castling_string: str) -> tuple[CastlingRight, ...]:
+    def from_fen(cls, fen_castling_string: str) -> tuple["CastlingRight", ...]:
         """Parses a FEN castling string into a tuple of CastlingRight objects.
 
         Args:
@@ -257,22 +184,22 @@ class Direction(Enum):
     TWO_RIGHT = (2, 0)
 
     @classmethod
-    def straight(cls) -> set[Direction]:
+    def straight(cls) -> set["Direction"]:
         """Returns the set of orthogonal directions."""
         return {cls.UP, cls.DOWN, cls.LEFT, cls.RIGHT}
 
     @classmethod
-    def diagonal(cls) -> set[Direction]:
+    def diagonal(cls) -> set["Direction"]:
         """Returns the set of diagonal directions."""
         return {cls.UP_LEFT, cls.DOWN_LEFT, cls.UP_RIGHT, cls.DOWN_RIGHT}
 
     @classmethod
-    def straight_and_diagonal(cls) -> set[Direction]:
+    def straight_and_diagonal(cls) -> set["Direction"]:
         """Returns the set of all 8 standard directions."""
         return cls.straight() | cls.diagonal()
 
     @classmethod
-    def two_straight_one_sideways(cls) -> set[Direction]:
+    def two_straight_one_sideways(cls) -> set["Direction"]:
         """Returns the set of directions a knight moves in."""
         return {
             cls.L_UP_LEFT, cls.L_UP_RIGHT, cls.L_DOWN_LEFT, cls.L_DOWN_RIGHT,
@@ -280,17 +207,17 @@ class Direction(Enum):
         }
 
     @classmethod
-    def up_straight_or_diagonal(cls) -> set[Direction]:
+    def up_straight_or_diagonal(cls) -> set["Direction"]:
         """Returns the set of forward (white) pawn directions."""
         return {cls.UP, cls.UP_LEFT, cls.UP_RIGHT}
 
     @classmethod
-    def down_straight_or_diagonal(cls) -> set[Direction]:
+    def down_straight_or_diagonal(cls) -> set["Direction"]:
         """Returns the set of forward (black) pawn directions."""
         return {cls.DOWN, cls.DOWN_LEFT, cls.DOWN_RIGHT}
 
     @classmethod
-    def two_left_or_right(cls) -> set[Direction]:
+    def two_left_or_right(cls) -> set["Direction"]:
         """Returns the directions for a king's castling move."""
         return {cls.TWO_LEFT, cls.TWO_RIGHT}
 

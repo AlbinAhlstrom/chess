@@ -14,6 +14,9 @@ class Rules(ABC):
     Rules are stateless logic providers that answer questions about
     the legality and status of a given GameState.
     """
+    GameOverReason = GameOverReason
+    MoveLegalityReason = MoveLegalityReason
+    BoardLegalityReason = BoardLegalityReason
 
     @property
     @abstractmethod
