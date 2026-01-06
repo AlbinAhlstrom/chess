@@ -152,11 +152,11 @@ class Game:
 
         self.state = replace(new_state, repetition_count=count)
 
-        is_game_over = self.rules.is_game_over(self.state)
-        is_check = self.rules.is_check(self.state)
+        is_game_over = self.is_over
+        is_check = self.is_check
 
         if is_game_over:
-            if self.rules.get_game_over_reason(self.state) == GameOverReason.CHECKMATE:
+            if self.game_over_reason == GameOverReason.CHECKMATE:
                  san += "#"
         elif is_check:
              san += "+"
@@ -240,22 +240,45 @@ class Game:
     @property
     def is_checkmate(self) -> bool:
         """Checks if the current side to move is checkmated."""
-        return self.rules.is_checkmate(self.state)
+        cls = getattr(self.rules, "GameOverReason", GameOverReason)
+        reason = getattr(cls, "CHECKMATE", None)
+        return reason is not None and self.game_over_reason == reason
 
     @property
-    def is_over(self) -> bool:
-        """Checks if the game is over."""
-        return self.rules.is_game_over(self.state) or self.is_over_by_timeout or self.game_over_reason_override is not None or self.winner_override is not None
+    def is_stalemate(self) -> bool:
+        """Whether the game is over by stalemate."""
+        cls = getattr(self.rules, "GameOverReason", GameOverReason)
+        reason = getattr(cls, "STALEMATE", None)
+        return reason is not None and self.game_over_reason == reason
 
     @property
     def is_draw(self) -> bool:
         """Checks if the game is a draw."""
-        return self.rules.is_draw(self.state)
+        cls = getattr(self.rules, "GameOverReason", GameOverReason)
+        draw_reasons = []
+        for attr in ("STALEMATE", "REPETITION", "FIFTY_MOVE_RULE", "MUTUAL_AGREEMENT", "INSUFFICIENT_MATERIAL"):
+            reason = getattr(cls, attr, None)
+            if reason is not None:
+                draw_reasons.append(reason)
+
+        return self.game_over_reason in draw_reasons
+
+    @property
+    def is_over(self) -> bool:
+        """Checks if the game is over."""
+        if self.is_over_by_timeout or self.game_over_reason_override is not None or self.winner_override is not None:
+            return True
+        return self.rules.is_game_over(self.state)
 
     @property
     def legal_moves(self) -> list[Move]:
         """Returns a list of all legal moves in the current position."""
-        return self.rules.get_legal_moves(self.state)
+        return [move for move in self.rules.get_theoretical_moves(self.state) if self.is_move_legal(move)]
+
+    @property
+    def has_legal_moves(self) -> bool:
+        """Checks if there is at least one legal move."""
+        return any(self.is_move_legal(move) for move in self.rules.get_theoretical_moves(self.state))
 
     @property
     def game_over_reason(self) -> GameOverReason:

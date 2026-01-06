@@ -2,6 +2,7 @@ from v_chess.rules import AntichessRules
 from v_chess.game_state import GameState
 from v_chess.move import Move
 from v_chess.enums import MoveLegalityReason, GameOverReason
+from v_chess.game import Game
 
 def test_mandatory_capture_simple():
     # White R at a1, Black P at a2. Capture available.
@@ -10,32 +11,31 @@ def test_mandatory_capture_simple():
     rules = AntichessRules()
     
     # Capture is legal
-    assert rules.is_legal(state, Move("a1a2"))
+    assert rules.validate_move(state, Move("a1a2")) == MoveLegalityReason.LEGAL
     
     # Non-capture (horizontal) is illegal
-    assert not rules.is_legal(state, Move("a1b1"))
-    
-    # Reason check
     assert rules.validate_move(state, Move("a1b1")) == MoveLegalityReason.MANDATORY_CAPTURE
 
 def test_mandatory_capture_multiple_options():
-    # White R a1. Black P a2, P b1.
-    # a1xa2 and a1xb1 are captures. a1c1 is non-capture.
-    fen = "8/8/8/8/8/8/p7/Rn6 w - - 0 1"
+    # White R b2. Black P b4, Black P d2.
+    # b2b4 and b2d2 are captures.
+    # b2b3 and b2c2 are non-captures.
+    fen = "8/8/8/8/1p6/8/1R1p4/8 w - - 0 1"
     state = GameState.from_fen(fen)
     rules = AntichessRules()
     
-    assert rules.is_legal(state, Move("a1a2"))
-    assert rules.is_legal(state, Move("a1b1"))
-    assert not rules.is_legal(state, Move("a1c1"))
+    assert rules.validate_move(state, Move("b2b4")) == MoveLegalityReason.LEGAL
+    assert rules.validate_move(state, Move("b2d2")) == MoveLegalityReason.LEGAL
+    assert rules.validate_move(state, Move("b2b3")) == MoveLegalityReason.MANDATORY_CAPTURE
+    assert rules.validate_move(state, Move("b2c2")) == MoveLegalityReason.MANDATORY_CAPTURE
 
 def test_no_capture_allows_any_move():
     # Start pos. No captures.
     state = GameState.starting_setup()
     rules = AntichessRules()
     
-    assert rules.is_legal(state, Move("e2e3"))
-    assert rules.is_legal(state, Move("g1f3"))
+    assert rules.validate_move(state, Move("e2e3")) == MoveLegalityReason.LEGAL
+    assert rules.validate_move(state, Move("g1f3")) == MoveLegalityReason.LEGAL
 
 def test_en_passant_is_mandatory():
     # White P e5. Black P d5 (just moved d7-d5). EP d6.
@@ -44,10 +44,8 @@ def test_en_passant_is_mandatory():
     state = GameState.from_fen(fen)
     rules = AntichessRules()
     
-    assert rules.is_legal(state, Move("e5d6"))
-    # Can pawn move e5-e6? No, blocked? No, e6 is empty.
-    # But capture is mandatory.
-    assert not rules.is_legal(state, Move("e5e6"))
+    assert rules.validate_move(state, Move("e5d6")) == MoveLegalityReason.LEGAL
+    assert rules.validate_move(state, Move("e5e6")) == MoveLegalityReason.MANDATORY_CAPTURE
 
 def test_king_mechanics_check_ignored():
     # King in check.
@@ -59,7 +57,7 @@ def test_king_mechanics_check_ignored():
     assert not rules.get_game_over_reason(state) == GameOverReason.CHECKMATE
     
     # King can move to attacked square?
-    assert rules.is_legal(state, Move("e1f2"))
+    assert rules.validate_move(state, Move("e1f2")) == MoveLegalityReason.LEGAL
 
 def test_castling_illegal():
     # Setup where castling would be legal in standard.
@@ -68,7 +66,6 @@ def test_castling_illegal():
     rules = AntichessRules()
     
     # Castling e1g1
-    assert not rules.is_legal(state, Move("e1g1"))
     assert rules.validate_move(state, Move("e1g1")) == MoveLegalityReason.CASTLING_DISABLED
 
 def test_termination_zero_pieces():
@@ -82,9 +79,7 @@ def test_termination_zero_pieces():
 def test_termination_stalemate():
     # White has pieces but no moves.
     fen = "8/8/8/8/8/p7/P7/k7 w - - 0 1"
-    state = GameState.from_fen(fen)
-    rules = AntichessRules()
+    game = Game(fen, rules=AntichessRules())
     
-    legal_moves = rules.get_legal_moves(state)
-    assert not legal_moves
-    assert rules.is_game_over(state)
+    assert not game.legal_moves
+    assert game.is_over

@@ -43,7 +43,7 @@ class StandardRules(Rules):
 
         if state.repetition_count >= 3:
             return cls.REPETITION
-        if self.is_fifty_moves(state):
+        if state.halfmove_clock >= 100:
             return cls.FIFTY_MOVE_RULE
         if not self.has_legal_moves(state):
             if self.is_check(state):

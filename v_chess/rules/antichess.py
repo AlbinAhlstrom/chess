@@ -23,11 +23,12 @@ class AntichessRules(StandardRules):
         if pseudo_reason != self.MoveLegalityReason.LEGAL:
             return pseudo_reason
 
-        if self._is_capture(state, move):
+        is_capture = self._is_capture(state, move)
+        if is_capture:
             return self.MoveLegalityReason.LEGAL
 
         for opt_move in self.get_theoretical_moves(state):
-            if self.move_pseudo_legality_reason(state, opt_move) == self.MoveLegalityReason.LEGAL:
+            if self.move_pseudo_legality_reason(state, opt_move).value == self.MoveLegalityReason.LEGAL.value:
                 if self._is_capture(state, opt_move):
                     return self.MoveLegalityReason.MANDATORY_CAPTURE
         return self.MoveLegalityReason.LEGAL
@@ -49,7 +50,7 @@ class AntichessRules(StandardRules):
     def get_game_over_reason(self, state: GameState) -> GameOverReason:
         if state.repetition_count >= 3:
              return self.GameOverReason.REPETITION
-        if self.is_fifty_moves(state):
+        if state.halfmove_clock >= 100:
              return self.GameOverReason.FIFTY_MOVE_RULE
         if not state.board.get_pieces(color=state.turn):
             return self.GameOverReason.ALL_PIECES_CAPTURED

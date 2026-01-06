@@ -34,7 +34,6 @@ def test_fifty_move_rule_standard():
     game.take_turn(Move("g1f3")) 
     
     assert game.state.halfmove_clock == 100
-    assert game.rules.is_fifty_moves(game.state)
     assert game.game_over_reason == GameOverReason.FIFTY_MOVE_RULE
     assert game.is_draw
 
@@ -47,7 +46,7 @@ def test_fifty_move_rule_reset_on_pawn_move():
     game.take_turn(Move("e2e4"))
     
     assert game.state.halfmove_clock == 0
-    assert not game.rules.is_fifty_moves(game.state)
+    assert not game.state.halfmove_clock >= 100
 
 def test_fifty_move_rule_reset_on_capture():
     """Verify clock resets on capture."""
@@ -60,7 +59,7 @@ def test_fifty_move_rule_reset_on_capture():
     game.take_turn(Move("e4d5"))
     
     assert game.state.halfmove_clock == 0
-    assert not game.rules.is_fifty_moves(game.state)
+    assert not game.state.halfmove_clock >= 100
 
 def test_fifty_move_rule_antichess():
     """Verify 50-move rule in Antichess."""
@@ -68,5 +67,5 @@ def test_fifty_move_rule_antichess():
     game = Game(rules=AntichessRules())
     game.state = replace(game.state, halfmove_clock=100)
     
-    assert game.rules.is_fifty_moves(game.state)
+    assert game.state.halfmove_clock >= 100
     assert game.game_over_reason == GameOverReason.FIFTY_MOVE_RULE
