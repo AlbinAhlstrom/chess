@@ -45,18 +45,19 @@ class StandardRules(Rules):
             return cls.REPETITION
         if state.halfmove_clock >= 100:
             return cls.FIFTY_MOVE_RULE
+        
         if not self.has_legal_moves(state):
             if self.is_check(state):
-                reason = getattr(cls, "CHECKMATE", None)
-                if reason: return reason
-            reason = getattr(cls, "STALEMATE", None)
-            if reason: return reason
-            return cls.ONGOING
+                return getattr(cls, "CHECKMATE", GameOverReason.CHECKMATE)
+            else:
+                return getattr(cls, "STALEMATE", GameOverReason.STALEMATE)
+        
         return cls.ONGOING
 
     def has_legal_moves(self, state: GameState) -> bool:
         """Checks if there is at least one legal move."""
-        return any(self.validate_move(state, move) == MoveLegalityReason.LEGAL for move in self.get_theoretical_moves(state))
+        cls = getattr(self, "MoveLegalityReason", MoveLegalityReason)
+        return any(self.validate_move(state, move) == cls.LEGAL for move in self.get_theoretical_moves(state))
 
     def validate_move(self, state: GameState, move: Move) -> MoveLegalityReason:
         """Validates if a move is fully legal."""
@@ -126,82 +127,6 @@ class StandardRules(Rules):
         """Checks if the king is left in check after a move."""
         return state.board.bitboard.is_king_attacked_after_move(move, state.turn, state.board, state.ep_square)
 
-    def apply_move(self, state: GameState, move: Move) -> GameState:
-        """Executes a move and returns the new GameState."""
-        new_board = state.board.copy()
-
-        piece = new_board.get_piece(move.start)
-        if piece is None:
-            raise ValueError(f"No piece found at start coord: {move.start}.")
-
-        target = new_board.get_piece(move.end)
-
-        is_castling = isinstance(piece, King) and abs(move.start.col - move.end.col) == 2
-        is_pawn_move = isinstance(piece, Pawn)
-        is_en_passant = is_pawn_move and move.end == state.ep_square
-        is_capture = target is not None or is_en_passant
-
-        new_halfmove_clock = state.halfmove_clock + 1
-        if is_pawn_move or is_capture:
-            new_halfmove_clock = 0
-
-        new_fullmove_count = state.fullmove_count
-        if state.turn == Color.BLACK:
-            new_fullmove_count += 1
-
-        new_board.move_piece(piece, move.start, move.end)
-
-        if is_en_passant:
-            direction = Direction.DOWN if piece.color == Color.WHITE else Direction.UP
-            captured_coordinate = move.end.adjacent(direction)
-            new_board.remove_piece(captured_coordinate)
-
-        if is_castling:
-            rook_col = 0 if move.end.col == 2 else 7
-            rook_coord = Square(move.end.row, rook_col)
-            rook = new_board.get_piece(rook_coord)
-            if rook:
-                direction = Direction.RIGHT if move.end.col == 2 else Direction.LEFT
-                end_coord = move.end.adjacent(direction)
-                new_board.move_piece(rook, rook_coord, end_coord)
-
-        if move.promotion_piece is not None:
-            new_board.set_piece(move.promotion_piece, move.end)
-
-        new_castling_rights = set(state.castling_rights)
-
-        def revoke_rights(color: Color):
-            to_remove = [r for r in new_castling_rights if r != CastlingRight.NONE and r.color == color]
-            for r in to_remove: new_castling_rights.discard(r)
-
-        def revoke_rook_right(square: Square):
-            to_remove = [r for r in new_castling_rights if r != CastlingRight.NONE and r.expected_rook_square == square]
-            for r in to_remove: new_castling_rights.discard(r)
-
-        if isinstance(piece, King):
-            revoke_rights(piece.color)
-
-        if isinstance(piece, Rook):
-            revoke_rook_right(move.start)
-
-        if isinstance(target, Rook):
-            revoke_rook_right(move.end)
-
-        new_ep_square = None
-        direction = Direction.DOWN if piece.color == Color.WHITE else Direction.UP
-        if isinstance(piece, Pawn) and abs(move.start.row - move.end.row) > 1:
-            new_ep_square = move.end.adjacent(direction)
-
-        return GameState(
-            board=new_board,
-            turn=state.turn.opposite,
-            castling_rights=tuple(sorted(new_castling_rights, key=lambda x: x.value)),
-            ep_square=new_ep_square,
-            halfmove_clock=new_halfmove_clock,
-            fullmove_count=new_fullmove_count,
-            repetition_count=1
-        )
-
     def get_theoretical_moves(self, state: GameState):
         """Generates all moves possible on an empty board for the current turn."""
         bb = state.board.bitboard
@@ -240,6 +165,9 @@ class StandardRules(Rules):
                             yield Move(sq, Square(row, 2))
 
                 temp_mask &= temp_mask - 1
+        
+        # Add variant-specific moves (e.g. drops)
+        yield from self.get_extra_theoretical_moves(state)
 
     def move_pseudo_legality_reason(self, state: GameState, move: Move) -> MoveLegalityReason:
         """Determines if a move is pseudo-legal."""
@@ -463,3 +391,153 @@ class StandardRules(Rules):
                                  if self.validate_move(state, move) == MoveLegalityReason.LEGAL:
                                      moves.append(move)
         return moves
+
+    def apply_move(self, state: GameState, move: Move) -> GameState:
+        """Executes a move and returns the new GameState."""
+        
+        if move.is_drop:
+             new_board = state.board.copy()
+             new_board.set_piece(move.drop_piece, move.end)
+             
+             new_halfmove_clock = state.halfmove_clock + 1
+             new_fullmove_count = state.fullmove_count + (1 if state.turn == Color.BLACK else 0)
+             
+             new_state = GameState(
+                board=new_board,
+                turn=state.turn.opposite,
+                castling_rights=state.castling_rights,
+                ep_square=None,
+                halfmove_clock=new_halfmove_clock,
+                fullmove_count=new_fullmove_count,
+                repetition_count=1
+             )
+             
+             return self.post_move_actions(state, move, new_state)
+
+        new_board = state.board.copy()
+        piece = new_board.get_piece(move.start)
+        target = new_board.get_piece(move.end)
+
+        # Castling Detection (Generalized for 960)
+        is_castling = False
+        rook_sq = None
+        if isinstance(piece, King):
+            # Standard/960 Target: King moves > 1 square OR to C/G file
+            if abs(move.start.col - move.end.col) > 1:
+                is_castling = True
+            # 960 KxR Capture: Target is own Rook
+            elif isinstance(target, Rook) and target.color == piece.color:
+                is_castling = True
+                rook_sq = move.end
+
+        is_pawn_move = isinstance(piece, Pawn)
+        is_en_passant = is_pawn_move and move.end == state.ep_square
+        is_capture = target is not None or is_en_passant
+
+        new_halfmove_clock = state.halfmove_clock + 1
+        if is_pawn_move or is_capture:
+            new_halfmove_clock = 0
+
+        new_fullmove_count = state.fullmove_count
+        if state.turn == Color.BLACK:
+            new_fullmove_count += 1
+
+        if is_castling:
+            # Determine Castling Right involved
+            if rook_sq: # Known from KxR
+                # Find right matching this rook
+                right = next((r for r in state.castling_rights if r.expected_rook_square == rook_sq and r.color == piece.color), None)
+            else:
+                # Infer from direction
+                is_kingside = move.end.col > move.start.col
+                # For 960, we might need more robust matching if multiple rooks on same side (rare)
+                # Standard assumption: King moves towards the rook.
+                # In 960 standard notation (target c/g), g is kingside, c is queenside.
+                if move.end.col == 6: # g-file (Kingside)
+                     right = next((r for r in state.castling_rights if r.color == piece.color and r.expected_rook_square.col > move.start.col), None)
+                elif move.end.col == 2: # c-file (Queenside)
+                     right = next((r for r in state.castling_rights if r.color == piece.color and r.expected_rook_square.col < move.start.col), None)
+                else:
+                     # Non-standard target (manual 960 move?), fall back to direction
+                     if is_kingside:
+                         right = next((r for r in state.castling_rights if r.color == piece.color and r.expected_rook_square.col > move.start.col), None)
+                     else:
+                         right = next((r for r in state.castling_rights if r.color == piece.color and r.expected_rook_square.col < move.start.col), None)
+
+            if right:
+                rook_sq = right.expected_rook_square
+                rook = new_board.get_piece(rook_sq)
+                
+                # Destination Squares (Fixed for Chess)
+                rank = move.start.row
+                king_dest = Square(rank, 6) # g-file
+                rook_dest = Square(rank, 5) # f-file
+                if right.expected_rook_square.col < move.start.col: # Queenside
+                    king_dest = Square(rank, 2) # c-file
+                    rook_dest = Square(rank, 3) # d-file
+                
+                # Execute Castling
+                # Remove both first to avoid self-collision in 960
+                new_board.remove_piece(move.start)
+                new_board.remove_piece(rook_sq)
+                new_board.set_piece(piece, king_dest)
+                new_board.set_piece(rook, rook_dest)
+            else:
+                # Fallback (shouldn't happen if validated)
+                new_board.move_piece(piece, move.start, move.end)
+
+        else:
+            new_board.move_piece(piece, move.start, move.end)
+
+        if is_en_passant:
+            direction = Direction.DOWN if piece.color == Color.WHITE else Direction.UP
+            captured_coordinate = move.end.adjacent(direction)
+            new_board.remove_piece(captured_coordinate)
+
+        if move.promotion_piece is not None:
+            new_board.set_piece(move.promotion_piece, move.end)
+
+        new_castling_rights = set(state.castling_rights)
+
+        def revoke_rights(color: Color):
+            to_remove = [r for r in new_castling_rights if r != CastlingRight.NONE and r.color == color]
+            for r in to_remove: new_castling_rights.discard(r)
+
+        def revoke_rook_right(square: Square):
+            to_remove = [r for r in new_castling_rights if r != CastlingRight.NONE and r.expected_rook_square == square]
+            for r in to_remove: new_castling_rights.discard(r)
+
+        if isinstance(piece, King):
+            revoke_rights(piece.color)
+
+        if isinstance(piece, Rook):
+            revoke_rook_right(move.start)
+
+        # If rook was captured (or involved in castling? No, castling rights revoked by King move)
+        # But if we capture a rook, we must revoke *that* rook's right.
+        # In castling KxR, target IS rook.
+        if isinstance(target, Rook):
+            revoke_rook_right(move.end)
+        
+        # Explicit check for 960 KxR castling target revocation if not caught above
+        if is_castling and rook_sq:
+             revoke_rook_right(rook_sq)
+
+        new_ep_square = None
+        direction = Direction.DOWN if piece.color == Color.WHITE else Direction.UP
+        if isinstance(piece, Pawn) and abs(move.start.row - move.end.row) > 1:
+            new_ep_square = move.end.adjacent(direction)
+
+        # Basic state transition
+        new_state = GameState(
+            board=new_board,
+            turn=state.turn.opposite,
+            castling_rights=tuple(sorted(new_castling_rights, key=lambda x: x.value)),
+            ep_square=new_ep_square,
+            halfmove_clock=new_halfmove_clock,
+            fullmove_count=new_fullmove_count,
+            repetition_count=1
+        )
+        
+        # Apply variant hooks
+        return self.post_move_actions(state, move, new_state)
