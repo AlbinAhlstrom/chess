@@ -8,7 +8,7 @@ from v_chess.square import Square
 
 def test_board_empty():
     board = Board.empty()
-    assert len(board.board) == 0
+    assert len(board) == 0
     assert board.get_piece(Square(0, 0)) is None
 
 def test_set_and_get_piece():
@@ -31,7 +31,7 @@ def test_remove_piece():
     
     assert removed_piece == pawn
     assert board.get_piece(square) is None
-    assert len(board.board) == 0
+    assert len(board) == 0
 
 def test_move_piece():
     board = Board.empty()
@@ -55,7 +55,6 @@ def test_board_copy():
     
     assert board_copy.get_piece(square) == pawn
     assert board_copy is not board
-    assert board_copy.board is not board.board
     
     board_copy.remove_piece(square)
     assert board_copy.get_piece(square) is None

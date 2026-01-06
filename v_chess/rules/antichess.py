@@ -60,7 +60,7 @@ class AntichessRules(StandardRules):
         white_pawns = self.state.board.get_pieces(Pawn, Color.WHITE)
         black_pawns = self.state.board.get_pieces(Pawn, Color.BLACK)
         pawns_on_backrank = []
-        for sq, piece in self.state.board.board.items():
+        for sq, piece in self.state.board.items():
              if isinstance(piece, Pawn) and (sq.row == 0 or sq.row == 7):
                  pawns_on_backrank.append(piece)
 

@@ -13,7 +13,7 @@ def test_fen_parsing_starting_position():
     assert state.ep_square is None
     assert state.halfmove_clock == 0
     assert state.fullmove_count == 1
-    assert len(state.board.board) == 32
+    assert len(state.board) == 32
 
 def test_fen_parsing_mid_game():
     fen = "rnbq1rk1/ppp1bppp/5n2/3p4/3P4/2N2N2/PPP1BPPP/R1BQ1RK1 b - - 4 7"

@@ -144,7 +144,7 @@ class Move:
 
         candidates = []
 
-        for sq, p in game.state.board.board.items():
+        for sq, p in game.state.board.items():
             if p and isinstance(p, type(piece)) and p.color == piece.color:
                 if sq == self.start:
                     continue
@@ -279,7 +279,7 @@ class Move:
             disambiguation = piece_indicator
 
         candidates = []
-        for sq, p in game.state.board.board.items():
+        for sq, p in game.state.board.items():
             if p and isinstance(p, piece_type) and p.color == game.state.turn:
                  candidates.append(sq)
 

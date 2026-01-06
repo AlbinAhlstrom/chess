@@ -118,6 +118,26 @@ class Bitboard:
         """Returns the bitmask for a specific piece type and color."""
         return self.pieces[color].get(piece_type, 0)
 
+    def piece_at(self, square_index: int) -> tuple[Optional[type[Piece]], Optional[Color]]:
+        """Returns the piece type and color at the given square index."""
+        if square_index < 0:
+            return None, None
+
+        mask = 1 << square_index
+        if not (self.occupied & mask):
+            return None, None
+
+        if self.occupied_co[Color.WHITE] & mask:
+            for p_type, p_mask in self.pieces[Color.WHITE].items():
+                if p_mask & mask:
+                    return p_type, Color.WHITE
+        else:
+            for p_type, p_mask in self.pieces[Color.BLACK].items():
+                if p_mask & mask:
+                    return p_type, Color.BLACK
+
+        return None, None
+
     def is_attacked(self, square_idx: int, by_color: Color, occupancy_override: Optional[int] = None) -> bool:
         """Checks if a square is attacked by pieces of a specific color."""
         occ = occupancy_override if occupancy_override is not None else self.occupied
@@ -159,17 +179,23 @@ class Bitboard:
         start_idx = move.start.index
         end_idx = move.end.index
 
-        moving_piece = board.get_piece(move.start)
+        if move.is_drop:
+            moving_piece = move.drop_piece
+        else:
+            moving_piece = board.get_piece(move.start)
+
         if not moving_piece:
             return False
 
         target_piece = board.get_piece(move.end)
-        is_ep = isinstance(moving_piece, Pawn) and move.end == ep_square
+        is_ep = not move.is_drop and isinstance(moving_piece, Pawn) and move.end == ep_square
 
         orig_pieces_white = {k: v for k, v in self.pieces[Color.WHITE].items()}
         orig_pieces_black = {k: v for k, v in self.pieces[Color.BLACK].items()}
 
-        self.pieces[moving_piece.color][type(moving_piece)] &= ~(1 << start_idx)
+        if not move.is_drop:
+            self.pieces[moving_piece.color][type(moving_piece)] &= ~(1 << start_idx)
+
         self.pieces[moving_piece.color][type(moving_piece)] |= (1 << end_idx)
 
         if target_piece:

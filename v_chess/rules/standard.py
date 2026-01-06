@@ -68,7 +68,7 @@ class StandardRules(Rules):
         # AND the current player has a king on the board.
         if self.has_check:
             has_king = any(isinstance(p, King) and p.color == self.state.turn 
-                           for p in self.state.board.board.values())
+                           for p in self.state.board.values())
             if has_king and self.king_left_in_check(move):
                 return MoveLegalityReason.KING_LEFT_IN_CHECK
 
@@ -86,7 +86,7 @@ class StandardRules(Rules):
         black_piece_max = 16 - len(black_pawns)
 
         pawns_on_backrank = []
-        for sq, piece in self.state.board.board.items():
+        for sq, piece in self.state.board.items():
              if isinstance(piece, Pawn) and (sq.row == 0 or sq.row == 7):
                  pawns_on_backrank.append(piece)
 
@@ -418,7 +418,7 @@ class StandardRules(Rules):
     def get_legal_castling_moves(self) -> list[Move]:
         """Returns all legal castling moves."""
         moves = []
-        for sq, piece in self.state.board.board.items():
+        for sq, piece in self.state.board.items():
             if isinstance(piece, King) and piece.color == self.state.turn:
                  # Check short
                  m_short = Move(sq, Square(sq.row, 6))
@@ -435,7 +435,7 @@ class StandardRules(Rules):
         if self.state.ep_square is None:
             return []
         moves = []
-        for sq, piece in self.state.board.board.items():
+        for sq, piece in self.state.board.items():
              if isinstance(piece, Pawn) and piece.color == self.state.turn:
                  direction = piece.direction
                  if (
@@ -450,7 +450,7 @@ class StandardRules(Rules):
     def get_legal_promotion_moves(self) -> list[Move]:
         """Returns all legal pawn promotion moves."""
         moves = []
-        for sq, piece in self.state.board.board.items():
+        for sq, piece in self.state.board.items():
             if isinstance(piece, Pawn) and piece.color == self.state.turn:
                  direction = piece.direction
                  next_sq = sq.get_step(direction)

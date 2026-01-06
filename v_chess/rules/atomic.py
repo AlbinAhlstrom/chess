@@ -104,7 +104,7 @@ class AtomicRules(StandardRules):
         # 3. Check for king explosion (own king)
         next_state = self.apply_move(move)
         own_king_exists = any(isinstance(p, King) and p.color == self.state.turn 
-                              for p in next_state.board.board.values())
+                              for p in next_state.board.values())
         
         if not own_king_exists:
             return self.MoveLegalityReason.KING_EXPLODED
@@ -114,7 +114,7 @@ class AtomicRules(StandardRules):
         # But if the move DOESN'T explode the opponent's king, you MUST NOT be in check.
         
         opp_king_exists = any(isinstance(p, King) and p.color == self.state.turn.opposite 
-                               for p in next_state.board.board.values())
+                               for p in next_state.board.values())
         
         if not opp_king_exists:
             return self.MoveLegalityReason.LEGAL # Win move!
@@ -130,8 +130,8 @@ class AtomicRules(StandardRules):
         return self.MoveLegalityReason.LEGAL
 
     def _kings_adjacent(self, board) -> bool:
-        wk = [sq for sq, p in board.board.items() if isinstance(p, King) and p.color == Color.WHITE]
-        bk = [sq for sq, p in board.board.items() if isinstance(p, King) and p.color == Color.BLACK]
+        wk = [sq for sq, p in board.items() if isinstance(p, King) and p.color == Color.WHITE]
+        bk = [sq for sq, p in board.items() if isinstance(p, King) and p.color == Color.BLACK]
         if not wk or not bk: return False
         return wk[0].is_adjacent_to(bk[0])
 
@@ -148,8 +148,8 @@ class AtomicRules(StandardRules):
 
     def get_game_over_reason(self) -> GameOverReason:
         # Check if a king is missing
-        wk = any(isinstance(p, King) and p.color == Color.WHITE for p in self.state.board.board.values())
-        bk = any(isinstance(p, King) and p.color == Color.BLACK for p in self.state.board.board.values())
+        wk = any(isinstance(p, King) and p.color == Color.WHITE for p in self.state.board.values())
+        bk = any(isinstance(p, King) and p.color == Color.BLACK for p in self.state.board.values())
         
         if not wk or not bk:
             return self.GameOverReason.KING_EXPLODED
@@ -166,7 +166,7 @@ class AtomicRules(StandardRules):
     def get_winner(self) -> Color | None:
         reason = self.get_game_over_reason()
         if reason == self.GameOverReason.KING_EXPLODED:
-            wk = any(isinstance(p, King) and p.color == Color.WHITE for p in self.state.board.board.values())
+            wk = any(isinstance(p, King) and p.color == Color.WHITE for p in self.state.board.values())
             if not wk: return Color.BLACK
             return Color.WHITE
         return super().get_winner()

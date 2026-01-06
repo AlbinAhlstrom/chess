@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TypeVar
+from typing import TypeVar, Generator, TYPE_CHECKING
 
 from v_chess.fen_helpers import board_from_fen, get_fen_from_board
 from v_chess.enums import Color
@@ -7,6 +7,8 @@ from v_chess.piece.piece import Piece
 from v_chess.square import Coordinate, Square
 from v_chess.bitboard import Bitboard
 
+if TYPE_CHECKING:
+    from v_chess.piece import Piece
 
 T = TypeVar("T", bound=Piece)
 
@@ -20,23 +22,27 @@ class Board:
     STARTING_POSITION_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
     EMPTY_BOARD_FEN = "8/8/8/8/8/8/8/8"
 
-    def __init__(self, pieces: dict[Square, Piece] | str = {}, _sync_bitboard=True):
+    def __init__(self, pieces: dict[Square, Piece] | str = {}):
         """Initializes the Board.
 
         Args:
             pieces: A dictionary mapping squares to pieces, or a FEN string.
-            _sync_bitboard: Whether to synchronize the bitboard. Defaults to True.
         """
         self.bitboard = Bitboard()
 
+        initial_pieces = {}
         if isinstance(pieces, str):
-            self.board = board_from_fen(pieces)
+            initial_pieces = board_from_fen(pieces)
         elif isinstance(pieces, dict):
-            self.board = pieces if pieces else {}
+            initial_pieces = pieces
 
-        if _sync_bitboard:
-            for sq, piece in self.board.items():
-                self.bitboard.set_piece(sq.index, piece)
+        for sq, piece in initial_pieces.items():
+            self.bitboard.set_piece(sq.index, piece)
+
+    @property
+    def board(self) -> dict[Square, Piece]:
+        """Compatibility property returning a dict of pieces."""
+        return dict(self.items())
 
     def get_piece(self, coordinate: Coordinate) -> Piece | None:
         """Gets the piece at a specific coordinate.
@@ -47,9 +53,13 @@ class Board:
         Returns:
             The Piece at the coordinate, or None if empty.
         """
-        if isinstance(coordinate, Square):
-            return self.board.get(coordinate)
-        return self.board.get(Square(coordinate))
+        if not isinstance(coordinate, Square):
+            coordinate = Square(coordinate)
+        
+        p_type, color = self.bitboard.piece_at(coordinate.index)
+        if p_type and color:
+            return p_type(color)
+        return None
 
     def set_piece(self, piece: Piece, square: str | tuple | Square):
         """Sets a piece at a specific square.
@@ -61,11 +71,10 @@ class Board:
         if not isinstance(square, Square):
             square = Square(square)
 
-        old_piece = self.board.get(square)
+        old_piece = self.get_piece(square)
         if old_piece:
              self.bitboard.remove_piece(square.index, old_piece)
 
-        self.board[square] = piece
         self.bitboard.set_piece(square.index, piece)
 
     def remove_piece(self, coordinate: Coordinate) -> Piece | None:
@@ -80,7 +89,7 @@ class Board:
         if not isinstance(coordinate, Square):
             coordinate = Square(coordinate)
 
-        piece = self.board.pop(coordinate, None)
+        piece = self.get_piece(coordinate)
         if piece:
             self.bitboard.remove_piece(coordinate.index, piece)
         return piece
@@ -95,10 +104,6 @@ class Board:
             start: The starting square.
             end: The destination square.
         """
-        # We manually remove and set to ensure bitboard updates correct
-        # remove_piece handles removing from bitboard
-        # set_piece handles adding (and removing potential capture)
-
         self.remove_piece(start)
         self.set_piece(piece, end)
 
@@ -112,31 +117,39 @@ class Board:
         Returns:
             A list of pieces on the board matching the criteria.
         """
-        if piece_type == Piece and color is None:
-             return list(self.board.values())
+        pieces = []
+        colors = [color] if color else [Color.WHITE, Color.BLACK]
 
-        if piece_type != Piece:
-             mask = 0
-             if color is not None:
-                  mask = self.bitboard.pieces[color].get(piece_type, 0)
-             else:
-                  mask = self.bitboard.pieces[Color.WHITE].get(piece_type, 0) | \
-                         self.bitboard.pieces[Color.BLACK].get(piece_type, 0)
-
-             pieces = []
-             temp_mask = mask
-             while temp_mask:
-                  idx = (temp_mask & -temp_mask).bit_length() - 1
-                  sq = Square(divmod(idx, 8))
-                  p = self.board.get(sq)
-                  if p: pieces.append(p)
-                  temp_mask &= temp_mask - 1
-             return pieces
-
-        pieces = [piece for piece in self.board.values() if piece]
-        if color is not None:
-            pieces = [piece for piece in pieces if piece.color == color]
+        for c in colors:
+            types_to_check = [piece_type] if piece_type != Piece else self.bitboard.pieces[c].keys()
+            for p_cls in types_to_check:
+                mask = self.bitboard.pieces[c][p_cls]
+                while mask:
+                    mask &= mask - 1
+                    pieces.append(p_cls(c))
+        
         return pieces
+
+    def items(self) -> Generator[tuple[Square, Piece], None, None]:
+        """Yields (Square, Piece) pairs for all pieces on the board."""
+        occupied = self.bitboard.occupied
+        while occupied:
+            idx = (occupied & -occupied).bit_length() - 1
+            sq = Square(divmod(idx, 8))
+            p_type, color = self.bitboard.piece_at(idx)
+            if p_type and color:
+                yield sq, p_type(color)
+            occupied &= occupied - 1
+
+    def values(self) -> Generator[Piece, None, None]:
+        """Yields all Pieces on the board."""
+        for _, piece in self.items():
+            yield piece
+
+    def __len__(self) -> int:
+        """Returns the number of pieces on the board."""
+        # Count set bits in occupied bitmask
+        return bin(self.bitboard.occupied).count('1')
 
     @classmethod
     def empty(cls) -> "Board":
@@ -175,9 +188,7 @@ class Board:
         Returns:
             A new Board instance with the same piece configuration.
         """
-        # Create new board with dictionary copy, skipping expensive initial sync
-        new_board = Board(self.board.copy(), _sync_bitboard=False)
-        # Fast copy of bitboard
+        new_board = Board()
         new_board.bitboard = self.bitboard.copy()
         return new_board
 

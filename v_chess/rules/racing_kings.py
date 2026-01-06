@@ -42,9 +42,9 @@ class RacingKingsRules(StandardRules):
 
     def get_game_over_reason(self) -> GameOverReason:
         wk_on_8 = any(isinstance(p, King) and p.color == Color.WHITE and sq.row == 0
-                      for sq, p in self.state.board.board.items())
+                                                for sq, p in self.state.board.items())
         bk_on_8 = any(isinstance(p, King) and p.color == Color.BLACK and sq.row == 0
-                      for sq, p in self.state.board.board.items())
+                                                for sq, p in self.state.board.items())
 
         if wk_on_8 and bk_on_8:
             return self.GameOverReason.STALEMATE
@@ -79,7 +79,7 @@ class RacingKingsRules(StandardRules):
         reason = self.get_game_over_reason()
         if reason == self.GameOverReason.KING_TO_EIGHTH_RANK:
             wk_on_8 = any(isinstance(p, King) and p.color == Color.WHITE and sq.row == 0
-                          for sq, p in self.state.board.board.items())
+                                                    for sq, p in self.state.board.items())
             if wk_on_8: return Color.WHITE
             return Color.BLACK
         return super().get_winner()

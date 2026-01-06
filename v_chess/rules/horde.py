@@ -8,19 +8,23 @@ from .standard import StandardRules
 
 
 class HordeRules(StandardRules):
+    """Rules for Horde chess variant."""
     MoveLegalityReason = MoveLegalityReason.load("Horde")
     BoardLegalityReason = BoardLegalityReason.load("Horde")
     GameOverReason = GameOverReason.load("Horde")
 
     @property
     def name(self) -> str:
+        """The human-readable name of the variant."""
         return "Horde"
 
     @property
     def starting_fen(self) -> str:
+        """The default starting FEN for Horde."""
         return "rnbqkbnr/pppppppp/8/1PP2PP1/PPPPPPPP/PPPPPPPP/PPPPPPPP/PPPPPPPP w kq - 0 1"
 
     def validate_board_state(self) -> BoardLegalityReason:
+        """Validates the board state, allowing for the lack of a White King."""
         # Standard logic but without White King requirement
         black_kings = self.state.board.get_pieces(King, Color.BLACK)
         if len(black_kings) < 1:
@@ -55,11 +59,13 @@ class HordeRules(StandardRules):
         return BoardLegalityReason.VALID
 
     def is_check(self) -> bool:
+        """Checks if the current player is in check (always False for White)."""
         if self.state.turn == Color.WHITE:
             return False # White has no King
         return super().is_check()
 
     def get_game_over_reason(self) -> GameOverReason:
+        """Determines the game over reason, including capture of all White pieces."""
         # White wins if Black checkmated
         if self.state.turn == Color.BLACK:
             if not self.has_legal_moves():
@@ -88,6 +94,7 @@ class HordeRules(StandardRules):
             return self.GameOverReason.ONGOING
 
     def get_winner(self) -> Color | None:
+        """Determines the winner of the game."""
         reason = self.get_game_over_reason()
         if reason == self.GameOverReason.CHECKMATE:
             return Color.WHITE
@@ -96,6 +103,7 @@ class HordeRules(StandardRules):
         return super().get_winner()
 
     def get_theoretical_moves(self):
+        """Generates all theoretical moves, including Horde-specific pawn pushes."""
         yield from super().get_theoretical_moves()
 
         # Horde specific: White pawns on rank 1 can also move 2 steps
@@ -115,6 +123,7 @@ class HordeRules(StandardRules):
                 mask &= mask - 1
 
     def move_pseudo_legality_reason(self, move: Move) -> MoveLegalityReason:
+        """Checks pseudo-legality, handling Horde-specific rank 1 pawn pushes."""
         piece = self.state.board.get_piece(move.start)
         if piece and isinstance(piece, Pawn) and piece.color == Color.WHITE:
             # White Rank 1: row 7. Double push is valid if path is clear.

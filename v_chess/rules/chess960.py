@@ -146,7 +146,7 @@ class Chess960Rules(StandardRules):
         for right in self.state.castling_rights:
             if right == CastlingRight.NONE: continue
             row = 7 if right.color == Color.WHITE else 0
-            kings = [p for sq, p in self.state.board.board.items() 
+            kings = [p for sq, p in self.state.board.items() 
                      if isinstance(p, King) and p.color == right.color and sq.row == row]
             rook_sq = right.expected_rook_square
             rook = self.state.board.get_piece(rook_sq)
@@ -221,14 +221,14 @@ class Chess960Rules(StandardRules):
 
     def get_legal_castling_moves(self) -> list[Move]:
         moves = []
-        for sq, piece in self.state.board.board.items():
+        for sq, piece in self.state.board.items():
             if isinstance(piece, King) and piece.color == self.state.turn:
                  for target_col in [6, 2]:
                      m = Move(sq, Square(sq.row, target_col))
                      if self.castling_legality_reason(m, piece) == MoveLegalityReason.LEGAL:
                          moves.append(m)
                  # Also add King-to-Rook moves for 960 notation
-                 for r_sq, r_piece in self.state.board.board.items():
+                 for r_sq, r_piece in self.state.board.items():
                       if isinstance(r_piece, Rook) and r_piece.color == piece.color:
                            is_kingside = r_sq.col > sq.col
                            target_col = 6 if is_kingside else 2

@@ -23,7 +23,7 @@ class Pawn(Piece):
 
     @property
     def direction(self) -> Direction:
-        """Which direction the piece moves in (up for white and down for black)."""
+        """The movement direction of the pawn."""
         if self.color == Color.WHITE:
             return Direction.UP
         else:

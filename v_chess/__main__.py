@@ -4,7 +4,7 @@ from v_chess.enums import MoveLegalityReason
 
 
 def main():
-    """Simple cli game-loop."""
+    """Starts a simple CLI game loop for standard chess."""
     game = Game()
 
     while True:

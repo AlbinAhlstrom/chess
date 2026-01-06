@@ -20,7 +20,7 @@ class KingOfTheHillRules(StandardRules):
         # Check King of the Hill condition: King on center squares
         center_squares = {Square("d4"), Square("d5"), Square("e4"), Square("e5")}
         
-        for sq, piece in self.state.board.board.items():
+        for sq, piece in self.state.board.items():
             if isinstance(piece, King) and sq in center_squares:
                 return self.GameOverReason.KING_ON_HILL
         

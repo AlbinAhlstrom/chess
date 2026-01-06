@@ -88,7 +88,7 @@ def _parse_pocket(pocket_str: str) -> Tuple[Tuple[Piece, ...], Tuple[Piece, ...]
     # content inside []
     white_pocket: List[Piece] = []
     black_pocket: List[Piece] = []
-    
+
     for char in pocket_str:
         piece_cls = piece_from_char.get(char)
         if piece_cls:
@@ -97,7 +97,7 @@ def _parse_pocket(pocket_str: str) -> Tuple[Tuple[Piece, ...], Tuple[Piece, ...]
                 white_pocket.append(piece_cls(Color.WHITE))
             else:
                 black_pocket.append(piece_cls(Color.BLACK))
-                
+
     return (tuple(white_pocket), tuple(black_pocket))
 
 def _serialize_pocket(white_pocket: Tuple[Piece, ...], black_pocket: Tuple[Piece, ...]) -> str:
@@ -137,11 +137,11 @@ def state_from_fen(fen: str) -> "GameState":
     # Check for Three-Check: ends with +N+M
     # We split by space. Standard has 6 fields.
     fen_parts = fen.split()
-    
+
     three_check_suffix = None
     if len(fen_parts) == 7 and "+" in fen_parts[6]:
         three_check_suffix = fen_parts[6]
-        
+
     # Check for Crazyhouse: 1st field has []
     crazyhouse_pocket = None
     if "[" in fen_parts[0] and "]" in fen_parts[0]:
@@ -165,7 +165,7 @@ def state_from_fen(fen: str) -> "GameState":
         raise ValueError("FEN halfmove and fullmove must be int.")
 
     rules = StandardRules()
-    
+
     # Instantiate specific GameState
     if three_check_suffix:
         # format +w+b e.g. +2+0
@@ -189,7 +189,7 @@ def state_from_fen(fen: str) -> "GameState":
             board, active_color, castling_rights, en_passant,
             halfmove_clock, fullmove_count, rules, 1
         )
-        
+
     rules.state = state
     return state
 
@@ -203,9 +203,9 @@ def state_to_fen(state: "GameState") -> str:
         The full FEN string.
     """
     from v_chess.game_state import ThreeCheckGameState, CrazyhouseGameState
-    
+
     placement = state.board.fen
-    
+
     # Variant handling for placement (Crazyhouse)
     if isinstance(state, CrazyhouseGameState):
         pocket_str = _serialize_pocket(state.pockets[0], state.pockets[1])
@@ -220,9 +220,9 @@ def state_to_fen(state: "GameState") -> str:
     fm = str(state.fullmove_count)
 
     base_fen = f"{placement} {active} {rights_str} {ep} {hm} {fm}"
-    
+
     # Variant handling for suffix (Three-Check)
     if isinstance(state, ThreeCheckGameState):
         base_fen += f" +{state.checks[0]}+{state.checks[1]}"
-        
+
     return base_fen

@@ -8,19 +8,23 @@ from .standard import StandardRules
 
 
 class CrazyhouseRules(StandardRules):
+    """Rules for Crazyhouse chess variant."""
     MoveLegalityReason = MoveLegalityReason.load("Crazyhouse")
     BoardLegalityReason = BoardLegalityReason.load("Crazyhouse")
     GameOverReason = GameOverReason.load("Crazyhouse")
 
     @property
     def name(self) -> str:
+        """The human-readable name of the variant."""
         return "Crazyhouse"
 
     @property
     def fen_type(self) -> str:
+        """The FEN notation type used."""
         return "crazyhouse"
 
     def apply_move(self, move: Move) -> CrazyhouseGameState:
+        """Applies a move, handling pocket updates for captures and drops."""
         if move.is_drop:
             return self._apply_drop(move)
         
@@ -72,6 +76,7 @@ class CrazyhouseRules(StandardRules):
         return next_state
 
     def _apply_drop(self, move: Move) -> CrazyhouseGameState:
+        """Handles piece dropping logic."""
         if not move.is_drop:
             raise ValueError("Not a drop move")
             
@@ -120,6 +125,7 @@ class CrazyhouseRules(StandardRules):
         return new_state
 
     def get_theoretical_moves(self):
+        """Yields all legal moves including drops from pocket."""
         yield from super().get_theoretical_moves()
         
         if not isinstance(self.state, CrazyhouseGameState):
@@ -143,6 +149,7 @@ class CrazyhouseRules(StandardRules):
                         yield Move(Square(None), sq, None, p, player_to_move=self.state.turn)
 
     def move_pseudo_legality_reason(self, move: Move) -> MoveLegalityReason:
+        """Checks pseudo-legality, including drop moves."""
         if move.is_drop:
             if not isinstance(self.state, CrazyhouseGameState):
                 return self.MoveLegalityReason.NO_PIECE

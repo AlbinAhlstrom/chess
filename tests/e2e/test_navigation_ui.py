@@ -53,11 +53,13 @@ def test_history_navigation_ui(page: Page, frontend_url: str):
     history_bar = page.locator(".mobile-history-scroll")
     expect(history_bar).to_be_visible()
     items = history_bar.locator(".history-item")
-    expect(items).to_have_count(3)
+    expect(items).to_have_count(2)
     
     # 3. Go back to Start
     print("Navigating back to Start...")
-    items.nth(0).click()
+    # There is no "Start" item in the scroll, use First Move button
+    first_btn = page.locator(".mobile-history-bar button[title='First Move']")
+    first_btn.click()
     page.wait_for_timeout(500)
     expect(page.locator("div.piece[data-square='e2']")).to_be_visible()
     
@@ -68,18 +70,19 @@ def test_history_navigation_ui(page: Page, frontend_url: str):
     
     # 5. Use navigation buttons
     print("Testing navigation buttons...")
-    next_btn = page.locator("button[title='Next']")
+    next_btn = page.locator(".mobile-history-bar button[title='Next']")
     next_btn.click()
     page.wait_for_timeout(500)
     expect(page.locator("div.piece[data-square='e4']")).to_be_visible()
     
     # 6. Go to latest
     print("Returning to latest...")
-    items.nth(2).click() # e5
+    last_btn = page.locator(".mobile-history-bar button[title='Last Move']")
+    last_btn.click()
     page.wait_for_timeout(500)
     expect(board).to_have_css("pointer-events", "auto")
     
     # 7. Make another move
     print("Making another move...")
     move_piece(page, "g1", "f3")
-    expect(items).to_have_count(4)
+    expect(items).to_have_count(3)
