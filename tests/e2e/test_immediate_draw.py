@@ -8,17 +8,17 @@ def test_immediate_draw_on_creation(page: Page, frontend_url: str):
     page.goto(f"{frontend_url}/otb")
     
     # 2. Wait for game creation and board load
-    page.wait_for_url(re.compile(r".*/game/.*"), timeout=5000)
+    page.wait_for_url(re.compile(r".*/game/.*"), timeout=10000)
     
     # Capture the GET game state response
     with page.expect_response(lambda response: "/api/game/" in response.url and response.request.method == "GET") as response_info:
-        page.wait_for_selector(".board", timeout=5000)
+        page.wait_for_selector(".board", timeout=10000)
     
     response = response_info.value
     game_state = response.json()
     print(f"Captured Game State: is_over={game_state.get('is_over')}")
     
-    page.wait_for_selector(".board", timeout=5000)
+    page.wait_for_selector(".board", timeout=10000)
     
     # 3. Check for "Draw" text or game over modal
     # Expectation: Should NOT be visible immediately

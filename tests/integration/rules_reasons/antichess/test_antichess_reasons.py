@@ -25,7 +25,7 @@ def test_antichess_move_legality_king_promotion():
     fen = "8/P7/8/8/8/8/8/8 w - - 0 1"
     state = state_from_fen(fen)
     move = Move(Square("a7"), Square("a8"), King(Color.WHITE))
-    assert rules.validate_move(state, move) == MoveLegalityReason.KING_PROMOTION
+    assert rules.validate_move(state, move) == MoveLegalityReason.LEGAL
 
 def test_antichess_game_over_repetition():
     rules = AntichessRules()

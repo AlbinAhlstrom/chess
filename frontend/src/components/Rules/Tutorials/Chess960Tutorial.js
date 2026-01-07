@@ -12,7 +12,6 @@ function Chess960TutorialBoard() {
     ]);
     const [message, setMessage] = useState("Chess960: The starting positions of pieces are randomized!");
     const [isShuffling, setIsShuffling] = useState(false);
-    const [completed, setCompleted] = useState(false);
     
     const randomize = () => {
         setIsShuffling(true);
@@ -32,7 +31,6 @@ function Chess960TutorialBoard() {
             if (count > 8) {
                 clearInterval(interval);
                 setIsShuffling(false);
-                setCompleted(true);
                 SoundManager.play('lock');
                 setMessage("POSITION LOCKED! In a full game, there are 960 possible starting positions.");
             }

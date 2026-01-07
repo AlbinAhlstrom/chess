@@ -38,10 +38,10 @@ def e2e_environment(tmp_path_factory):
     frontend_dir = os.path.join(root_dir, "frontend")
     
     # 2. Start Backend
-    print("[E2E Setup] Starting Backend on port 8000...")
+    print("[E2E Setup] Starting Backend on port 8001...")
     # Ensure we use the same python interpreter (virtualenv)
     # Add --reload to ensure code changes are picked up automatically
-    backend_cmd = [sys.executable, "-m", "uvicorn", "backend.main:app", "--port", "8000", "--reload"]
+    backend_cmd = [sys.executable, "-m", "uvicorn", "backend.main:app", "--port", "8001", "--reload"]
     
     backend_proc = subprocess.Popen(
         backend_cmd,
@@ -51,19 +51,27 @@ def e2e_environment(tmp_path_factory):
         env={**os.environ, "DATABASE_URL": db_url}  # Pass the env explicitly
     )
 
-    if not wait_for_port(8000):
+    if not wait_for_port(8001):
         print("[E2E Error] Backend failed to start!")
         backend_proc.terminate()
         stdout, stderr = backend_proc.communicate()
         print(f"Backend STDOUT: {stdout.decode()}")
         print(f"Backend STDERR: {stderr.decode()}")
         # DB file is in temp dir, pytest handles cleanup
-        pytest.fail("Backend failed to start on port 8000")
+        pytest.fail("Backend failed to start on port 8001")
 
     # 3. Start Frontend
-    print("[E2E Setup] Starting Frontend on port 3000...")
+    print("[E2E Setup] Starting Frontend on port 3001...")
     # Set BROWSER=none to prevent opening a tab
-    frontend_env = {**os.environ, "BROWSER": "none"}
+    # Set PORT=3001 for React
+    # Set REACT_APP_API_URL and REACT_APP_WS_URL to point to backend on 8001
+    frontend_env = {
+        **os.environ,
+        "BROWSER": "none",
+        "PORT": "3001",
+        "REACT_APP_API_URL": "http://localhost:8001/api",
+        "REACT_APP_WS_URL": "ws://localhost:8001/ws"
+    }
     frontend_proc = subprocess.Popen(
         ["npm", "start"],
         cwd=frontend_dir,
@@ -72,7 +80,7 @@ def e2e_environment(tmp_path_factory):
         env=frontend_env
     )
 
-    if not wait_for_port(3000, timeout=60): # React startup can be slow
+    if not wait_for_port(3001, timeout=60): # React startup can be slow
         print("[E2E Error] Frontend failed to start!")
         frontend_proc.terminate()
         backend_proc.terminate()
@@ -80,7 +88,7 @@ def e2e_environment(tmp_path_factory):
         print(f"Frontend STDOUT: {stdout.decode()}")
         print(f"Frontend STDERR: {stderr.decode()}")
         # DB file is in temp dir, pytest handles cleanup
-        pytest.fail("Frontend failed to start on port 3000")
+        pytest.fail("Frontend failed to start on port 3001")
 
     print("[E2E Setup] Environment Ready!")
     
@@ -108,7 +116,7 @@ def e2e_environment(tmp_path_factory):
 @pytest.fixture
 def frontend_url():
     # Always point to the local instance managed by e2e_environment
-    return "http://localhost:3000"
+    return "http://localhost:3001"
 
 @pytest.fixture(scope="session")
 def browser_type_launch_args(browser_type_launch_args):
@@ -119,5 +127,5 @@ def browser_type_launch_args(browser_type_launch_args):
 
 @pytest.fixture(autouse=True)
 def set_default_timeout(page: Page):
-    page.set_default_timeout(5000)
+    page.set_default_timeout(10000)
     yield

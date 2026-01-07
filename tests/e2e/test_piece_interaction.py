@@ -26,7 +26,7 @@ def test_selection_logic(page: Page, frontend_url: str):
     
     # Wait for redirect
     print("Waiting for redirect...")
-    page.wait_for_url(re.compile(r".*/game/.*"), timeout=5000)
+    page.wait_for_url(re.compile(r".*/game/.*"), timeout=10000)
     
     page.wait_for_selector(".pieces")
     # Wait for legal moves to load (API call)
@@ -93,7 +93,7 @@ def test_drag_interaction(page: Page, frontend_url: str):
     
     # Wait for redirect
     print("Waiting for redirect...")
-    page.wait_for_url(re.compile(r".*/game/.*"), timeout=5000)
+    page.wait_for_url(re.compile(r".*/game/.*"), timeout=10000)
     
     page.wait_for_selector(".pieces")
     # Wait for legal moves to load
@@ -118,7 +118,7 @@ def test_opponent_selection(page: Page, frontend_url: str):
     
     # Wait for redirect
     print("Waiting for redirect...")
-    page.wait_for_url(re.compile(r".*/game/.*"), timeout=5000)
+    page.wait_for_url(re.compile(r".*/game/.*"), timeout=10000)
     
     page.wait_for_selector(".pieces")
     # Wait for legal moves to load

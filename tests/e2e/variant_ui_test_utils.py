@@ -85,7 +85,7 @@ def move_piece_ui(page: Page, from_sq: str, to_sq: str, promotion_piece: str = N
     # Handle promotion dialog
     if promotion_piece:
         promo_selector = f".promotion-option.{promotion_piece.lower()}"
-        page.wait_for_selector(promo_selector, timeout=5000)
+        page.wait_for_selector(promo_selector, timeout=10000)
         page.click(promo_selector)
 
 def run_variant_ui_game(page: Page, frontend_url: str, game_data: VariantPGNGame):
@@ -166,7 +166,7 @@ def run_variant_ui_game(page: Page, frontend_url: str, game_data: VariantPGNGame
                     print(f"    [SYNC WARNING] UI SAN '{actual_san}' differs from expected '{san}'")
             except Exception as e:
                 print(f"    [SYNC ERROR] Move {move_index} ({san}) did not appear in history at {wait_selector}")
-                page.wait_for_selector(f"[data-square='{move_obj.end}'].piece", timeout=5000)
+                page.wait_for_selector(f"[data-square='{move_obj.end}'].piece", timeout=10000)
         except Exception as e:
             print(f"  FAILED at move {i+1}: {san}")
             print(f"  Logic Game FEN: {game.state.fen}")

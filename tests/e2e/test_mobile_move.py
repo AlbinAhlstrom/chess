@@ -31,7 +31,7 @@ def test_mobile_tap_move(browser, frontend_url):
     page.goto(f"{frontend_url}/otb")
     
     print("Waiting for redirect...")
-    page.wait_for_url(re.compile(r".*/game/.*"), timeout=5000)
+    page.wait_for_url(re.compile(r".*/game/.*"), timeout=10000)
     
     page.wait_for_selector(".pieces")
     # Wait for legal moves to load

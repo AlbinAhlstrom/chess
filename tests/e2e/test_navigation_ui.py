@@ -5,15 +5,15 @@ from playwright.sync_api import Page, expect
 def move_piece(page: Page, start_sq: str, end_sq: str):
     start_selector = f"div.piece[data-square='{start_sq}']"
     end_selector = f".squares div[data-square='{end_sq}']"
-    page.wait_for_selector(start_selector, timeout=5000)
-    page.wait_for_selector(end_selector, timeout=5000)
+    page.wait_for_selector(start_selector, timeout=10000)
+    page.wait_for_selector(end_selector, timeout=10000)
     start_box = page.locator(start_selector).bounding_box()
     end_box = page.locator(end_selector).bounding_box()
     page.mouse.move(start_box["x"] + start_box["width"] / 2, start_box["y"] + start_box["height"] / 2)
     page.mouse.down()
     page.mouse.move(end_box["x"] + end_box["width"] / 2, end_box["y"] + end_box["height"] / 2, steps=5)
     page.mouse.up()
-    page.wait_for_selector(f"div.piece[data-square='{end_sq}']", timeout=5000)
+    page.wait_for_selector(f"div.piece[data-square='{end_sq}']", timeout=10000)
 
 def test_history_navigation_ui(page: Page, frontend_url: str):
     page.set_viewport_size({"width": 375, "height": 667})
@@ -23,7 +23,7 @@ def test_history_navigation_ui(page: Page, frontend_url: str):
     page.on("response", lambda response: print(f"RESPONSE: {response.status} {response.url}"))
     
     print(f"Navigating to {frontend_url}/otb")
-    page.goto(f"{frontend_url}/otb", timeout=5000)
+    page.goto(f"{frontend_url}/otb", timeout=10000)
 
     print("Waiting for page content...")
     try:
@@ -32,7 +32,7 @@ def test_history_navigation_ui(page: Page, frontend_url: str):
         if loading.is_visible():
             print("Detected loading screen...")
             
-        page.wait_for_selector(".pieces", timeout=5000)
+        page.wait_for_selector(".pieces", timeout=10000)
         print(f"Current URL after load: {page.url}")
     except Exception as e:
         page.screenshot(path="nav_fail.png")

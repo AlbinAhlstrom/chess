@@ -182,6 +182,8 @@ def validate_king_safety(state: "GameState", move: "Move", rules: "Rules") -> Op
 def validate_mandatory_capture(state: "GameState", move: "Move", rules: "Rules") -> Optional[MoveLegalityReason]:
     """Enforces mandatory captures (e.g., in Antichess)."""
     from v_chess.piece import Pawn
+    
+    # If the current move is already a capture, it's valid under this rule.
     is_capture = state.board.get_piece(move.end) is not None
     if not is_capture:
         piece = state.board.get_piece(move.start)
@@ -191,18 +193,47 @@ def validate_mandatory_capture(state: "GameState", move: "Move", rules: "Rules")
     if is_capture:
         return None
         
+    # If we got here, the current move is NOT a capture. 
+    # We must check if ANY other legal move IS a capture.
+    
+    # OPTIMIZATION: Check if this state has been cached for captures.
+    cached_has_cap = getattr(state, "_has_mandatory_captures", None)
+    if cached_has_cap is not None:
+        if cached_has_cap:
+            return MoveLegalityReason.MANDATORY_CAPTURE
+        return None
+
+    has_cap = False
     possible_moves = rules.get_possible_moves(state)
     for opt_move in possible_moves:
-        if rules.move_pseudo_legality_reason(state, opt_move) == MoveLegalityReason.LEGAL:
-            opt_is_cap = state.board.get_piece(opt_move.end) is not None
-            if not opt_is_cap:
-                opt_piece = state.board.get_piece(opt_move.start)
-                if opt_piece and isinstance(opt_piece, Pawn) and opt_move.end == state.ep_square:
-                    opt_is_cap = True
+        # We only check for physical captures here to avoid recursion back into validate_mandatory_capture.
+        # A move is a capture if it ends on a piece or is an EP move.
+        opt_is_cap = state.board.get_piece(opt_move.end) is not None
+        if not opt_is_cap:
+            opt_piece = state.board.get_piece(opt_move.start)
+            if opt_piece and isinstance(opt_piece, Pawn) and opt_move.end == state.ep_square:
+                opt_is_cap = True
+        
+        if opt_is_cap:
+            # Check pseudo-legality (except mandatory capture itself)
+            # This is tricky because we don't want to call validate_move which calls us.
+            # We check the other validators.
+            validators_to_check = [v for v in rules.move_validators if v != validate_mandatory_capture]
+            is_pseudo_legal = True
+            for val in validators_to_check:
+                if val(state, opt_move, rules) is not None:
+                    is_pseudo_legal = False
+                    break
             
-            if opt_is_cap:
-                print(f"[VALIDATOR DEBUG] MANDATORY_CAPTURE triggered for move {move.uci}. Found mandatory capture: {opt_move.uci}")
-                return MoveLegalityReason.MANDATORY_CAPTURE
+            if is_pseudo_legal:
+                has_cap = True
+                break
+    
+    # Cache the result on the state object for subsequent moves in the same validation batch.
+    # Use object.__setattr__ because GameState is a frozen dataclass.
+    object.__setattr__(state, "_has_mandatory_captures", has_cap)
+    if has_cap:
+        return MoveLegalityReason.MANDATORY_CAPTURE
     
     return None
 

@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { coordsToAlgebraic, algebraicToCoords } from '../../../helpers';
+import { coordsToAlgebraic } from '../../../helpers';
 
 export function useBoardInteraction(isFlipped, position, allPossibleMoves, canMovePiece, onMoveAttempt) {
     const [selectedSquare, setSelectedSquare] = useState(null);

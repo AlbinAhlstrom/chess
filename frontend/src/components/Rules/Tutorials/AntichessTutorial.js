@@ -123,10 +123,7 @@ function AntichessTutorialBoard() {
         setIsProcessing(true);
         setTimeout(() => {
             setPieces(prev => {
-                const queen = prev.find(p => p.id === 'bq');
-                return prev
-                    .filter(p => !(p.file === targetFile && p.rank === targetRank))
-                    .map(p => p.id === 'bq' ? { ...p, file: targetFile, rank: targetRank } : p);
+                return prev.filter(p => p.id !== 'bq');
             });
             setShatter({ file: targetFile, rank: targetRank });
             setIsShaking(true);

@@ -48,7 +48,7 @@ function UsernamePrompt({ onComplete }) {
                         type="text" 
                         placeholder="Username" 
                         value={name} 
-                        onChange={(e) => setName(e.target.value.replace(/[^a-zA-Z0-9_\-]/g, ''))}
+                        onChange={(e) => setName(e.target.value.replace(/[^a-zA-Z0-9_-]/g, ''))}
                         disabled={loading}
                         autoFocus
                     />

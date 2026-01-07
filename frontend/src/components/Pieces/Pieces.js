@@ -37,33 +37,27 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     const [isFlipped, setIsFlippedLocal] = useState(false);
     
     const {
-        user,
-        startingTime,
-        setStartingTime,
-        increment,
-        setIncrement,
-        isTimeControlEnabled,
-        setIsTimeControlEnabled
+        user
     } = useUserSession();
 
     const {
         fen, setFen,
         fenHistory, setFenHistory,
         viewedIndex, setViewedIndex,
-        gameId, setGameId,
+        gameId,
         inCheck, setInCheck,
         moveHistory, setMoveHistory,
         lastMove, setLastMove,
         winner, setWinner,
         isGameOver, setIsGameOver,
         turn, setTurn,
-        currentVariant, setCurrentVariant,
+        currentVariant,
         ratingDiffs, setRatingDiffs,
         allPossibleMoves,
-        whitePlayer, setWhitePlayer,
-        blackPlayer, setBlackPlayer,
-        whitePlayerId, setWhitePlayerId,
-        blackPlayerId, setBlackPlayerId,
+        whitePlayer,
+        blackPlayer,
+        whitePlayerId,
+        blackPlayerId,
         takebackOffer, setTakebackOffer,
         drawOffer, setDrawOffer,
         initializeGame,
@@ -144,8 +138,8 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
     }, [position, ws]);
 
     const {
-        selectedSquare, setSelectedSquare,
-        legalMoves, setLegalMoves,
+        selectedSquare,
+        legalMoves,
         ref,
         handleSquareClick,
         handlePieceDragStart,
