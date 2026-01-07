@@ -1,13 +1,13 @@
 import './ImportDialog.css';
 import { useState } from 'react';
 
-function ImportDialog({ onImport, onCancel }) {
+function ImportDialog({ onImport, onCancel, initialVariant = 'standard' }) {
     const [fen, setFen] = useState('');
-    const [variant, setVariant] = useState('standard');
+    const [variant, setVariant] = useState(initialVariant);
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onImport(fen, variant);
+        onImport(fen.trim() || null, variant);
     };
 
     const handleOverlayClick = (e) => {

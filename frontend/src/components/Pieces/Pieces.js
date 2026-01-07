@@ -208,7 +208,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                 style={shake > 0 ? { '--shake-intensity': shake } : {}}
             >
                 <PromotionManager isPromotionDialogOpen={isPromotionDialogOpen} promotionColor={fen?.split(' ')[1] === 'w' ? 'w' : 'b'} handlePromotion={handlePromotion} handleCancelPromotion={() => setPromotionDialogOpen(false)} />
-                {isImportDialogOpen && <ImportDialog onImport={(f, v) => { setImportDialogOpen(false); initializeGame(f, v); }} onCancel={() => setImportDialogOpen(false)} />}
+                {isImportDialogOpen && <ImportDialog initialVariant={currentVariant} onImport={(f, v) => { setImportDialogOpen(false); initializeGame(f, v); }} onCancel={() => setImportDialogOpen(false)} />}
 
                 {selectedSquare && renderHighlight(selectedSquare, 'var(--selection-highlight)', 'selected')}
                 {lastMove && renderHighlight(lastMove.from, 'var(--last-move-highlight)', 'last-from')}
