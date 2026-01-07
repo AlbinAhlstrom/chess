@@ -47,6 +47,9 @@ class Game:
         self.winner_override = None
         self.game_over_reason_override = None
 
+        self._status_cache = {}
+        self._status_cache_fen = None
+
         if self.time_control:
             if 'limit' in self.time_control:
                 start_sec = float(self.time_control['limit'])
@@ -231,32 +234,42 @@ class Game:
         """Returns the number of times the current position has occurred."""
         return self.state.repetition_count
 
+    def _get_from_cache(self, key: str, provider):
+        """Retrieves a value from the cache or computes it if not present."""
+        if self._status_cache_fen != self.state.fen:
+            self._status_cache = {}
+            self._status_cache_fen = self.state.fen
+        
+        if key not in self._status_cache:
+            self._status_cache[key] = provider()
+        return self._status_cache[key]
+
     @property
     def is_check(self) -> bool:
         """Checks if the current side to move is in check."""
-        return self.rules.is_check(self.state)
+        return self._get_from_cache("is_check", lambda: self.rules.is_check(self.state))
 
     @property
     def is_checkmate(self) -> bool:
         """Checks if the current side to move is checkmated."""
-        return self.rules.is_checkmate(self.state)
+        return self._get_from_cache("is_checkmate", lambda: self.rules.is_checkmate(self.state))
 
     @property
     def is_stalemate(self) -> bool:
         """Whether the game is over by stalemate."""
-        return self.rules.is_stalemate(self.state)
+        return self._get_from_cache("is_stalemate", lambda: self.rules.is_stalemate(self.state))
 
     @property
     def is_draw(self) -> bool:
         """Checks if the game is a draw."""
-        return self.rules.is_draw(self.state)
+        return self._get_from_cache("is_draw", lambda: self.rules.is_draw(self.state))
 
     @property
     def is_over(self) -> bool:
         """Checks if the game is over."""
         if self.is_over_by_timeout or self.game_over_reason_override is not None or self.winner_override is not None:
             return True
-        return self.rules.is_game_over(self.state)
+        return self._get_from_cache("is_over", lambda: self.rules.is_game_over(self.state))
 
     @property
     def legal_moves(self) -> list[Move]:
@@ -266,7 +279,7 @@ class Game:
     @property
     def has_legal_moves(self) -> bool:
         """Checks if there is at least one legal move."""
-        return self.rules.has_legal_moves(self.state)
+        return self._get_from_cache("has_legal_moves", lambda: self.rules.has_legal_moves(self.state))
 
     @property
     def game_over_reason(self) -> GameOverReason:
@@ -275,7 +288,7 @@ class Game:
             return self.game_over_reason_override
         if self.is_over_by_timeout:
              return GameOverReason.TIMEOUT
-        return self.rules.get_game_over_reason(self.state)
+        return self._get_from_cache("game_over_reason", lambda: self.rules.get_game_over_reason(self.state))
 
     @property
     def winner(self) -> str | None:
@@ -288,7 +301,7 @@ class Game:
              # If timeout, the winner is the one NOT on turn (simplification)
              return self.state.turn.opposite.value
 
-        color = self.rules.get_winner(self.state)
+        color = self._get_from_cache("winner", lambda: self.rules.get_winner(self.state))
         return color.value if color else None
 
     def is_move_legal(self, move: Move) -> bool:
