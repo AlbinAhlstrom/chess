@@ -112,7 +112,6 @@ class Rules(ABC):
         for v in self.move_validators:
             reason = v(state, move, self)
             if reason:
-                print(f"[RULES DEBUG] Move {move.uci} rejected by {v.__name__}: {reason.value}")
                 return reason
         return MoveLegalityReason.LEGAL
 

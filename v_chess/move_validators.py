@@ -334,11 +334,9 @@ def validate_racing_kings_move(state: "GameState", move: "Move", rules: "Rules")
     next_state = rules.apply_move(state, move)
     
     if rules.is_check(next_state):
-        print(f"[VALIDATOR DEBUG] RACING_KINGS GIVES_CHECK for move {move.uci}")
         return MoveLegalityReason.GIVES_CHECK
 
     if rules.inactive_player_in_check(next_state):
-         print(f"[VALIDATOR DEBUG] RACING_KINGS KING_LEFT_IN_CHECK for move {move.uci}")
          return MoveLegalityReason.KING_LEFT_IN_CHECK
          
     return None
