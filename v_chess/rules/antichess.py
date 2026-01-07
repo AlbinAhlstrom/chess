@@ -16,21 +16,13 @@ from v_chess.state_validators import (
     pawn_on_backrank, pawn_count_standard, en_passant_target_validity
 )
 from v_chess.special_moves import (
-    PieceMoveGenerator, GlobalMoveGenerator, basic_moves,
+    PieceMoveRule, GlobalMoveRule, basic_moves,
     pawn_promotions, pawn_double_push
 )
 from .standard import StandardRules
 
 
 class AntichessRules(StandardRules):
-    @property
-    def name(self) -> str:
-        return "Antichess"
-
-    @property
-    def has_check(self) -> bool:
-        return False
-    
     @property
     def game_over_conditions(self) -> List[Callable[[GameState, "StandardRules"], Optional[GameOverReason]]]:
         return [
@@ -45,13 +37,13 @@ class AntichessRules(StandardRules):
         return [
             validate_piece_presence,
             validate_turn,
+            validate_mandatory_capture,
             validate_moveset,
             validate_friendly_capture,
-            validate_antichess_castling,
             validate_pawn_capture,
             validate_path,
             validate_promotion,
-            validate_mandatory_capture
+            validate_antichess_castling
         ]
 
     @property
@@ -64,8 +56,8 @@ class AntichessRules(StandardRules):
         ]
 
     @property
-    def piece_generators(self) -> List[PieceMoveGenerator]:
-        """Returns a list of generators for piece-specific moves."""
+    def piece_moves(self) -> List[PieceMoveRule]:
+        """Returns a list of rules for piece-specific moves."""
         return [
             basic_moves,
             pawn_promotions,
@@ -73,8 +65,8 @@ class AntichessRules(StandardRules):
         ]
 
     @property
-    def global_generators(self) -> List[GlobalMoveGenerator]:
-        """Returns a list of generators for moves not originating from board pieces."""
+    def global_moves(self) -> List[GlobalMoveRule]:
+        """Returns a list of rules for moves not originating from board pieces."""
         return []
 
     def is_check(self, state: GameState) -> bool:
@@ -85,16 +77,16 @@ class AntichessRules(StandardRules):
 
     def get_winner(self, state: GameState) -> Color | None:
         reason = self.get_game_over_reason(state)
-        if reason == self.GameOverReason.ALL_PIECES_CAPTURED:
+        if reason == GameOverReason.ALL_PIECES_CAPTURED:
              white_pieces = any(p.color == Color.WHITE for p in state.board.values())
              if not white_pieces: return Color.WHITE
              return Color.BLACK
-        if reason == self.GameOverReason.STALEMATE:
+        if reason == GameOverReason.STALEMATE:
              return state.turn
         return None
 
     def castling_legality_reason(self, state: GameState, move: Move, piece: King) -> MoveLegalityReason:
-        return self.MoveLegalityReason.CASTLING_DISABLED
+        return MoveLegalityReason.CASTLING_DISABLED
 
     def get_legal_castling_moves(self, state: GameState) -> list[Move]:
         return []

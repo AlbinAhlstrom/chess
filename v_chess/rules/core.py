@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from v_chess.game_over_conditions import GameOverCondition
     from v_chess.move_validators import MoveValidator
     from v_chess.state_validators import StateValidator
-    from v_chess.special_moves import PieceMoveGenerator, GlobalMoveGenerator
+    from v_chess.special_moves import PieceMoveRule, GlobalMoveRule
 
 
 class Rules(ABC):
@@ -48,18 +48,18 @@ class Rules(ABC):
 
     @property
     @abstractmethod
-    def piece_generators(self) -> List["PieceMoveGenerator"]:
-        """Returns a list of generators for piece-specific moves."""
+    def piece_moves(self) -> List["PieceMoveRule"]:
+        """Returns a list of rules for piece-specific moves."""
         ...
 
     @property
     @abstractmethod
-    def global_generators(self) -> List["GlobalMoveGenerator"]:
-        """Returns a list of generators for moves not originating from board pieces."""
+    def global_moves(self) -> List["GlobalMoveRule"]:
+        """Returns a list of rules for moves not originating from board pieces."""
         ...
 
-    def get_theoretical_moves(self, state: "GameState") -> list[Move]:
-        """Generates all moves possible on an empty board using modular generators."""
+    def get_possible_moves(self, state: "GameState") -> list[Move]:
+        """Generates all moves possible on an empty board using modular rules."""
         moves = []
         bb = state.board.bitboard
         turn = state.turn
@@ -74,13 +74,13 @@ class Rules(ABC):
                 piece = state.board.get_piece(sq)
 
                 if piece:
-                    for gen in self.piece_generators:
+                    for gen in self.piece_moves:
                         moves.extend(gen(state, sq, piece))
 
                 temp_mask &= temp_mask - 1
 
         # 2. Global moves (e.g. Drops)
-        for gen in self.global_generators:
+        for gen in self.global_moves:
             moves.extend(gen(state))
 
         return moves
@@ -152,7 +152,7 @@ class Rules(ABC):
 
     def has_legal_moves(self, state: "GameState") -> bool:
         """Checks if there is at least one legal move."""
-        return any(self.validate_move(state, move) == MoveLegalityReason.LEGAL for move in self.get_theoretical_moves(state))
+        return any(self.validate_move(state, move) == MoveLegalityReason.LEGAL for move in self.get_possible_moves(state))
 
     def is_game_over(self, state: "GameState") -> bool:
         """Convenience method to check if the game has ended."""

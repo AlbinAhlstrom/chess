@@ -261,7 +261,7 @@ class Game:
     @property
     def legal_moves(self) -> list[Move]:
         """Returns a list of all legal moves in the current position."""
-        return [move for move in self.rules.get_theoretical_moves(self.state) if self.is_move_legal(move)]
+        return [move for move in self.rules.get_possible_moves(self.state) if self.is_move_legal(move)]
 
     @property
     def has_legal_moves(self) -> bool:

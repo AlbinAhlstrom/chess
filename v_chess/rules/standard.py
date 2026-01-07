@@ -23,21 +23,18 @@ from v_chess.state_validators import (
     en_passant_target_validity, inactive_player_check_safety
 )
 from v_chess.special_moves import (
-    PieceMoveGenerator, GlobalMoveGenerator, basic_moves,
+    PieceMoveRule, GlobalMoveRule, basic_moves, 
     pawn_promotions, pawn_double_push, standard_castling
 )
 from .core import Rules
 
 
 class StandardRules(Rules):
-    @property
-    def starting_fen(self) -> str:
-        from v_chess.game_state import GameState
-        return GameState.STARTING_FEN
+    """Standard rules for a game of chess."""
 
     @property
-    def game_over_conditions(self) -> List[Callable[[GameState, Rules], Optional[GameOverReason]]]:
-        """Returns a list of conditions that can end the game."""
+    def game_over_conditions(self) -> List[Callable[[GameState, "StandardRules"], Optional[GameOverReason]]]:
+        """Returns a list of game over conditions."""
         return [
             evaluate_repetition,
             evaluate_fifty_move_rule,
@@ -46,7 +43,7 @@ class StandardRules(Rules):
         ]
 
     @property
-    def move_validators(self) -> List[Callable[[GameState, Move, Rules], Optional[MoveLegalityReason]]]:
+    def move_validators(self) -> List[Callable[[GameState, Move, "StandardRules"], Optional[MoveLegalityReason]]]:
         """Returns a list of move validators."""
         return [
             validate_piece_presence,
@@ -61,7 +58,7 @@ class StandardRules(Rules):
         ]
 
     @property
-    def state_validators(self) -> List[Callable[[GameState, Rules], Optional[BoardLegalityReason]]]:
+    def state_validators(self) -> List[Callable[[GameState, "StandardRules"], Optional[BoardLegalityReason]]]:
         """Returns a list of board state validators."""
         return [
             standard_king_count,
@@ -74,8 +71,13 @@ class StandardRules(Rules):
         ]
 
     @property
-    def piece_generators(self) -> List[PieceMoveGenerator]:
-        """Returns a list of generators for piece-specific moves."""
+    def starting_fen(self) -> str:
+        """Returns the starting FEN for standard chess."""
+        return "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
+    @property
+    def piece_moves(self) -> List[PieceMoveRule]:
+        """Returns a list of rules for piece-specific moves."""
         return [
             basic_moves,
             pawn_promotions,
@@ -84,8 +86,8 @@ class StandardRules(Rules):
         ]
 
     @property
-    def global_generators(self) -> List[GlobalMoveGenerator]:
-        """Returns a list of generators for moves not originating from board pieces."""
+    def global_moves(self) -> List[GlobalMoveRule]:
+        """Returns a list of rules for moves not originating from board pieces."""
         return []
 
     def get_winner(self, state: GameState) -> Color | None:

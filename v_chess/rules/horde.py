@@ -17,7 +17,7 @@ from v_chess.state_validators import (
     en_passant_target_validity, inactive_player_check_safety
 )
 from v_chess.special_moves import (
-    PieceMoveGenerator, GlobalMoveGenerator, basic_moves,
+    PieceMoveRule, GlobalMoveRule, basic_moves,
     pawn_promotions, pawn_double_push, standard_castling, horde_pawn_double_push
 )
 from .standard import StandardRules
@@ -59,8 +59,8 @@ class HordeRules(StandardRules):
         ]
 
     @property
-    def piece_generators(self) -> List[PieceMoveGenerator]:
-        """Returns a list of generators for piece-specific moves."""
+    def piece_moves(self) -> List[PieceMoveRule]:
+        """Returns a list of rules for piece-specific moves."""
         return [
             basic_moves,
             pawn_promotions,
@@ -70,8 +70,8 @@ class HordeRules(StandardRules):
         ]
 
     @property
-    def global_generators(self) -> List[GlobalMoveGenerator]:
-        """Returns a list of generators for moves not originating from board pieces."""
+    def global_moves(self) -> List[GlobalMoveRule]:
+        """Returns a list of rules for moves not originating from board pieces."""
         return []
 
     @property
@@ -88,8 +88,8 @@ class HordeRules(StandardRules):
     def get_winner(self, state: GameState) -> Color | None:
         """Determines the winner of the game."""
         reason = self.get_game_over_reason(state)
-        if reason == self.GameOverReason.CHECKMATE:
+        if reason == GameOverReason.CHECKMATE:
             return Color.WHITE
-        if reason == self.GameOverReason.ALL_PIECES_CAPTURED:
+        if reason == GameOverReason.ALL_PIECES_CAPTURED:
             return Color.BLACK
         return super().get_winner(state)

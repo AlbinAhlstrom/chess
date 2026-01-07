@@ -15,7 +15,7 @@ from v_chess.state_validators import (
     en_passant_target_validity, inactive_player_check_safety, atomic_kings_proximity
 )
 from v_chess.special_moves import (
-    PieceMoveGenerator, GlobalMoveGenerator, basic_moves,
+    PieceMoveRule, GlobalMoveRule, basic_moves,
     pawn_promotions, pawn_double_push, standard_castling
 )
 from .standard import StandardRules
@@ -23,10 +23,6 @@ from dataclasses import replace
 
 
 class AtomicRules(StandardRules):
-    @property
-    def name(self) -> str:
-        return "Atomic"
-        
     @property
     def game_over_conditions(self) -> List[Callable[[GameState, "StandardRules"], Optional[GameOverReason]]]:
         return [evaluate_atomic_king_exploded] + super().game_over_conditions
@@ -49,19 +45,19 @@ class AtomicRules(StandardRules):
     def state_validators(self) -> List[Callable[[GameState, "StandardRules"], Optional[BoardLegalityReason]]]:
         """Returns a list of board state validators."""
         return [
-            atomic_kings_proximity,
             standard_king_count,
             pawn_on_backrank,
             pawn_count_standard,
             piece_count_promotion_consistency,
             castling_rights_consistency,
             en_passant_target_validity,
+            atomic_kings_proximity,
             inactive_player_check_safety
         ]
 
     @property
-    def piece_generators(self) -> List[PieceMoveGenerator]:
-        """Returns a list of generators for piece-specific moves."""
+    def piece_moves(self) -> List[PieceMoveRule]:
+        """Returns a list of rules for piece-specific moves."""
         return [
             basic_moves,
             pawn_promotions,
@@ -70,8 +66,8 @@ class AtomicRules(StandardRules):
         ]
 
     @property
-    def global_generators(self) -> List[GlobalMoveGenerator]:
-        """Returns a list of generators for moves not originating from board pieces."""
+    def global_moves(self) -> List[GlobalMoveRule]:
+        """Returns a list of rules for moves not originating from board pieces."""
         return []
 
     def post_move_actions(self, old_state: GameState, move: Move, new_state: GameState) -> GameState:
@@ -125,7 +121,7 @@ class AtomicRules(StandardRules):
 
     def get_winner(self, state: GameState) -> Color | None:
         reason = self.get_game_over_reason(state)
-        if reason == self.GameOverReason.KING_EXPLODED:
+        if reason == GameOverReason.KING_EXPLODED:
             wk = any(isinstance(p, King) and p.color == Color.WHITE for p in state.board.values())
             if not wk: return Color.BLACK
             return Color.WHITE

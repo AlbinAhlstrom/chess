@@ -7,11 +7,11 @@ if TYPE_CHECKING:
     from v_chess.game_state import GameState
     from v_chess.piece import Piece
 
-# Type Aliases for Modular Generators
-# PieceMoveGenerator: Generates moves for a specific piece at a specific square.
-PieceMoveGenerator = Callable[["GameState", "Square", "Piece"], Iterable[Move]]
-# GlobalMoveGenerator: Generates moves that don't originate from a specific piece on board (e.g. Drops).
-GlobalMoveGenerator = Callable[["GameState"], Iterable[Move]]
+# Type Aliases for Modular Rules
+# PieceMoveRule: Generates moves for a specific piece at a specific square.
+PieceMoveRule = Callable[["GameState", "Square", "Piece"], Iterable[Move]]
+# GlobalMoveRule: Generates moves that don't originate from a specific piece on board (e.g. Drops).
+GlobalMoveRule = Callable[["GameState"], Iterable[Move]]
 
 def basic_moves(state: "GameState", sq: "Square", piece: "Piece") -> Iterable[Move]:
     """Generates basic moves for a piece, excluding pawn promotions."""

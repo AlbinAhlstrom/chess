@@ -63,7 +63,7 @@ class RacingKingsRules(StandardRules):
 
     def get_winner(self, state: GameState) -> Color | None:
         reason = self.get_game_over_reason(state)
-        if reason == self.GameOverReason.KING_TO_EIGHTH_RANK:
+        if reason == GameOverReason.KING_TO_EIGHTH_RANK:
             wk_on_8 = False
             for sq, p in state.board.items():
                 if isinstance(p, King) and p.color == Color.WHITE and sq.row == 0:

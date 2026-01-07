@@ -189,7 +189,7 @@ def validate_mandatory_capture(state: "GameState", move: "Move", rules: "Rules")
     if is_capture:
         return None
         
-    for opt_move in rules.get_theoretical_moves(state):
+    for opt_move in rules.get_possible_moves(state):
         if rules.move_pseudo_legality_reason(state, opt_move) == MoveLegalityReason.LEGAL:
             opt_is_cap = state.board.get_piece(opt_move.end) is not None
             if not opt_is_cap:

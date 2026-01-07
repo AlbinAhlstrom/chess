@@ -4,21 +4,20 @@ from v_chess.game_state import GameState, ThreeCheckGameState
 from v_chess.move import Move
 from v_chess.game_over_conditions import evaluate_three_check_win
 from v_chess.special_moves import (
-    PieceMoveGenerator, GlobalMoveGenerator, basic_moves,
+    PieceMoveRule, GlobalMoveRule, basic_moves,
     pawn_promotions, pawn_double_push, standard_castling
 )
 from .standard import StandardRules
 
 
 class ThreeCheckRules(StandardRules):
-# ...
     @property
     def game_over_conditions(self) -> List[Callable[[GameState, "StandardRules"], Optional[GameOverReason]]]:
         return [evaluate_three_check_win] + super().game_over_conditions
 
     @property
-    def piece_generators(self) -> List[PieceMoveGenerator]:
-        """Returns a list of generators for piece-specific moves."""
+    def piece_moves(self) -> List[PieceMoveRule]:
+        """Returns a list of rules for piece-specific moves."""
         return [
             basic_moves,
             pawn_promotions,
@@ -27,8 +26,8 @@ class ThreeCheckRules(StandardRules):
         ]
 
     @property
-    def global_generators(self) -> List[GlobalMoveGenerator]:
-        """Returns a list of generators for moves not originating from board pieces."""
+    def global_moves(self) -> List[GlobalMoveRule]:
+        """Returns a list of rules for moves not originating from board pieces."""
         return []
 
     def post_move_actions(self, old_state: GameState, move: Move, new_state: GameState) -> GameState:
@@ -60,7 +59,7 @@ class ThreeCheckRules(StandardRules):
 
     def get_winner(self, state: GameState) -> Color | None:
         reason = self.get_game_over_reason(state)
-        if reason == self.GameOverReason.THREE_CHECKS:
+        if reason == GameOverReason.THREE_CHECKS:
             if isinstance(state, ThreeCheckGameState):
                 if state.checks[0] >= 3:
                     return Color.WHITE

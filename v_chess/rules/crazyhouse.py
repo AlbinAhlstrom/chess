@@ -20,7 +20,7 @@ from v_chess.state_validators import (
     en_passant_target_validity, inactive_player_check_safety
 )
 from v_chess.special_moves import (
-    PieceMoveGenerator, GlobalMoveGenerator, basic_moves,
+    PieceMoveRule, GlobalMoveRule, basic_moves,
     pawn_promotions, pawn_double_push, standard_castling, crazyhouse_drops
 )
 from .standard import StandardRules
@@ -47,8 +47,8 @@ class CrazyhouseRules(StandardRules):
         ]
 
     @property
-    def piece_generators(self) -> List[PieceMoveGenerator]:
-        """Returns a list of generators for piece-specific moves."""
+    def piece_moves(self) -> List[PieceMoveRule]:
+        """Returns a list of rules for piece-specific moves."""
         return [
             basic_moves,
             pawn_promotions,
@@ -57,8 +57,8 @@ class CrazyhouseRules(StandardRules):
         ]
 
     @property
-    def global_generators(self) -> List[GlobalMoveGenerator]:
-        """Returns a list of generators for moves not originating from board pieces."""
+    def global_moves(self) -> List[GlobalMoveRule]:
+        """Returns a list of rules for moves not originating from board pieces."""
         return [crazyhouse_drops]
 
     @property
