@@ -52,7 +52,7 @@ function Header({ user }) {
           </svg>
         </button>
         <div className="auth-section">
-          {user ? (
+          {user && !user.is_guest ? (
             <div className="user-profile-dropdown-container" style={{ position: 'relative' }}>
               <div className="user-profile-trigger" onClick={toggleDropdown} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                 <img src={user.picture} alt={user.name} className="header-avatar" />
