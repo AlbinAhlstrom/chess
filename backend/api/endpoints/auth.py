@@ -6,7 +6,7 @@ import traceback
 
 from backend.core.config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URI, FRONTEND_URL, IS_PROD
 from backend import database
-from backend.database import User
+from backend.database import User, async_session
 
 router = APIRouter()
 
@@ -64,7 +64,7 @@ async def auth(request: Request):
         except Exception as e:
             print(f"Error saving user to DB: {e}")
             traceback.print_exc()
-            raise HTTPException(status_code=500, detail="Database error during authentication")
+            raise HTTPException(status_code=500, detail=f"Database error during authentication: {str(e)}")
             
     return RedirectResponse(url=FRONTEND_URL)
 

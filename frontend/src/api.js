@@ -142,6 +142,17 @@ export const setUsername = (username) => {
 };
 
 export const getAuthLinks = () => {
+    if (process.env.REACT_APP_API_URL) {
+        const apiBase = process.env.REACT_APP_API_URL;
+        // Assume apiBase ends with /api, we want to replace it with /auth or just use the root
+        // If apiBase is "http://localhost:8001/api", we want "http://localhost:8001/auth"
+        const authBase = apiBase.replace(/\/api\/?$/, "/auth");
+        return {
+            loginLink: `${authBase}/login`,
+            logoutLink: `${authBase}/logout`
+        };
+    }
+
     const hostname = window.location.hostname;
     const isProd = hostname === 'v-chess.com' || hostname === 'www.v-chess.com' || hostname.endsWith('.vercel.app');
     const base = isProd ? "https://api.v-chess.com/auth" : `http://${hostname}:8000/auth`;
