@@ -7,7 +7,7 @@ import Piece from './Piece';
 import LegalMoveDot from '../LegalMoveDot/LegalMoveDot.js';
 import HighlightSquare from '../HighlightSquare/HighlightSquare.js';
 import ImportDialog from '../ImportDialog/ImportDialog.js';
-import Confetti from '../Rules/Confetti';
+
 import { algebraicToCoords } from '../../helpers.js';
 
 // Subcomponents
@@ -232,8 +232,7 @@ export function Pieces({ onFenChange, variant = "standard", matchmaking = false,
                 })}
 
                 <GameOverIndicator isGameOver={isGameOver} position={position} winner={winner} isFlipped={isFlipped} />
-                <Confetti trigger={isGameOver && !!winner} />
-
+                
                 {showGuestPrompt && (
                     <GuestSignInPrompt 
                         onDismiss={() => setShowGuestPrompt(false)}
