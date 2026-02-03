@@ -7,9 +7,30 @@ git clean -fd
 git pull origin main
 
 # 2. Ensure Virtual Environment exists
+PYTHON_CMD=python3
+if command -v python3.14 &> /dev/null; then
+    PYTHON_CMD=python3.14
+fi
+
+if [ -d "venv" ]; then
+    # Check if venv is the correct version (handle missing/broken venv gracefully)
+    if [ -f "venv/bin/python3" ]; then
+        VENV_VER=$(venv/bin/python3 --version 2>&1 | awk '{print $2}' | cut -d. -f1,2)
+        TARGET_VER=$($PYTHON_CMD --version 2>&1 | awk '{print $2}' | cut -d. -f1,2)
+        
+        if [ "$VENV_VER" != "$TARGET_VER" ]; then
+            echo "Virtual environment version mismatch ($VENV_VER vs $TARGET_VER). Recreating..."
+            rm -rf venv
+        fi
+    else
+        echo "Virtual environment broken. Recreating..."
+        rm -rf venv
+    fi
+fi
+
 if [ ! -d "venv/bin" ]; then
-    echo "Creating virtual environment..."
-    python3 -m venv venv
+    echo "Creating virtual environment with $PYTHON_CMD..."
+    $PYTHON_CMD -m venv venv
 fi
 
 # 3. Kill existing uvicorn processes
