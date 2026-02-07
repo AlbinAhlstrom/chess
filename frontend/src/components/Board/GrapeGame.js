@@ -433,14 +433,21 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
 
     const handleSquareMouseDown = (e, r, c) => {
         if (gameOverRef.current) return;
-        if (e.button !== 0) return; // Left click only
+
+        // For mouse events, check button
+        if (e.type === 'mousedown' && e.button !== 0) return;
 
         // If selecting own piece
         const piece = board[r][c];
         const isMyPiece = (blueToMove && isBlue(piece)) || (!blueToMove && !isBlue(piece) && piece !== EMPTY);
 
         if (isMyPiece) {
-            e.preventDefault();
+            // Prevent scrolling on touch
+            if (e.type === 'touchstart') {
+                // e.preventDefault(); 
+            } else if (e.type === 'mousedown') {
+                e.preventDefault();
+            }
 
             // Start drag mode immediately
             setSelectedSquare([r, c]);
@@ -469,18 +476,13 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
     useEffect(() => {
         if (!isDraggingSlider) return;
 
-        const handleMouseMove = (e) => {
+        const handleMove = (clientX) => {
             if (!selectedSquare) return;
-            const [r, c] = selectedSquare;
-
-            // Calculate slider origin position (center of selected square)
-            // This requires knowing the board position - we'll use a simpler approach
-            // based on the slider container's bounding rect
             const sliderTrack = document.querySelector('.rotation-slider-track');
             if (!sliderTrack) return;
 
             const rect = sliderTrack.getBoundingClientRect();
-            const relativeX = e.clientX - rect.left;
+            const relativeX = clientX - rect.left;
             const notchWidth = rect.width / 4;
 
             let notch = Math.round((relativeX - (notchWidth / 2)) / notchWidth);
@@ -488,26 +490,36 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
             if (notch !== sliderNotchRef.current) setSliderNotch(notch);
         };
 
-        const handleMouseUp = () => {
+        const handleMouseMove = (e) => handleMove(e.clientX);
+        const handleTouchMove = (e) => {
+            if (e.touches.length > 0) {
+                handleMove(e.touches[0].clientX);
+            }
+        };
+
+        const handleUp = () => {
             setIsDraggingSlider(false);
 
             const finalNotch = sliderNotchRef.current;
             if (finalNotch > 0) {
-                // Map notch to rotation type: 1=90°CW(1), 2=180°(2), 3=270°CW(3)
                 const rotationMap = { 1: 1, 2: 2, 3: 3 };
                 handleRotation(rotationMap[finalNotch]);
             }
-            // Any notch <= 0 cancels (including -1 and 0)
             setSelectedSquare(null);
             setSliderNotch(0);
             setSelectionMode(null);
         };
 
         window.addEventListener('mousemove', handleMouseMove);
-        window.addEventListener('mouseup', handleMouseUp);
+        window.addEventListener('mouseup', handleUp);
+        window.addEventListener('touchmove', handleTouchMove, { passive: false });
+        window.addEventListener('touchend', handleUp);
+
         return () => {
             window.removeEventListener('mousemove', handleMouseMove);
-            window.removeEventListener('mouseup', handleMouseUp);
+            window.removeEventListener('mouseup', handleUp);
+            window.removeEventListener('touchmove', handleTouchMove);
+            window.removeEventListener('touchend', handleUp);
         };
     }, [isDraggingSlider, selectedSquare]);
 
@@ -718,6 +730,7 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
                                     key={`${r}-${c}`}
                                     className={`grape-board-square ${isDark ? 'grape-dark' : 'grape-light'} ${isSelected ? 'grape-selected' : ''}`}
                                     onMouseDown={(e) => handleSquareMouseDown(e, r, c)}
+                                    onTouchStart={(e) => handleSquareMouseDown(e, r, c)}
                                 >
                                     {c === 0 && <span className="grape-board-coords-row">{r}</span>}
                                     {r === 0 && <span className="grape-board-coords-col">{String.fromCharCode(97 + c)}</span>}
@@ -733,7 +746,9 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
                             className="rotation-slider-container"
                             style={{
                                 position: 'absolute',
-                                left: `calc(var(--grape-square-size) * ${selectedSquare[1]})`,
+                                // Constrain slider to board width (10 squares)
+                                // Slider width is 4 squares. Max left should be 6 squares.
+                                left: `calc(var(--grape-square-size) * ${Math.min(6, selectedSquare[1])})`,
                                 top: `calc(var(--grape-square-size) * ${9 - selectedSquare[0]} + var(--grape-square-size) / 2)`,
                                 zIndex: 100
                             }}
@@ -747,6 +762,7 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
                                     className={`rotation-slider-handle ${isDraggingSlider ? 'dragging' : ''}`}
                                     style={{ left: `calc(var(--grape-square-size) / 2 + ${sliderNotch} * var(--grape-square-size))` }}
                                     onMouseDown={handleSliderMouseDown}
+                                    onTouchStart={handleSliderMouseDown}
                                 />
                             </div>
                         </div>
