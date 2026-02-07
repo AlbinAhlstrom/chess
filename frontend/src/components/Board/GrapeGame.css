@@ -19,10 +19,7 @@
 .grape-game-board {
     display: grid;
     grid-template-columns: repeat(10, 50px);
-    gap: 1px;
     margin: 0;
-    background: #34495e;
-    padding: 10px;
     border-radius: 5px;
     transform-origin: top left;
     position: relative;
@@ -80,22 +77,21 @@
 }
 
 .grape-light {
-    background: #AAFAAA;
-    color: #2c3e50;
+    background: var(--light-square);
+    color: var(--dark-square);
 }
 
 .grape-dark {
-    background: #87DA87;
-    color: #2c3e50;
+    background: var(--dark-square);
+    color: var(--light-square);
 }
 
 .grape-selected {
-    background: rgba(140, 220, 140, 0.7) !important;
-    color: white;
+    background: var(--selection-highlight) !important;
 }
 
 .grape-destination-highlight {
-    background: rgba(140, 220, 140, 0.8) !important;
+    background: var(--last-move-highlight) !important;
     cursor: pointer;
 }
 

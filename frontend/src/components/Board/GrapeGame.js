@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useGameWebSocket } from '../Pieces/hooks/useGameWebSocket';
 import { useUserSession } from '../Pieces/hooks/useUserSession';
+import GameSidebar from '../Pieces/subcomponents/GameSidebar';
 import './GrapeGame.css';
 
 // Constants
@@ -83,16 +85,25 @@ const DEFAULT_FEN = "lllziiiioo/lvzzsstjoo/vvzssttjjj/......t...///...T....../JJ
 
 export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
     const { user } = useUserSession();
+    const navigate = useNavigate();
 
     // Game State
     const [board, setBoard] = useState(Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(EMPTY)));
     const [blueToMove, setBlueToMove] = useState(true);
+    const [currentFen, setCurrentFen] = useState(DEFAULT_FEN);
     const [moveHistoryStr, setMoveHistoryStr] = useState("");
     const [selectedSquare, setSelectedSquare] = useState(null);
     const [validDestinations, setValidDestinations] = useState(null); // Map<coord, rotation>
     const [pieceRenderMap, setPieceRenderMap] = useState(new Map()); // Key "r,c" -> { width, height, rotation, color, type, isAnchor }
     const [lastMove, setLastMove] = useState(null);
     const [gameOver, setGameOverLocal] = useState(null); // 0=running, 1=blue win, 2=red win
+
+    // Sidebar State
+    const [fenHistory, setFenHistory] = useState([]);
+    const [viewedIndex, setViewedIndex] = useState(-1);
+    const [moveHistory, setMoveHistory] = useState([]);
+    const [takebackOffer, setTakebackOffer] = useState(null);
+    const [drawOffer, setDrawOffer] = useState(null);
 
     // Rotation Slider State
     const [sliderNotch, setSliderNotch] = useState(0); // 0=origin, 1=90°, 2=180°, 3=270°
@@ -120,14 +131,17 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
     const ws = useGameWebSocket({
         gameId,
         setFen: (fen) => {
+            setCurrentFen(fen);
             initFromFen(fen);
         },
+        setFenHistory,
+        setViewedIndex,
         setMoveHistory: (hist) => {
-            // Reconstruct moves if needed, but we rely on FEN mostly
+            setMoveHistory(hist);
             setMoveHistoryStr(hist.join(" "));
         },
         setTurn: (turnVal) => {
-            // Handled by FEN
+            // Handled by FEN usually, but we can update if needed
         },
         setIsGameOver: (over) => {
             if (!over) setGameOverLocal(null);
@@ -135,8 +149,44 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
         setWinner: (w) => {
             if (w === "white") setGameOverLocal(1);
             else if (w === "black") setGameOverLocal(2);
+        },
+        setTakebackOffer,
+        setDrawOffer,
+        effects: {
+            setShatterSquare: () => { }, // Dummy for now
+            setShowShatter: () => { },
+            setShake: () => { },
+            setExplosionSquare: () => { },
+            setShowExplosion: () => { }
         }
     });
+
+    // History Navigation
+    useEffect(() => {
+        if (viewedIndex !== -1 && fenHistory[viewedIndex]) {
+            initFromFen(fenHistory[viewedIndex]);
+            setSelectedSquare(null);
+            setSliderNotch(0);
+        } else if (viewedIndex === -1 && fenHistory.length > 0) {
+            initFromFen(fenHistory[fenHistory.length - 1]);
+            setSelectedSquare(null);
+            setSliderNotch(0);
+        }
+        // eslint-disable-next-line
+    }, [viewedIndex]);
+
+    // Game Actions
+    const handleUndo = () => ws.current?.send(JSON.stringify({ type: "undo" }));
+    const handleResign = () => ws.current?.send(JSON.stringify({ type: "resign" }));
+    const handleDraw = () => ws.current?.send(JSON.stringify({ type: "draw_offer" }));
+    const handleTakeback = () => ws.current?.send(JSON.stringify({ type: "takeback_offer" }));
+    const handleNewGame = () => navigate('/create-game');
+    const handleReset = () => { /* Implement reset */ };
+
+    const handleAcceptDraw = () => ws.current?.send(JSON.stringify({ type: "draw_accept" }));
+    const handleDeclineDraw = () => ws.current?.send(JSON.stringify({ type: "draw_decline" }));
+    const handleAcceptTakeback = () => ws.current?.send(JSON.stringify({ type: "takeback_accept" }));
+    const handleDeclineTakeback = () => ws.current?.send(JSON.stringify({ type: "takeback_decline" }));
 
     // Initialize
     useEffect(() => {
@@ -633,7 +683,7 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
         <div className="grape-game-container">
             <div className="grape-board-wrap">
                 <div className="grape-game-board">
-                    <img src="/images/grape_pieces/grape.png" className="grape-overlay" alt="Grape" />
+                    <img src="/images/grape_pieces/grape.svg" className="grape-overlay" alt="Grape" />
 
                     {[...board].reverse().map((row, rIndex) => {
                         const r = 9 - rIndex; // Actual row index (9 at top)
@@ -679,7 +729,7 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
                                         top: `${offsetTop}px`
                                     }}>
                                         <img
-                                            src={`/images/grape_pieces/${pColor}_${pName}.png`}
+                                            src={`/images/grape_pieces/${pColor}_${pName}.svg`}
                                             className="grape-piece-img"
                                             alt=""
                                             style={imgStyle}
@@ -727,14 +777,36 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
                         </div>
                     )}
                 </div>
+
+                <GameSidebar
+                    gameId={gameId}
+                    fenHistory={fenHistory}
+                    viewedIndex={viewedIndex}
+                    onJumpToMove={setViewedIndex}
+                    onStepBackward={() => setViewedIndex(prev => Math.max(0, prev === -1 ? fenHistory.length - 2 : prev - 1))}
+                    onStepForward={() => setViewedIndex(prev => prev === -1 ? -1 : (prev + 1 >= fenHistory.length - 1 ? -1 : prev + 1))}
+                    moveHistory={moveHistory}
+                    isGameOver={!!gameOver}
+                    winner={gameOver === 1 ? 'white' : (gameOver === 2 ? 'black' : null)}
+                    onNewGame={handleNewGame}
+                    onReset={handleReset}
+                    onUndo={handleUndo}
+                    onTakeback={handleTakeback}
+                    onResign={handleResign}
+                    onDraw={handleDraw}
+                    onImport={() => { }} // Not implemented
+                    onCopyFen={() => navigator.clipboard.writeText(currentFen)}
+                    drawOffer={drawOffer}
+                    takebackOffer={takebackOffer}
+                    user={user}
+                    handleAcceptDraw={handleAcceptDraw}
+                    handleDeclineDraw={handleDeclineDraw}
+                    handleAcceptTakeback={handleAcceptTakeback}
+                    handleDeclineTakeback={handleDeclineTakeback}
+                />
             </div>
 
-            <div className="grape-status">
-                Turn: <span className={blueToMove ? 'grape-blue-turn' : 'grape-red-turn'}>
-                    {blueToMove ? "Blue" : "Red"}
-                </span>
-                {gameOver && <strong> - GAME OVER ({gameOver === 1 ? "Blue" : "Red"} Wins!)</strong>}
-            </div>
+            {gameOver && <div className="grape-status"><strong>GAME OVER ({gameOver === 1 ? "Blue" : "Red"} Wins!)</strong></div>}
         </div>
     );
 }
