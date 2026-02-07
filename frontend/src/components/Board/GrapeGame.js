@@ -234,7 +234,7 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
     const calculateRenderMap = (currentBoard) => {
         const renderMap = new Map();
         const visited = new Set();
-        const CELL_SIZE = 50; // CSS size
+        const CELL_SIZE = 1; // Use multipliers for responsiveness
 
         for (let row = 0; row < BOARD_SIZE; row++) {
             for (let col = 0; col < BOARD_SIZE; col++) {
@@ -308,20 +308,11 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
                 // Render Metadata
                 const boardCols = maxC - minC + 1;
                 const boardRows = maxR - minR + 1;
-                const containerWidth = boardCols * CELL_SIZE - 10;
-                const containerHeight = boardRows * CELL_SIZE - 10;
+                const containerWidth = boardCols * CELL_SIZE;
+                const containerHeight = boardRows * CELL_SIZE;
 
-                // Offset Calculation relative to Anchor
-                // Anchor is at (anchorR, anchorC). Container top-left is at (maxR, minC) relative to grid?
-                // Wait, visually:
-                // Grid cell (r, c). 
-                // Anchor (anchorR, anchorC).
-                // Top-Left of bounding box is (maxR, minC).
-                // Offset X = (minC - anchorC) * CELL_SIZE + 5
-                // Offset Y = (anchorR - maxR) * CELL_SIZE + 5
-
-                const offsetLeft = (minC - anchorC) * CELL_SIZE + 5;
-                const offsetTop = (anchorR - maxR) * CELL_SIZE + 5;
+                const offsetLeft = (minC - anchorC) * CELL_SIZE;
+                const offsetTop = (anchorR - maxR) * CELL_SIZE;
 
                 renderMap.set(`${anchorR},${anchorC}`, {
                     isAnchor: true,
@@ -490,24 +481,11 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
 
             const rect = sliderTrack.getBoundingClientRect();
             const relativeX = e.clientX - rect.left;
-            const NOTCH_WIDTH = 50; // pixels per notch
+            const notchWidth = rect.width / 4;
 
-            if (selectionMode === 'click') {
-                // Click mode: has cancel zone
-                const CANCEL_WIDTH = 25;
-                if (relativeX < CANCEL_WIDTH) {
-                    if (sliderNotchRef.current !== -1) setSliderNotch(-1);
-                } else {
-                    let notch = Math.round((relativeX - CANCEL_WIDTH) / NOTCH_WIDTH);
-                    notch = Math.max(0, Math.min(3, notch));
-                    if (notch !== sliderNotchRef.current) setSliderNotch(notch);
-                }
-            } else {
-                // Drag mode: no cancel zone, starts at 25px
-                let notch = Math.round((relativeX - 25) / NOTCH_WIDTH);
-                notch = Math.max(0, Math.min(3, notch));
-                if (notch !== sliderNotchRef.current) setSliderNotch(notch);
-            }
+            let notch = Math.round((relativeX - (notchWidth / 2)) / notchWidth);
+            notch = Math.max(0, Math.min(3, notch));
+            if (notch !== sliderNotchRef.current) setSliderNotch(notch);
         };
 
         const handleMouseUp = () => {
@@ -515,8 +493,8 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
 
             const finalNotch = sliderNotchRef.current;
             if (finalNotch > 0) {
-                // Map notch to rotation type: 1=90°CW(3), 2=180°(2), 3=270°CW(1)
-                const rotationMap = { 1: 3, 2: 2, 3: 1 };
+                // Map notch to rotation type: 1=90°CW(1), 2=180°(2), 3=270°CW(3)
+                const rotationMap = { 1: 1, 2: 2, 3: 3 };
                 handleRotation(rotationMap[finalNotch]);
             }
             // Any notch <= 0 cancels (including -1 and 0)
@@ -556,7 +534,7 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
         pieceSquares.forEach(([pr, pc]) => tempBoard[pr][pc] = EMPTY);
 
         // Map slider notch to rotation type (1=90°CW, 2=180°, 3=270°CW)
-        const rotationMap = { 1: 3, 2: 2, 3: 1 }; // notch -> rotationType
+        const rotationMap = { 1: 1, 2: 2, 3: 3 }; // notch -> rotationType
         const rotationType = rotationMap[sliderNotch];
 
         // Calculate new positions
@@ -568,13 +546,13 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
             const dc = pc - c;
             let nr, nc;
 
-            if (rotationType === 1) { // 90° CCW
+            if (rotationType === 1) { // 90° CW
                 nr = r - dc;
                 nc = c + dr;
             } else if (rotationType === 2) { // 180°
                 nr = r - dr;
                 nc = c - dc;
-            } else { // 90° CW (rotationType === 3)
+            } else { // 90° CCW / 270° CW (rotationType === 3)
                 nr = r + dc;
                 nc = c - dr;
             }
@@ -623,16 +601,13 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
             let dc = pc - c;
             let nr, nc;
 
-            if (rotationType === 1) { // 90 CCW: (dr, dc) -> (dc, -dr) ? No, (x,y)->(-y, x)
-                // Matrix rotation: x' = x*cos - y*sin...
-                // Grid: up is +row? No, array index is row 0 at top.
-                // standard math: (x,y) -> (-y, x). 
+            if (rotationType === 1) { // 90 CW
                 nr = r - dc;
                 nc = c + dr;
             } else if (rotationType === 2) { // 180
                 nr = r - dr;
                 nc = c - dc;
-            } else { // 90 CW
+            } else { // 90 CCW
                 nr = r + dc;
                 nc = c - dr;
             }
@@ -712,21 +687,21 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
 
                                 // Handling 90/270 rotations (swap dimensions)
                                 if (rotation % 180 !== 0) {
-                                    imgStyle.width = `${height}px`;
-                                    imgStyle.height = `${width}px`;
-                                    const offsetX = (width - height) / 2;
-                                    const offsetY = (height - width) / 2;
+                                    imgStyle.width = `calc(var(--grape-square-size) * ${height - 0.2})`;
+                                    imgStyle.height = `calc(var(--grape-square-size) * ${width - 0.2})`;
+                                    const offsetXMultiplier = (width - height) / 2;
+                                    const offsetYMultiplier = (height - width) / 2;
                                     imgStyle.position = 'absolute';
-                                    imgStyle.left = `${offsetX}px`;
-                                    imgStyle.top = `${offsetY}px`;
+                                    imgStyle.left = `calc(var(--grape-square-size) * ${offsetXMultiplier})`;
+                                    imgStyle.top = `calc(var(--grape-square-size) * ${offsetYMultiplier})`;
                                 }
 
                                 pieceImg = (
                                     <div className="grape-piece-container" style={{
-                                        width: `${width}px`,
-                                        height: `${height}px`,
-                                        left: `${offsetLeft}px`,
-                                        top: `${offsetTop}px`
+                                        width: `calc(var(--grape-square-size) * ${width - 0.2})`,
+                                        height: `calc(var(--grape-square-size) * ${height - 0.2})`,
+                                        left: `calc(var(--grape-square-size) * ${offsetLeft + 0.1})`,
+                                        top: `calc(var(--grape-square-size) * ${offsetTop + 0.1})`
                                     }}>
                                         <img
                                             src={`/images/grape_pieces/${pColor}_${pName}.svg`}
@@ -758,19 +733,19 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
                             className="rotation-slider-container"
                             style={{
                                 position: 'absolute',
-                                left: `${selectedSquare[1] * 50 + 25 + 10 - 25}px`,
-                                top: `${(9 - selectedSquare[0]) * 50 + 25 + 10}px`,
+                                left: `calc(var(--grape-square-size) * ${selectedSquare[1]})`,
+                                top: `calc(var(--grape-square-size) * ${9 - selectedSquare[0]} + var(--grape-square-size) / 2)`,
                                 zIndex: 100
                             }}
                         >
-                            <div className="rotation-slider-track drag">
-                                <div className="rotation-slider-notch start" style={{ left: '25px' }} title="Start">●</div>
-                                <div className="rotation-slider-notch" style={{ left: '75px' }} title="90° CW">90°</div>
-                                <div className="rotation-slider-notch" style={{ left: '125px' }} title="180°">180°</div>
-                                <div className="rotation-slider-notch" style={{ left: '175px' }} title="270° CW">270°</div>
+                            <div className="rotation-slider-track drag" style={{ width: `calc(var(--grape-square-size) * 4)` }}>
+                                <div className="rotation-slider-notch start" style={{ left: `calc(var(--grape-square-size) / 2)` }} title="Start">●</div>
+                                <div className="rotation-slider-notch" style={{ left: `calc(var(--grape-square-size) * 1.5)` }} title="90° CW">90°</div>
+                                <div className="rotation-slider-notch" style={{ left: `calc(var(--grape-square-size) * 2.5)` }} title="180°">180°</div>
+                                <div className="rotation-slider-notch" style={{ left: `calc(var(--grape-square-size) * 3.5)` }} title="270° CW">270°</div>
                                 <div
                                     className={`rotation-slider-handle ${isDraggingSlider ? 'dragging' : ''}`}
-                                    style={{ left: `${25 + sliderNotch * 50}px` }}
+                                    style={{ left: `calc(var(--grape-square-size) / 2 + ${sliderNotch} * var(--grape-square-size))` }}
                                     onMouseDown={handleSliderMouseDown}
                                 />
                             </div>
