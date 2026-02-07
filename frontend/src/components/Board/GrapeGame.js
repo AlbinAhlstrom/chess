@@ -94,6 +94,10 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
     const [lastMove, setLastMove] = useState(null);
     const [gameOver, setGameOverLocal] = useState(null); // 0=running, 1=blue win, 2=red win
 
+    // Rotation Slider State
+    const [sliderNotch, setSliderNotch] = useState(0); // 0=origin, 1=90°, 2=180°, 3=270°
+    const [isDraggingSlider, setIsDraggingSlider] = useState(false);
+    const sliderNotchRef = useRef(0);
     // Internal refs for logic that doesn't need immediate re-renders or avoiding closurestaleness
     const boardRef = useRef(board);
     const blueToMoveRef = useRef(blueToMove);
@@ -377,24 +381,83 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
         return squares;
     };
 
-    const handleSquareClick = (r, c) => {
+    const handleSquareMouseDown = (e, r, c) => {
         if (gameOverRef.current) return;
+        if (e.button !== 0) return; // Left click only
 
         // If selecting own piece
         const piece = board[r][c];
         const isMyPiece = (blueToMove && isBlue(piece)) || (!blueToMove && !isBlue(piece) && piece !== EMPTY);
 
         if (isMyPiece) {
+            e.preventDefault();
             setSelectedSquare([r, c]);
-            // Calculate standard rotations?
-            // Since we lack the full engine here in this snippet, 
-            // I'll add a simplified "rotation" UI
+            setSliderNotch(0);
+            setIsDraggingSlider(true); // Start dragging immediately
             return;
         }
 
-        // Move execution (mocked for now as we need rotation input)
-        // If we select a destination...
+        // Clicking elsewhere cancels selection
+        setSelectedSquare(null);
+        setSliderNotch(0);
     };
+
+    // Sync slider ref
+    useEffect(() => { sliderNotchRef.current = sliderNotch; }, [sliderNotch]);
+
+    // Slider interaction handlers
+    const handleSliderMouseDown = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDraggingSlider(true);
+    };
+
+    // Handle slider drag via window events
+    useEffect(() => {
+        if (!isDraggingSlider) return;
+
+        const handleMouseMove = (e) => {
+            if (!selectedSquare) return;
+            const [r, c] = selectedSquare;
+
+            // Calculate slider origin position (center of selected square)
+            // This requires knowing the board position - we'll use a simpler approach
+            // based on the slider container's bounding rect
+            const sliderTrack = document.querySelector('.rotation-slider-track');
+            if (!sliderTrack) return;
+
+            const rect = sliderTrack.getBoundingClientRect();
+            const relativeX = e.clientX - rect.left;
+            const NOTCH_WIDTH = 50; // pixels per notch
+
+            // Calculate notch (0-3)
+            let notch = Math.round(relativeX / NOTCH_WIDTH);
+            notch = Math.max(0, Math.min(3, notch));
+
+            if (notch !== sliderNotchRef.current) {
+                setSliderNotch(notch);
+            }
+        };
+
+        const handleMouseUp = () => {
+            setIsDraggingSlider(false);
+
+            const finalNotch = sliderNotchRef.current;
+            if (finalNotch > 0) {
+                // Map notch to rotation type: 1=90°CW(3), 2=180°(2), 3=270°CW(1)
+                const rotationMap = { 1: 3, 2: 2, 3: 1 };
+                handleRotation(rotationMap[finalNotch]);
+            }
+            setSliderNotch(0);
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isDraggingSlider, selectedSquare]);
 
     // We need the rotation buttons action
     const handleRotation = (rotationType) => {
@@ -540,7 +603,7 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
                                 <div
                                     key={`${r}-${c}`}
                                     className={`grape-board-square ${isDark ? 'grape-dark' : 'grape-light'} ${isSelected ? 'grape-selected' : ''}`}
-                                    onClick={() => handleSquareClick(r, c)}
+                                    onMouseDown={(e) => handleSquareMouseDown(e, r, c)}
                                 >
                                     {c === 0 && <span className="grape-board-coords-row">{r}</span>}
                                     {r === 0 && <span className="grape-board-coords-col">{String.fromCharCode(97 + c)}</span>}
@@ -549,17 +612,39 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
                             );
                         });
                     })}
+
+                    {/* Rotation Slider - inside board for correct positioning */}
+                    {selectedSquare && (
+                        <div
+                            className="rotation-slider-container"
+                            style={{
+                                position: 'absolute',
+                                left: `${selectedSquare[1] * 50 + 25 + 10}px`,
+                                top: `${(9 - selectedSquare[0]) * 50 + 25 + 10}px`,
+                                zIndex: 100
+                            }}
+                        >
+                            <div className="rotation-slider-track">
+                                <div className="rotation-slider-notch" style={{ left: '0px' }} title="Cancel">○</div>
+                                <div className="rotation-slider-notch" style={{ left: '50px' }} title="90° CW">90°</div>
+                                <div className="rotation-slider-notch" style={{ left: '100px' }} title="180°">180°</div>
+                                <div className="rotation-slider-notch" style={{ left: '150px' }} title="270° CW">270°</div>
+                                <div
+                                    className={`rotation-slider-handle ${isDraggingSlider ? 'dragging' : ''}`}
+                                    style={{ left: `${sliderNotch * 50}px` }}
+                                    onMouseDown={handleSliderMouseDown}
+                                />
+                            </div>
+                            <button
+                                className="rotation-slider-cancel"
+                                onClick={() => { setSelectedSquare(null); setSliderNotch(0); }}
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
-
-            {selectedSquare && (
-                <div className="grape-controls">
-                    <button className="grape-rotation-btn" onClick={() => handleRotation(1)}>Rot 1 (90°L)</button>
-                    <button className="grape-rotation-btn" onClick={() => handleRotation(2)}>Rot 2 (180°)</button>
-                    <button className="grape-rotation-btn" onClick={() => handleRotation(3)}>Rot 3 (90°R)</button>
-                    <button className="grape-rotation-btn" onClick={() => setSelectedSquare(null)}>Cancel</button>
-                </div>
-            )}
 
             <div className="grape-status">
                 Turn: <span className={blueToMove ? 'grape-blue-turn' : 'grape-red-turn'}>
