@@ -83,6 +83,132 @@ for (const [pieceTypeStr, baseShape] of Object.entries(BASE_SHAPES)) {
 
 const DEFAULT_FEN = "lllziiiioo/lvzzsstjoo/vvzssttjjj/......t...///...T....../JJJTTSSZVV/OOJTSSZZVL/OOIIIIZLLL w";
 
+const generateFen = (currentBoard, nextColorBlue) => {
+    let fen = "";
+    for (let r = 9; r >= 0; r--) {
+        let emptyCount = 0;
+        for (let c = 0; c < BOARD_SIZE; c++) {
+            const p = currentBoard[r][c];
+            if (p === EMPTY) {
+                emptyCount++;
+            } else {
+                if (emptyCount > 0) {
+                    if (emptyCount === 10) fen += "A"; // Grape convention
+                    else fen += emptyCount;
+                    emptyCount = 0;
+                }
+                fen += VALUE_TO_CHAR[p];
+            }
+        }
+        if (emptyCount > 0) {
+            if (emptyCount === 10) fen += "A";
+            else fen += emptyCount;
+        }
+        if (r > 0) fen += "/";
+    }
+    fen += nextColorBlue ? " w" : " b";
+    return fen;
+};
+
+const calculateRenderMap = (currentBoard) => {
+    const renderMap = new Map();
+    const visited = new Set();
+    const CELL_SIZE = 1; // Use multipliers for responsiveness
+
+    for (let row = 0; row < BOARD_SIZE; row++) {
+        for (let col = 0; col < BOARD_SIZE; col++) {
+            const piece = currentBoard[row][col];
+            if (piece === EMPTY) continue;
+
+            const key = `${row},${col}`;
+            if (visited.has(key)) continue;
+
+            // Flood fill
+            const allCoords = [];
+            const stack = [[row, col]];
+            const pieceVisited = new Set([key]);
+
+            while (stack.length > 0) {
+                const [r, c] = stack.pop();
+                allCoords.push([r, c]);
+                visited.add(`${r},${c}`);
+
+                for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+                    const nr = r + dr;
+                    const nc = c + dc;
+                    if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+                        const nkey = `${nr},${nc}`;
+                        if (!pieceVisited.has(nkey) && currentBoard[nr][nc] === piece) {
+                            pieceVisited.add(nkey);
+                            stack.push([nr, nc]);
+                        }
+                    }
+                }
+            }
+
+            if (allCoords.length === 0) continue;
+
+            // Determine Anchor (Top-Left visually)
+            // Visual Top = Max Row Index (since we render 9 down to 0)
+            // Visual Left = Min Col Index
+            let anchorR = -1;
+            let anchorC = 100;
+
+            // Also bounds for size
+            let minR = 100, maxR = -1, minC = 100, maxC = -1;
+
+            allCoords.forEach(([r, c]) => {
+                if (r > anchorR || (r === anchorR && c < anchorC)) {
+                    anchorR = r;
+                    anchorC = c;
+                }
+                minR = Math.min(minR, r);
+                maxR = Math.max(maxR, r);
+                minC = Math.min(minC, c);
+                maxC = Math.max(maxC, c);
+            });
+
+            // Fingerprint & Rotation (from earlier logic)
+            const maxRow = maxR;
+            const minCol = minC;
+            const normalized = allCoords.map(([r, c]) => [maxRow - r, c - minCol]);
+            const fingerprint = getShapeFingerprint(normalized);
+
+            const pieceType = getPieceType(piece);
+            let rotation = 0;
+            if (pieceType !== ORANGUTAN_P) {
+                const rots = ALL_SHAPE_ROTATIONS[pieceType];
+                rotation = rots ? (rots[fingerprint] || 0) : 0;
+            }
+            if (isBlue(piece)) {
+                rotation = (rotation + 180) % 360;
+            }
+
+            // Render Metadata
+            const boardCols = maxC - minC + 1;
+            const boardRows = maxR - minR + 1;
+            const containerWidth = boardCols * CELL_SIZE;
+            const containerHeight = boardRows * CELL_SIZE;
+
+            const offsetLeft = (minC - anchorC) * CELL_SIZE;
+            const offsetTop = (anchorR - maxR) * CELL_SIZE;
+
+            renderMap.set(`${anchorR},${anchorC}`, {
+                isAnchor: true,
+                rotation,
+                width: containerWidth,
+                height: containerHeight,
+                offsetLeft,
+                offsetTop,
+                pieceType,
+                isBlue: isBlue(piece),
+                piece
+            });
+        }
+    }
+    return renderMap;
+};
+
 export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
     const { user } = useUserSession();
     const navigate = useNavigate();
@@ -91,11 +217,8 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
     const [board, setBoard] = useState(Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(EMPTY)));
     const [blueToMove, setBlueToMove] = useState(true);
     const [currentFen, setCurrentFen] = useState(DEFAULT_FEN);
-    const [moveHistoryStr, setMoveHistoryStr] = useState("");
     const [selectedSquare, setSelectedSquare] = useState(null);
-    const [validDestinations, setValidDestinations] = useState(null); // Map<coord, rotation>
     const [pieceRenderMap, setPieceRenderMap] = useState(new Map()); // Key "r,c" -> { width, height, rotation, color, type, isAnchor }
-    const [lastMove, setLastMove] = useState(null);
     const [gameOver, setGameOverLocal] = useState(null); // 0=running, 1=blue win, 2=red win
 
     // Sidebar State
@@ -109,7 +232,6 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
     const [sliderNotch, setSliderNotch] = useState(0); // 0=origin, 1=90°, 2=180°, 3=270°
     const [isDraggingSlider, setIsDraggingSlider] = useState(false);
     const [selectionMode, setSelectionMode] = useState(null); // 'click' or 'drag'
-    const [visualLocked, setVisualLocked] = useState(false); // Lock handle visual during grace period
     const sliderNotchRef = useRef(0);
     const [previewRenderMap, setPreviewRenderMap] = useState(null); // For rotation preview
     // Internal refs for logic that doesn't need immediate re-renders or avoiding closurestaleness
@@ -138,7 +260,6 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
         setViewedIndex,
         setMoveHistory: (hist) => {
             setMoveHistory(hist);
-            setMoveHistoryStr(hist.join(" "));
         },
         setTurn: (turnVal) => {
             // Handled by FEN usually, but we can update if needed
@@ -228,115 +349,14 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
         checkWinCondition(newBoard);
 
         setSelectedSquare(null);
-        setValidDestinations(null);
     };
 
-    const calculateRenderMap = (currentBoard) => {
-        const renderMap = new Map();
-        const visited = new Set();
-        const CELL_SIZE = 1; // Use multipliers for responsiveness
-
-        for (let row = 0; row < BOARD_SIZE; row++) {
-            for (let col = 0; col < BOARD_SIZE; col++) {
-                const piece = currentBoard[row][col];
-                if (piece === EMPTY) continue;
-
-                const key = `${row},${col}`;
-                if (visited.has(key)) continue;
-
-                // Flood fill
-                const allCoords = [];
-                const stack = [[row, col]];
-                const pieceVisited = new Set([key]);
-
-                while (stack.length > 0) {
-                    const [r, c] = stack.pop();
-                    allCoords.push([r, c]);
-                    visited.add(`${r},${c}`);
-
-                    for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
-                        const nr = r + dr;
-                        const nc = c + dc;
-                        if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
-                            const nkey = `${nr},${nc}`;
-                            if (!pieceVisited.has(nkey) && currentBoard[nr][nc] === piece) {
-                                pieceVisited.add(nkey);
-                                stack.push([nr, nc]);
-                            }
-                        }
-                    }
-                }
-
-                if (allCoords.length === 0) continue;
-
-                // Determine Anchor (Top-Left visually)
-                // Visual Top = Max Row Index (since we render 9 down to 0)
-                // Visual Left = Min Col Index
-                let anchorR = -1;
-                let anchorC = 100;
-
-                // Also bounds for size
-                let minR = 100, maxR = -1, minC = 100, maxC = -1;
-
-                allCoords.forEach(([r, c]) => {
-                    if (r > anchorR || (r === anchorR && c < anchorC)) {
-                        anchorR = r;
-                        anchorC = c;
-                    }
-                    minR = Math.min(minR, r);
-                    maxR = Math.max(maxR, r);
-                    minC = Math.min(minC, c);
-                    maxC = Math.max(maxC, c);
-                });
-
-                // Fingerprint & Rotation (from earlier logic)
-                const maxRow = maxR;
-                const minCol = minC;
-                const normalized = allCoords.map(([r, c]) => [maxRow - r, c - minCol]);
-                const fingerprint = getShapeFingerprint(normalized);
-
-                const pieceType = getPieceType(piece);
-                let rotation = 0;
-                if (pieceType !== ORANGUTAN_P) {
-                    const rots = ALL_SHAPE_ROTATIONS[pieceType];
-                    rotation = rots ? (rots[fingerprint] || 0) : 0;
-                }
-                if (isBlue(piece)) {
-                    rotation = (rotation + 180) % 360;
-                }
-
-                // Render Metadata
-                const boardCols = maxC - minC + 1;
-                const boardRows = maxR - minR + 1;
-                const containerWidth = boardCols * CELL_SIZE;
-                const containerHeight = boardRows * CELL_SIZE;
-
-                const offsetLeft = (minC - anchorC) * CELL_SIZE;
-                const offsetTop = (anchorR - maxR) * CELL_SIZE;
-
-                renderMap.set(`${anchorR},${anchorC}`, {
-                    isAnchor: true,
-                    rotation,
-                    width: containerWidth,
-                    height: containerHeight,
-                    offsetLeft,
-                    offsetTop,
-                    pieceType,
-                    isBlue: isBlue(piece),
-                    piece
-                });
-            }
-        }
-        return renderMap;
-    };
-
-    // Wrapper that updates state
-    const recalcRotations = (currentBoard) => {
+    const recalcRotations = useCallback((currentBoard) => {
         const renderMap = calculateRenderMap(currentBoard);
         setPieceRenderMap(renderMap);
-    };
+    }, []);
 
-    const checkWinCondition = (currentBoard) => {
+    const checkWinCondition = useCallback((currentBoard) => {
         let blueOrangutanExists = false;
         let redOrangutanExists = false;
         let blueInCenter = false;
@@ -363,46 +383,12 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
         if (winner && gameOverRef.current !== winner) {
             setGameOverLocal(winner);
         }
-    };
+    }, []);
 
-    const generateFen = (currentBoard, nextColorBlue) => {
-        let fen = "";
-        for (let r = 9; r >= 0; r--) {
-            let emptyCount = 0;
-            for (let c = 0; c < BOARD_SIZE; c++) {
-                const p = currentBoard[r][c];
-                if (p === EMPTY) {
-                    emptyCount++;
-                } else {
-                    if (emptyCount > 0) {
-                        if (emptyCount === 10) fen += "A"; // Grape convention
-                        else fen += emptyCount;
-                        emptyCount = 0;
-                    }
-                    fen += VALUE_TO_CHAR[p];
-                }
-            }
-            if (emptyCount > 0) {
-                if (emptyCount === 10) fen += "A";
-                else fen += emptyCount;
-            }
-            if (r > 0) fen += "/";
-        }
-        fen += nextColorBlue ? " w" : " b";
-        return fen;
-    };
+
 
     // Logic for moves
-    const calculateRotationDestinations = (row, col, rotation) => {
-        // This is complex, implementing simplified check for demo
-        // Ideally we need the full valid move logic from grape.html
-        // For RelayGame, we might trust the client fully but we need valid destinations to SHOW highlights
 
-        // Due to complexity limit in this tool usage, I am simplifying:
-        // Assume I ported the full `calculateRotationDestinations` from grape.html
-        // But for now I'll implement a Mock that just allows moving to adjacent if valid
-        return null;
-    };
 
     // NOTE: Because the full rotation logic is 300+ lines, I can't paste it all effectively here without hitting limits.
     // I will implement a "Smart" approach: I will copy the critical helpers.
@@ -465,128 +451,7 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
     // Sync slider ref
     useEffect(() => { sliderNotchRef.current = sliderNotch; }, [sliderNotch]);
 
-    // Slider interaction handlers
-    const handleSliderMouseDown = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDraggingSlider(true);
-    };
-
-    // Handle slider drag via window events
-    useEffect(() => {
-        if (!isDraggingSlider) return;
-
-        const handleMove = (clientX) => {
-            if (!selectedSquare) return;
-            const sliderTrack = document.querySelector('.rotation-slider-track');
-            if (!sliderTrack) return;
-
-            const rect = sliderTrack.getBoundingClientRect();
-            const relativeX = clientX - rect.left;
-            const notchWidth = rect.width / 4;
-
-            let notch = Math.round((relativeX - (notchWidth / 2)) / notchWidth);
-            notch = Math.max(0, Math.min(3, notch));
-            if (notch !== sliderNotchRef.current) setSliderNotch(notch);
-        };
-
-        const handleMouseMove = (e) => handleMove(e.clientX);
-        const handleTouchMove = (e) => {
-            if (e.touches.length > 0) {
-                handleMove(e.touches[0].clientX);
-            }
-        };
-
-        const handleUp = () => {
-            setIsDraggingSlider(false);
-
-            const finalNotch = sliderNotchRef.current;
-            if (finalNotch > 0) {
-                const rotationMap = { 1: 1, 2: 2, 3: 3 };
-                handleRotation(rotationMap[finalNotch]);
-            }
-            setSelectedSquare(null);
-            setSliderNotch(0);
-            setSelectionMode(null);
-        };
-
-        window.addEventListener('mousemove', handleMouseMove);
-        window.addEventListener('mouseup', handleUp);
-        window.addEventListener('touchmove', handleTouchMove, { passive: false });
-        window.addEventListener('touchend', handleUp);
-
-        return () => {
-            window.removeEventListener('mousemove', handleMouseMove);
-            window.removeEventListener('mouseup', handleUp);
-            window.removeEventListener('touchmove', handleTouchMove);
-            window.removeEventListener('touchend', handleUp);
-        };
-    }, [isDraggingSlider, selectedSquare]);
-
-    // Calculate preview render map when slider changes
-    useEffect(() => {
-        if (!selectedSquare || sliderNotch <= 0) {
-            setPreviewRenderMap(null);
-            return;
-        }
-
-        const [r, c] = selectedSquare;
-        const pieceSquares = getPieceSquares(r, c, board);
-        const pieceVal = board[r][c];
-
-        if (pieceSquares.length === 0) {
-            setPreviewRenderMap(null);
-            return;
-        }
-
-        // Create temp board with rotation applied
-        const tempBoard = board.map(row => [...row]);
-
-        // Clear old positions
-        pieceSquares.forEach(([pr, pc]) => tempBoard[pr][pc] = EMPTY);
-
-        // Map slider notch to rotation type (1=90°CW, 2=180°, 3=270°CW)
-        const rotationMap = { 1: 1, 2: 2, 3: 3 }; // notch -> rotationType
-        const rotationType = rotationMap[sliderNotch];
-
-        // Calculate new positions
-        let valid = true;
-        const rotatedSquares = [];
-
-        pieceSquares.forEach(([pr, pc]) => {
-            const dr = pr - r;
-            const dc = pc - c;
-            let nr, nc;
-
-            if (rotationType === 1) { // 90° CW
-                nr = r - dc;
-                nc = c + dr;
-            } else if (rotationType === 2) { // 180°
-                nr = r - dr;
-                nc = c - dc;
-            } else { // 90° CCW / 270° CW (rotationType === 3)
-                nr = r + dc;
-                nc = c - dr;
-            }
-
-            if (nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE) {
-                valid = false;
-            } else if (tempBoard[nr][nc] !== EMPTY) {
-                valid = false;
-            } else {
-                rotatedSquares.push([nr, nc]);
-            }
-        });
-
-        if (valid && rotatedSquares.length === pieceSquares.length) {
-            rotatedSquares.forEach(([nr, nc]) => tempBoard[nr][nc] = pieceVal);
-            const previewMap = calculateRenderMap(tempBoard);
-            setPreviewRenderMap(previewMap);
-        } else {
-            setPreviewRenderMap(null);
-        }
-    }, [sliderNotch, selectedSquare, board]);
-    const handleRotation = (rotationType) => {
+    const handleRotation = useCallback((rotationType) => {
         if (!selectedSquare) return;
         const [r, c] = selectedSquare;
 
@@ -664,7 +529,130 @@ export default function GrapeGame({ gameId, setWinner, setIsGameOver }) {
             // Invalid move feedback
             console.log("Invalid rotation");
         }
+    }, [board, blueToMove, selectedSquare, ws, recalcRotations, checkWinCondition]);
+
+    // Slider interaction handlers
+    const handleSliderMouseDown = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDraggingSlider(true);
     };
+
+    // Handle slider drag via window events
+    useEffect(() => {
+        if (!isDraggingSlider) return;
+
+        const handleMove = (clientX) => {
+            if (!selectedSquare) return;
+            const sliderTrack = document.querySelector('.rotation-slider-track');
+            if (!sliderTrack) return;
+
+            const rect = sliderTrack.getBoundingClientRect();
+            const relativeX = clientX - rect.left;
+            const notchWidth = rect.width / 4;
+
+            let notch = Math.round((relativeX - (notchWidth / 2)) / notchWidth);
+            notch = Math.max(0, Math.min(3, notch));
+            if (notch !== sliderNotchRef.current) setSliderNotch(notch);
+        };
+
+        const handleMouseMove = (e) => handleMove(e.clientX);
+        const handleTouchMove = (e) => {
+            if (e.touches.length > 0) {
+                handleMove(e.touches[0].clientX);
+            }
+        };
+
+        const handleUp = () => {
+            setIsDraggingSlider(false);
+
+            const finalNotch = sliderNotchRef.current;
+            if (finalNotch > 0) {
+                const rotationMap = { 1: 1, 2: 2, 3: 3 };
+                handleRotation(rotationMap[finalNotch]);
+            }
+            setSelectedSquare(null);
+            setSliderNotch(0);
+            setSelectionMode(null);
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleUp);
+        window.addEventListener('touchmove', handleTouchMove, { passive: false });
+        window.addEventListener('touchend', handleUp);
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleUp);
+            window.removeEventListener('touchmove', handleTouchMove);
+            window.removeEventListener('touchend', handleUp);
+        };
+    }, [isDraggingSlider, selectedSquare, handleRotation]);
+
+    // Calculate preview render map when slider changes
+    useEffect(() => {
+        if (!selectedSquare || sliderNotch <= 0) {
+            setPreviewRenderMap(null);
+            return;
+        }
+
+        const [r, c] = selectedSquare;
+        const pieceSquares = getPieceSquares(r, c, board);
+        const pieceVal = board[r][c];
+
+        if (pieceSquares.length === 0) {
+            setPreviewRenderMap(null);
+            return;
+        }
+
+        // Create temp board with rotation applied
+        const tempBoard = board.map(row => [...row]);
+
+        // Clear old positions
+        pieceSquares.forEach(([pr, pc]) => tempBoard[pr][pc] = EMPTY);
+
+        // Map slider notch to rotation type (1=90°CW, 2=180°, 3=270°CW)
+        const rotationMap = { 1: 1, 2: 2, 3: 3 }; // notch -> rotationType
+        const rotationType = rotationMap[sliderNotch];
+
+        // Calculate new positions
+        let valid = true;
+        const rotatedSquares = [];
+
+        pieceSquares.forEach(([pr, pc]) => {
+            const dr = pr - r;
+            const dc = pc - c;
+            let nr, nc;
+
+            if (rotationType === 1) { // 90° CW
+                nr = r - dc;
+                nc = c + dr;
+            } else if (rotationType === 2) { // 180°
+                nr = r - dr;
+                nc = c - dc;
+            } else { // 90° CCW / 270° CW (rotationType === 3)
+                nr = r + dc;
+                nc = c - dr;
+            }
+
+            if (nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE) {
+                valid = false;
+            } else if (tempBoard[nr][nc] !== EMPTY) {
+                valid = false;
+            } else {
+                rotatedSquares.push([nr, nc]);
+            }
+        });
+
+        if (valid && rotatedSquares.length === pieceSquares.length) {
+            rotatedSquares.forEach(([nr, nc]) => tempBoard[nr][nc] = pieceVal);
+            const previewMap = calculateRenderMap(tempBoard);
+            setPreviewRenderMap(previewMap);
+        } else {
+            setPreviewRenderMap(null);
+        }
+    }, [sliderNotch, selectedSquare, board]);
+
 
     return (
         <div className="grape-game-container">
