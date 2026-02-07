@@ -28,6 +28,9 @@ function GameBoardWrapper({ variant: propVariant, matchmaking = false, computer 
           setFlipped={setFlipped}
           setWinner={() => { }}
           setIsGameOver={() => { }}
+          matchmaking={matchmaking}
+          computer={computer}
+          flipped={flipped}
         />
       </div>
     );

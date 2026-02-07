@@ -135,7 +135,7 @@ async def game_websocket(websocket: WebSocket, game_id: str):
                         white_id, black_id = (model.white_player_id, model.black_player_id) if model else (None, None)
                     
                     is_white_turn, is_black_turn = game.state.turn == Color.WHITE, game.state.turn == Color.BLACK
-                    if (is_white_turn and white_id == "computer") or (is_black_turn and black_id == "computer"):
+                    if (not isinstance(game, RelayGame)) and ((is_white_turn and white_id == "computer") or (is_black_turn and black_id == "computer")):
                         asyncio.create_task(trigger_ai_move(game_id, game)); continue
                     
                     if is_white_turn and white_id and white_id != "computer" and user_id != white_id: continue

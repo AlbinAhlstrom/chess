@@ -15,6 +15,8 @@ from v_chess.square import Square
 
 router = APIRouter()
 
+from v_chess.relay_game import RelayGame
+
 @router.post("/game/new")
 async def new_game(req: NewGameRequest, request: Request):
     try:
@@ -23,8 +25,14 @@ async def new_game(req: NewGameRequest, request: Request):
         if variant == "random":
             variant = random.choice([v for v in RULES_MAP.keys() if v != 'random'])
             
-        rules = RULES_MAP.get(variant.lower(), StandardRules)()
-        game = Game(state=req.fen, rules=rules, time_control=req.time_control)
+        variant_cls = RULES_MAP.get(variant.lower(), StandardRules)
+        
+        if variant_cls == RelayGame:
+            game = RelayGame(state=req.fen, time_control=req.time_control)
+        else:
+            rules = variant_cls()
+            game = Game(state=req.fen, rules=rules, time_control=req.time_control)
+
         games[game_id], game_variants[game_id] = game, variant
         
         user_session = request.session.get("user")

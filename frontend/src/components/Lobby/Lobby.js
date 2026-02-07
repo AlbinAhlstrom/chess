@@ -99,9 +99,19 @@ function Lobby() {
             sendSocketMessage({ type: "create_seek", variant: selectedVariant, color: selectedColor, time_control: tc, user });
         } else if (gameMode === 'computer') {
             try {
+                console.log("Attempting to create Computer game:", { selectedVariant, tc, selectedColor });
                 const data = await createGame(selectedVariant, null, tc, selectedColor, true);
-                if (data.game_id) navigate(`/computer-game/${data.game_id}`);
-            } catch (err) { console.error(err); }
+                console.log("Create Game response:", data);
+                if (data.game_id) {
+                    navigate(`/computer-game/${data.game_id}`);
+                } else {
+                    console.error("No game_id returned:", data);
+                    alert("Failed to create game. See console.");
+                }
+            } catch (err) {
+                console.error("createGame failed:", err);
+                alert("Error creating game: " + err.message);
+            }
         } else if (gameMode === 'otb') {
             navigate(selectedVariant === 'standard' ? '/otb' : `/otb/${selectedVariant}`, { state: { timeControl: tc } });
         }
@@ -155,7 +165,7 @@ function Lobby() {
                     ))}
                 </div>
 
-                {gameMode !== 'quick' && gameMode !== 'otb' && <ColorSelector selectedColor={selectedColor} onSelectColor={setSelectedColor} />}
+                {gameMode !== 'quick' && gameMode !== 'otb' && <ColorSelector selectedColor={selectedColor} onSelectColor={setSelectedColor} selectedVariant={selectedVariant} />}
 
                 {gameMode === 'lobby' && <SeekList seeks={seeks} selectedVariant={selectedVariant} user={user} onCancelSeek={(id) => sendSocketMessage({ type: "cancel_seek", seek_id: id })} onJoinSeek={(id) => sendSocketMessage({ type: "join_seek", seek_id: id, user })} />}
 
