@@ -6,6 +6,7 @@ from sqlalchemy import select
 
 from v_chess.game import Game
 from v_chess.rules.standard import StandardRules
+from v_chess.relay_game import RelayGame
 from backend import database
 from backend.database import GameModel
 from backend.state import quick_match_queue, seeks, games, game_variants, RULES_MAP
@@ -88,9 +89,14 @@ async def match_players():
             p1, p2 = m["p1"], m["p2"]
             game_id = str(uuid4())
             variant = m["variant"]
-            rules_cls = RULES_MAP.get(variant.lower(), StandardRules)
-            rules = rules_cls()
-            game = Game(rules=rules, time_control=m["time_control"])
+            
+            if variant.lower() == "grape":
+                game = RelayGame(time_control=m["time_control"])
+            else:
+                rules_cls = RULES_MAP.get(variant.lower(), StandardRules)
+                rules = rules_cls()
+                game = Game(rules=rules, time_control=m["time_control"])
+            
             games[game_id] = game
             game_variants[game_id] = variant
             

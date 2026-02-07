@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import TypeVar, Generator
 
 from v_chess.fen_helpers import board_from_fen, get_fen_from_board

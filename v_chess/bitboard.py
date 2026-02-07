@@ -1,4 +1,6 @@
+from __future__ import annotations
 from typing import TYPE_CHECKING
+import math
 
 from v_chess.enums import Color, Direction
 from v_chess.piece import Pawn, Knight, Bishop, Rook, Queen, King, Piece

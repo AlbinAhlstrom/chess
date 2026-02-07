@@ -162,6 +162,8 @@ class Square:
             return "NoneSquare"
         return f"{chr(self.col + ord('a'))}{8 - self.row}"
 
-type Coordinate = str | tuple | Square
+from typing import TypeAlias, Union
+
+Coordinate: TypeAlias = Union[str, tuple, "Square"]
 
 
