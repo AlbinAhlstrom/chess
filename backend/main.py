@@ -24,6 +24,8 @@ from v_chess.game import Game
 from v_chess.enums import Color
 from v_chess.rules.standard import StandardRules
 
+from v_chess.relay_game import RelayGame
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize DB
@@ -35,19 +37,29 @@ async def lifespan(app: FastAPI):
         result = await session.execute(stmt)
         models = result.scalars().all()
         for model in models:
-            rules_cls = RULES_MAP.get(model.variant.lower(), StandardRules)
-            rules = rules_cls()
-            time_control = json.loads(model.time_control) if model.time_control else None
-            game = Game(state=model.fen, rules=rules, time_control=time_control)
-            game.move_history = json.loads(model.move_history)
-            if model.uci_history:
-                game.uci_history = json.loads(model.uci_history)
-            if model.clocks:
-                clocks_dict = json.loads(model.clocks)
-                game.clocks = {Color(k): v for k, v in clocks_dict.items()}
-            game.last_move_at = model.last_move_at
-            games[model.id] = game
-            game_variants[model.id] = model.variant
+            try:
+                rules_cls = RULES_MAP.get(model.variant.lower(), StandardRules)
+                time_control = json.loads(model.time_control) if model.time_control else None
+                
+                if model.variant.lower() == "grape":
+                    game = RelayGame(state=model.fen, time_control=time_control)
+                else:
+                    rules = rules_cls()
+                    game = Game(state=model.fen, rules=rules, time_control=time_control)
+                
+                game.move_history = json.loads(model.move_history)
+                if model.uci_history:
+                    game.uci_history = json.loads(model.uci_history)
+                if model.clocks:
+                    clocks_dict = json.loads(model.clocks)
+                    game.clocks = {Color(k): v for k, v in clocks_dict.items()}
+                game.last_move_at = model.last_move_at
+                games[model.id] = game
+                game_variants[model.id] = model.variant
+            except Exception as e:
+                print(f"ERROR: Failed to restore game {model.id} ({model.variant}): {e}")
+                # Continue loading other games
+                continue
 
     # Start monitors
     timeout_task = asyncio.create_task(timeout_monitor())

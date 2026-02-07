@@ -10,6 +10,7 @@ from v_chess.game import Game
 from v_chess.move import Move
 from v_chess.square import Square
 from v_chess.enums import Color
+from v_chess.relay_game import RelayGame
 from backend import database
 from backend.database import GameModel
 from backend.socket_manager import manager
@@ -140,16 +141,27 @@ async def game_websocket(websocket: WebSocket, game_id: str):
                     if is_white_turn and white_id and white_id != "computer" and user_id != white_id: continue
                     if is_black_turn and black_id and black_id != "computer" and user_id != black_id: continue
 
-                    move_uci = message["uci"]
-                    if "@" not in move_uci:
-                        if len(move_uci) < 4:
-                            raise ValueError("UCI move too short")
-                        start_sq, end_sq = Square(move_uci[:2]), Square(move_uci[2:4])
-                        piece = game.state.board.get_piece(start_sq)
-                        if piece and piece.fen.lower() == "p" and len(move_uci) == 4 and end_sq.is_promotion_row(piece.color): move_uci += "q"
-                    
-                    move_obj = Move(move_uci, player_to_move=game.state.turn)
-                    game.take_turn(move_obj, offer_draw=message.get("offer_draw", False))
+                    if isinstance(game, RelayGame):
+                        move_obj = Move(message["uci"], player_to_move=game.state.turn)
+                        game.take_turn(
+                            move_obj, 
+                            offer_draw=message.get("offer_draw", False),
+                            fen=message.get("fen"), 
+                            turn=message.get("turn"),
+                            is_over=message.get("is_over"),
+                            winner=message.get("winner")
+                        )
+                    else:
+                        move_uci = message["uci"]
+                        if "@" not in move_uci:
+                            if len(move_uci) < 4:
+                                raise ValueError("UCI move too short")
+                            start_sq, end_sq = Square(move_uci[:2]), Square(move_uci[2:4])
+                            piece = game.state.board.get_piece(start_sq)
+                            if piece and piece.fen.lower() == "p" and len(move_uci) == 4 and end_sq.is_promotion_row(piece.color): move_uci += "q"
+                        
+                        move_obj = Move(move_uci, player_to_move=game.state.turn)
+                        game.take_turn(move_obj, offer_draw=message.get("offer_draw", False))
                     rating_diffs = await save_game_to_db(game_id)
                     if game_id in pending_takebacks: del pending_takebacks[game_id]
                     

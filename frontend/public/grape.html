@@ -1,0 +1,2608 @@
+
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #2c3e50;
+            color: white;
+        }
+        .game-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.7);
+            padding: clamp(12px, 2.5vw, 24px);
+            border-radius: 10px;
+        }
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(10, 50px);
+            gap: 1px;
+            margin: 0;
+            background: #34495e;
+            padding: 10px;
+            border-radius: 5px;
+            position: relative;
+        }
+        .board-coords-row {
+            position: absolute;
+            left: 2px;
+            top: 2px;
+            font-size: 12px;
+            color: rgba(0,0,0,0.35);
+            pointer-events: none;
+            z-index: 1;
+            font-weight: 500;
+        }
+        .board-coords-col {
+            position: absolute;
+            right: 2px;
+            bottom: 1px;
+            font-size: 12px;
+            color: rgba(0,0,0,0.35);
+            pointer-events: none;
+            z-index: 1;
+            font-weight: 500;
+        }
+        .grape-overlay {
+            position: absolute;
+            pointer-events: none;
+            z-index: 5;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .board-square {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: visible;
+        }
+        .light { background: #AAFAAA; color: #2c3e50; }
+        .dark { background: #87DA87; color: #2c3e50; }
+        .selected { background: rgba(140, 220, 140, 0.7) !important; color: white; }
+        .destination-highlight { 
+		   background: rgba(140, 220, 140, 0.8) !important;
+            cursor: pointer;
+        }
+        .destination-highlight:hover {
+		   background: rgba(140, 220, 140, 0.9) !important;
+        }
+        .last-move-highlight {
+		   background: rgba(140, 220, 140, 0.7) !important;
+        }
+        .captured-piece-highlight {
+		   background: rgba(140, 220, 140, 0.45) !important;
+        }
+        .analysis-highlight {
+           background: rgba(180, 180, 180, 0.7) !important;
+        }
+        
+        .piece-img {
+            position: absolute;
+            transition: transform 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .piece-container {
+            position: absolute;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .rotation-btn, .bot-btn {
+            background: #f39c12;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .rotation-btn:hover, .bot-btn:hover { background: #e67e22; }
+        .rotation-btn:disabled, .bot-btn:disabled { background: #7f8c8d; cursor: not-allowed; }
+        .bot-btn.active { background: #27ae60; }
+        .status { 
+            text-align: center; 
+            margin: 10px 0; 
+            padding: 10px; 
+            background: rgba(255,255,255,0.1); 
+            border-radius: 5px; 
+        }
+        .blue-turn { color: #3498db; }
+        .red-turn { color: #e74c3c; }
+        .instructions {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .piece-fallback {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            pointer-events: none;
+        }
+        .piece-fallback.piece-blue { 
+            background: #3498db; 
+            color: white; 
+        }
+        .piece-fallback.piece-red { 
+            background: #e74c3c; 
+            color: white; 
+        }
+		
+        .bot-controls {
+            text-align: center;
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .bot-controls label {
+            margin: 0;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        
+        .bot-controls select {
+            padding: 5px 8px;
+            margin: 0 3px;
+            border-radius: 3px;
+            background: #34495e;
+            color: white;
+            border: 1px solid #7f8c8d;
+        }
+        
+        @media (max-width: 600px) {
+            .bot-controls {
+                padding: 10px;
+                gap: 5px;
+            }
+            .bot-controls label {
+                font-size: 13px;
+            }
+            .bot-controls select {
+                padding: 4px 6px;
+                margin: 0 2px;
+            }
+        }
+        
+        .thinking {
+            color: #f39c12;
+            font-style: italic;
+        }
+        
+        .keyboard-focus {
+            outline: 3px solid #f39c12 !important;
+            outline-offset: -3px;
+        }
+        
+        .board-square:focus {
+            outline: none;
+        }
+        
+        .move-history-panel {
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        
+        .move-history-panel h4 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+        }
+        
+        .move-input {
+            width: 100%;
+            min-height: 60px;
+            padding: 8px;
+            border-radius: 3px;
+            border: 1px solid #7f8c8d;
+            background: #34495e;
+            color: white;
+            font-family: monospace;
+            font-size: 12px;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+        
+        .fen-panel {
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
+        .fen-panel h4 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+        }
+        
+        .fen-input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 3px;
+            border: 1px solid #7f8c8d;
+            background: #34495e;
+            color: white;
+            font-family: monospace;
+            font-size: 12px;
+            box-sizing: border-box;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            .game-container {
+                max-width: 100%;
+                width: 100%;
+                padding: 5px;
+                border-radius: 0;
+                margin: 0;
+            }
+            .game-board {
+                margin: 0 !important;
+                padding: 5px !important;
+            }
+            .board-wrap {
+                margin: 5px auto;
+            }
+        }
+		
+		html, body { height: 100%; }
+		body { font-size: clamp(14px, 2.2vw, 18px); }
+
+		.board-wrap {
+		  position: relative;
+		  margin: 20px auto;
+		  display: inline-block;
+		  text-align: left;
+		}
+		
+		.game-container {
+		  text-align: center;
+		}
+
+		.game-board {
+		  transform-origin: top left;
+		}
+
+		.controls, .status, .instructions { padding: clamp(8px, 2vw, 16px); }
+		.rotation-btn, .bot-btn {
+		  display: inline-block;
+		  min-width: 90px;
+		  max-width: 140px;
+		  padding: clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 15px);
+		  font-size: clamp(12px, 2vw, 15px);
+		}
+		.instructions { font-size: clamp(12px, 2.4vw, 14px); }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        
+		<div class="board-wrap" id="board-wrap">
+			<div class="game-board" id="game-board" role="grid" aria-label="Game board" style="zoom: 1;"><img src="images/grape_pieces/grape.png" class="grape-overlay" alt="Center goal area" style="width: 91px; height: 91px;"><div class="board-square dark" role="gridcell" tabindex="0" data-row="9" data-col="0" aria-label="a9, red Leopard"><span class="board-coords-row">9</span><div class="piece-container" style="width: 140px; height: 90px; left: 5px; top: 5px;"><img class="piece-img" src="images/grape_pieces/red_leopard.png" alt="red leopard" style="position: absolute; width: 100%; height: 100%;"></div></div><div class="board-square light" role="gridcell" tabindex="0" data-row="9" data-col="1" aria-label="b9, red Leopard"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="9" data-col="2" aria-label="c9, red Leopard"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="9" data-col="3" aria-label="d9, red Zebra"><div class="piece-container" style="width: 90px; height: 140px; left: -45px; top: 5px;"><img class="piece-img" src="images/grape_pieces/red_zebra.png" alt="red zebra" style="position: absolute; width: 100%; height: 100%;"></div></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="9" data-col="4" aria-label="e9, red Insect"><div class="piece-container" style="width: 190px; height: 40px; left: 5px; top: 5px;"><img class="piece-img" src="images/grape_pieces/red_insect.png" alt="red insect" style="position: absolute; width: 100%; height: 100%;"></div></div><div class="board-square light" role="gridcell" tabindex="0" data-row="9" data-col="5" aria-label="f9, red Insect"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="9" data-col="6" aria-label="g9, red Insect"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="9" data-col="7" aria-label="h9, red Insect"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="9" data-col="8" aria-label="i9, red Orangutan"><div class="piece-container" style="width: 90px; height: 90px; left: 5px; top: 5px;"><img class="piece-img" src="images/grape_pieces/red_orangutan.png" alt="red orangutan" style="position: absolute; width: 100%; height: 100%;"></div></div><div class="board-square light" role="gridcell" tabindex="0" data-row="9" data-col="9" aria-label="j9, red Orangutan"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="8" data-col="0" aria-label="a8, red Leopard"><span class="board-coords-row">8</span></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="8" data-col="1" aria-label="b8, red Vampire"><div class="piece-container" style="width: 90px; height: 90px; left: -45px; top: 5px;"><img class="piece-img" src="images/grape_pieces/red_vampire.png" alt="red vampire" style="position: absolute; width: 100%; height: 100%;"></div></div><div class="board-square light" role="gridcell" tabindex="0" data-row="8" data-col="2" aria-label="c8, red Zebra"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="8" data-col="3" aria-label="d8, red Zebra"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="8" data-col="4" aria-label="e8, red Seahorse"><div class="piece-container" style="width: 140px; height: 90px; left: -45px; top: 5px;"><img class="piece-img" src="images/grape_pieces/red_seahorse.png" alt="red seahorse" style="position: absolute; width: 100%; height: 100%;"></div></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="8" data-col="5" aria-label="f8, red Seahorse"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="8" data-col="6" aria-label="g8, red Tiger"><div class="piece-container" style="width: 90px; height: 140px; left: -45px; top: 5px;"><img class="piece-img" src="images/grape_pieces/red_tiger.png" alt="red tiger" style="position: absolute; width: 100%; height: 100%;"></div></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="8" data-col="7" aria-label="h8, red Jaguar"><div class="piece-container" style="width: 140px; height: 90px; left: 5px; top: 5px;"><img class="piece-img" src="images/grape_pieces/red_jaguar.png" alt="red jaguar" style="position: absolute; width: 100%; height: 100%;"></div></div><div class="board-square light" role="gridcell" tabindex="0" data-row="8" data-col="8" aria-label="i8, red Orangutan"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="8" data-col="9" aria-label="j8, red Orangutan"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="7" data-col="0" aria-label="a7, red Vampire"><span class="board-coords-row">7</span></div><div class="board-square light" role="gridcell" tabindex="0" data-row="7" data-col="1" aria-label="b7, red Vampire"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="7" data-col="2" aria-label="c7, red Zebra"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="7" data-col="3" aria-label="d7, red Seahorse"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="7" data-col="4" aria-label="e7, red Seahorse"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="7" data-col="5" aria-label="f7, red Tiger"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="7" data-col="6" aria-label="g7, red Tiger"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="7" data-col="7" aria-label="h7, red Jaguar"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="7" data-col="8" aria-label="i7, red Jaguar"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="7" data-col="9" aria-label="j7, red Jaguar"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="6" data-col="0" aria-label="a6"><span class="board-coords-row">6</span></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="6" data-col="1" aria-label="b6"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="6" data-col="2" aria-label="c6"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="6" data-col="3" aria-label="d6"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="6" data-col="4" aria-label="e6"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="6" data-col="5" aria-label="f6"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="6" data-col="6" aria-label="g6, red Tiger"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="6" data-col="7" aria-label="h6"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="6" data-col="8" aria-label="i6"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="6" data-col="9" aria-label="j6"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="5" data-col="0" aria-label="a5"><span class="board-coords-row">5</span></div><div class="board-square light" role="gridcell" tabindex="0" data-row="5" data-col="1" aria-label="b5"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="5" data-col="2" aria-label="c5"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="5" data-col="3" aria-label="d5"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="5" data-col="4" aria-label="e5, center square"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="5" data-col="5" aria-label="f5, center square"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="5" data-col="6" aria-label="g5"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="5" data-col="7" aria-label="h5"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="5" data-col="8" aria-label="i5"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="5" data-col="9" aria-label="j5"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="4" data-col="0" aria-label="a4"><span class="board-coords-row">4</span></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="4" data-col="1" aria-label="b4"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="4" data-col="2" aria-label="c4"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="4" data-col="3" aria-label="d4"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="4" data-col="4" aria-label="e4, center square"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="4" data-col="5" aria-label="f4, center square"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="4" data-col="6" aria-label="g4"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="4" data-col="7" aria-label="h4"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="4" data-col="8" aria-label="i4"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="4" data-col="9" aria-label="j4"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="3" data-col="0" aria-label="a3"><span class="board-coords-row">3</span></div><div class="board-square light" role="gridcell" tabindex="0" data-row="3" data-col="1" aria-label="b3"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="3" data-col="2" aria-label="c3"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="3" data-col="3" aria-label="d3, blue Tiger"><div class="piece-container" style="width: 90px; height: 140px; left: 5px; top: 5px;"><img class="piece-img" src="images/grape_pieces/blue_tiger.png" alt="blue tiger" style="position: absolute; width: 100%; height: 100%;"></div></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="3" data-col="4" aria-label="e3"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="3" data-col="5" aria-label="f3"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="3" data-col="6" aria-label="g3"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="3" data-col="7" aria-label="h3"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="3" data-col="8" aria-label="i3"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="3" data-col="9" aria-label="j3"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="2" data-col="0" aria-label="a2, blue Jaguar"><span class="board-coords-row">2</span><div class="piece-container" style="width: 140px; height: 90px; left: 5px; top: 5px;"><img class="piece-img" src="images/grape_pieces/blue_jaguar.png" alt="blue jaguar" style="position: absolute; width: 100%; height: 100%;"></div></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="2" data-col="1" aria-label="b2, blue Jaguar"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="2" data-col="2" aria-label="c2, blue Jaguar"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="2" data-col="3" aria-label="d2, blue Tiger"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="2" data-col="4" aria-label="e2, blue Tiger"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="2" data-col="5" aria-label="f2, blue Seahorse"><div class="piece-container" style="width: 140px; height: 90px; left: -45px; top: 5px;"><img class="piece-img" src="images/grape_pieces/blue_seahorse.png" alt="blue seahorse" style="position: absolute; width: 100%; height: 100%;"></div></div><div class="board-square light" role="gridcell" tabindex="0" data-row="2" data-col="6" aria-label="g2, blue Seahorse"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="2" data-col="7" aria-label="h2, blue Zebra"><div class="piece-container" style="width: 90px; height: 140px; left: -45px; top: 5px;"><img class="piece-img" src="images/grape_pieces/blue_zebra.png" alt="blue zebra" style="position: absolute; width: 100%; height: 100%;"></div></div><div class="board-square light" role="gridcell" tabindex="0" data-row="2" data-col="8" aria-label="i2, blue Vampire"><div class="piece-container" style="width: 90px; height: 90px; left: 5px; top: 5px;"><img class="piece-img" src="images/grape_pieces/blue_vampire.png" alt="blue vampire" style="position: absolute; width: 100%; height: 100%;"></div></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="2" data-col="9" aria-label="j2, blue Vampire"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="1" data-col="0" aria-label="a1, blue Orangutan"><span class="board-coords-row">1</span><div class="piece-container" style="width: 90px; height: 90px; left: 5px; top: 5px;"><img class="piece-img" src="images/grape_pieces/blue_orangutan.png" alt="blue orangutan" style="position: absolute; width: 100%; height: 100%;"></div></div><div class="board-square light" role="gridcell" tabindex="0" data-row="1" data-col="1" aria-label="b1, blue Orangutan"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="1" data-col="2" aria-label="c1, blue Jaguar"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="1" data-col="3" aria-label="d1, blue Tiger"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="1" data-col="4" aria-label="e1, blue Seahorse"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="1" data-col="5" aria-label="f1, blue Seahorse"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="1" data-col="6" aria-label="g1, blue Zebra"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="1" data-col="7" aria-label="h1, blue Zebra"></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="1" data-col="8" aria-label="i1, blue Vampire"></div><div class="board-square light" role="gridcell" tabindex="0" data-row="1" data-col="9" aria-label="j1, blue Leopard"><div class="piece-container" style="width: 140px; height: 90px; left: -95px; top: 5px;"><img class="piece-img" src="images/grape_pieces/blue_leopard.png" alt="blue leopard" style="position: absolute; width: 100%; height: 100%;"></div></div><div class="board-square light" role="gridcell" tabindex="0" data-row="0" data-col="0" aria-label="a0, blue Orangutan"><span class="board-coords-row">0</span><span class="board-coords-col">a</span></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="0" data-col="1" aria-label="b0, blue Orangutan"><span class="board-coords-col">b</span></div><div class="board-square light" role="gridcell" tabindex="0" data-row="0" data-col="2" aria-label="c0, blue Insect"><span class="board-coords-col">c</span><div class="piece-container" style="width: 190px; height: 40px; left: 5px; top: 5px;"><img class="piece-img" src="images/grape_pieces/blue_insect.png" alt="blue insect" style="position: absolute; width: 100%; height: 100%;"></div></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="0" data-col="3" aria-label="d0, blue Insect"><span class="board-coords-col">d</span></div><div class="board-square light" role="gridcell" tabindex="0" data-row="0" data-col="4" aria-label="e0, blue Insect"><span class="board-coords-col">e</span></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="0" data-col="5" aria-label="f0, blue Insect"><span class="board-coords-col">f</span></div><div class="board-square light" role="gridcell" tabindex="0" data-row="0" data-col="6" aria-label="g0, blue Zebra"><span class="board-coords-col">g</span></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="0" data-col="7" aria-label="h0, blue Leopard"><span class="board-coords-col">h</span></div><div class="board-square light" role="gridcell" tabindex="0" data-row="0" data-col="8" aria-label="i0, blue Leopard"><span class="board-coords-col">i</span></div><div class="board-square dark" role="gridcell" tabindex="0" data-row="0" data-col="9" aria-label="j0, blue Leopard"><span class="board-coords-col">j</span></div></div>
+		</div>
+
+        <div class="controls" id="rotation-controls" style="display: none;">
+            <p>Choose rotation:</p>
+            <button class="rotation-btn" onclick="makePlayerMove(1)" aria-label="Rotate 90 degrees counter-clockwise">1 (90° counter-clockwise)</button>
+            <button class="rotation-btn" onclick="makePlayerMove(2)" aria-label="Rotate 180 degrees">2 (180°)</button>
+            <button class="rotation-btn" onclick="makePlayerMove(3)" aria-label="Rotate 90 degrees clockwise">3 (90° clockwise)</button>
+            <button class="rotation-btn" onclick="cancelSelection()" style="background: #7f8c8d;" aria-label="Cancel selection">Cancel</button>
+        </div>
+
+        <div class="bot-controls">
+            <label style="margin-right: 5px; display: inline-block; vertical-align: middle;">Bot:</label>
+            <select id="bot-depth" onchange="updateBotSettings()" style="vertical-align: middle; margin-right: 8px;">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4" selected="">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+            </select>
+            <label style="margin: 0 8px 0 0; display: inline-block; vertical-align: middle;">
+                <input type="checkbox" id="blue-bot" onchange="updateBotSettings()" style="vertical-align: middle; margin: 0 3px 0 0;"> Blue
+            </label>
+            <label style="margin: 0 8px 0 0; display: inline-block; vertical-align: middle;">
+                <input type="checkbox" id="red-bot" onchange="updateBotSettings()" style="vertical-align: middle; margin: 0 3px 0 0;"> Red
+            </label>
+            <label style="margin: 0 8px 0 0; display: inline-block; vertical-align: middle;">
+                <input type="checkbox" id="analysis-mode" onchange="updateBotSettings()" style="vertical-align: middle; margin: 0 3px 0 0;"> Eval
+            </label>
+            <span id="eval-display" style="display: inline-block; vertical-align: middle; font-size: 0.9em; color: #aaa;"></span>
+        </div>
+
+        <div style="text-align: center; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 5px; margin: 20px 0;">
+			<button class="bot-btn" onclick="newGame()" style="background: #27ae60;" aria-label="Start new game">New Game</button>
+			<button class="bot-btn" onclick="undoMove()" style="background: #8e44ad;" aria-label="Undo last move">Undo</button>
+			<button id="redo-btn" class="bot-btn" onclick="redoMove()" style="background: #e67e22; display: none;" aria-label="Redo move">Redo</button>
+			<div style="padding: 8px 12px; background: rgba(255,255,255,0.1); border-radius: 5px; font-size: clamp(12px, 2vw, 15px);" aria-live="polite">
+				Player: <span id="current-player" class="blue-turn">Blue</span>
+			</div>
+		</div>
+
+        <div id="message" class="status" style="display: none;">Click on a piece to select it</div>
+
+        <div class="instructions">
+            <strong>How to play:</strong><br>
+            1. Click on a square with one of your pieces<br>
+            2. Click on a grey square to rotate the piece there<br>
+            3. Goal: Get your Orangutan to the center OR capture opponent's Orangutan<br>
+            4. Draw by threefold repetition or 50 moves without capture<br>
+            <br>
+            <strong>Keyboard:</strong> Arrow keys to navigate, Enter to select, 1/2/3 for rotation, Escape to cancel, Tab for next movable piece.<br>
+            <strong>Shortcuts:</strong> Press Z, J, V, O, L, T, I, S to jump to a specific piece (press again to cycle).<br>
+            <br>
+            <strong>Bot mode:</strong> Check "Blue Bot" or "Red Bot" to let the computer play that color. Choose difficulty from the dropdown.
+        </div>
+        
+        <div class="move-history-panel">
+            <h4>Move History</h4>
+            <textarea id="move-list" class="move-input" placeholder="Paste move history here (e.g., 1. Zh22 Vj23 2. ...)"></textarea>
+        </div>
+        
+        <div class="fen-panel">
+            <h4>Position (FEN)</h4>
+            <input type="text" id="fen-input" class="fen-input" placeholder="Paste FEN here">
+        </div>
+    </div>
+
+    <script>
+        const EMPTY = 0;
+        const BLUE = 0;
+        const RED = 1;
+        
+        const BOARD_SIZE = 10;
+        const CELL_SIZE = 50;
+        const CENTER_SQUARES = [[4, 4], [4, 5], [5, 4], [5, 5]];
+        
+        // Timing constants (ms)
+        const BOT_MOVE_DELAY = 500;
+        const BOT_THINK_DELAY = 100;
+        const UNDO_BOT_DELAY = 500;
+
+        const ZEBRA_P = 2;
+        const JAGUAR_P = 4;
+        const VAMPIRE_P = 6;
+        const ORANGUTAN_P = 8;
+        const LEOPARD_P = 10;
+        const TIGER_P = 12;
+        const INSECT_P = 14;
+        const SEAHORSE_P = 16;
+
+        const PIECE_CHARS = {
+            'Z': BLUE | ZEBRA_P, 'J': BLUE | JAGUAR_P, 'V': BLUE | VAMPIRE_P,
+            'O': BLUE | ORANGUTAN_P, 'L': BLUE | LEOPARD_P, 'T': BLUE | TIGER_P,
+            'I': BLUE | INSECT_P, 'S': BLUE | SEAHORSE_P,
+            'z': RED | ZEBRA_P, 'j': RED | JAGUAR_P, 'v': RED | VAMPIRE_P,
+            'o': RED | ORANGUTAN_P, 'l': RED | LEOPARD_P, 't': RED | TIGER_P,
+            'i': RED | INSECT_P, 's': RED | SEAHORSE_P,
+        };
+        
+        const KEY_TO_PIECE_TYPE = {
+            'z': ZEBRA_P, 'j': JAGUAR_P, 'v': VAMPIRE_P,
+            'o': ORANGUTAN_P, 'l': LEOPARD_P, 't': TIGER_P,
+            'i': INSECT_P, 's': SEAHORSE_P
+        };
+
+        const VALUE_TO_CHAR = {};
+        for (const [char, value] of Object.entries(PIECE_CHARS)) {
+            VALUE_TO_CHAR[value] = char;
+        }
+        VALUE_TO_CHAR[EMPTY] = '.';
+
+        const PIECE_TYPE_TO_ANIMAL = {
+            [ZEBRA_P]: 'Zebra',
+            [JAGUAR_P]: 'Jaguar',
+            [VAMPIRE_P]: 'Vampire',
+            [ORANGUTAN_P]: 'Orangutan',
+            [LEOPARD_P]: 'Leopard',
+            [TIGER_P]: 'Tiger',
+            [INSECT_P]: 'Insect',
+            [SEAHORSE_P]: 'Seahorse'
+        };
+        
+        // SVG original orientation: true = (height > width), false = (width >= height)
+        
+        // Zobrist hashing for position detection
+        const zobristTable = [];
+        const zobristRedToMove = Math.floor(Math.random() * 0xFFFFFFFF);
+        (function initZobrist() {
+            for (let i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
+                zobristTable[i] = [];
+                for (let piece = 0; piece <= 17; piece++) {
+                    zobristTable[i][piece] = Math.floor(Math.random() * 0xFFFFFFFF);
+                }
+            }
+        })();
+
+        // State
+        const pieceRotations = new Map();
+        let validDestinations = new Map();
+        let lastMoveOldSquares = [];
+        let lastMoveCapturedSquares = [];
+        let keyboardSelectedSquare = null;
+        
+        // Transposition table for AI
+        const transpositionTable = new Map();
+        const TT_EXACT = 0;
+        const TT_LOWER = 1;
+        const TT_UPPER = 2;
+        
+        // Pre-computed orangutan values for performance
+        const BLUE_ORANGUTAN = BLUE | ORANGUTAN_P;
+        const RED_ORANGUTAN = RED | ORANGUTAN_P;
+        
+        // Sound effects using Web Audio API (lazy initialization)
+        let audioContext = null;
+        
+        function getAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioContext;
+        }
+        
+        function playSound(type) {
+            const ctx = getAudioContext();
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            
+            switch (type) {
+                case 'move':
+                    oscillator.frequency.setValueAtTime(440, ctx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(330, ctx.currentTime + 0.1);
+                    gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+                    oscillator.start(ctx.currentTime);
+                    oscillator.stop(ctx.currentTime + 0.1);
+                    break;
+                case 'capture':
+                    oscillator.frequency.setValueAtTime(600, ctx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.2);
+                    gainNode.gain.setValueAtTime(0.15, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                    oscillator.start(ctx.currentTime);
+                    oscillator.stop(ctx.currentTime + 0.2);
+                    break;
+                case 'win':
+                    [523, 659, 784].forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+                        osc.start(ctx.currentTime + i * 0.1);
+                        osc.stop(ctx.currentTime + 0.5 + i * 0.1);
+                    });
+                    break;
+                case 'lose':
+                    [392, 311, 262].forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.15);
+                        osc.frequency.exponentialRampToValueAtTime(freq * 0.95, ctx.currentTime + 0.4 + i * 0.15);
+                        gain.gain.setValueAtTime(0.1, ctx.currentTime + i * 0.15);
+                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5 + i * 0.15);
+                        osc.start(ctx.currentTime + i * 0.15);
+                        osc.stop(ctx.currentTime + 0.5 + i * 0.15);
+                    });
+                    break;
+                case 'select':
+                    oscillator.frequency.setValueAtTime(880, ctx.currentTime);
+                    gainNode.gain.setValueAtTime(0.05, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+                    oscillator.start(ctx.currentTime);
+                    oscillator.stop(ctx.currentTime + 0.05);
+                    break;
+            }
+        }
+        
+        function playGameEndSound() {
+            if (game.gameOver === null || game.gameOver === 0) {
+                playSound('lose');
+                return;
+            }
+            
+            const blueWon = game.gameOver === 1;
+            const humanPlaysBlue = !botSettings.blueBot;
+            const humanPlaysRed = !botSettings.redBot;
+            const isBotVsBot = botSettings.blueBot && botSettings.redBot;
+            
+            if (isBotVsBot) {
+                playSound('win');
+                return;
+            }
+            
+            // Check if human won
+            const humanWon = (blueWon && humanPlaysBlue) || (!blueWon && humanPlaysRed);
+            
+            if (humanWon) {
+                playSound('win');
+            } else {
+                playSound('lose');
+            }
+        }
+
+        const botSettings = {
+            blueBot: false,
+            redBot: false,
+            analysisMode: false,
+            depth: 4,
+            isThinking: false
+        };
+
+        let game = {
+            board: Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(EMPTY)),
+            blueToMove: true,
+            gameOver: null,
+            positionHistory: new Map(),
+            zobristHash: 0,
+            material: 0,
+            movesSinceCapture: 0
+        };
+
+        let selectedSquare = null;
+        
+        // ZJVOLTIS cycling state
+        let lastPieceKey = null;
+        let lastPieceIndex = 0;
+        
+        // Move notation history
+        let moveHistory = [];
+        let currentMoveIndex = 0;  // Position in moveHistory (for undo/redo)
+
+        function isBlue(piece) {
+            return piece !== EMPTY && piece % 2 === BLUE;
+        }
+
+        function getPieceType(piece) {
+            return piece & 0b11111110;
+        }
+
+        function calculateMaterial() {
+            let score = 0;
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    if (game.board[row][col] !== EMPTY) {
+                        score += (game.board[row][col] % 2 === RED) ? -1 : 1;
+                    }
+                }
+            }
+            return score;
+        }
+        
+        function calculateZobristHash() {
+            return hashPosition(game.board, game.blueToMove);
+        }
+        
+        function hashPosition(board, blueToMove) {
+            let hash = blueToMove ? 0 : zobristRedToMove;
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    const piece = board[row][col];
+                    if (piece !== EMPTY) {
+                        hash ^= zobristTable[row * BOARD_SIZE + col][piece];
+                    }
+                }
+            }
+            return hash;
+        }
+
+        function initFromFen(fen) {
+            const parts = fen.split(' ');
+            const boardStr = parts[0];
+            
+            game.board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(EMPTY));
+            
+            let currentRow = 9, currentCol = 0;
+            for (const char of boardStr) {
+                if (char >= '0' && char <= '9') {
+                    currentCol += parseInt(char);
+                } else if (char === 'A') {
+                    currentCol += 10;
+                } else if (char === '/') {
+                    currentRow--;
+                    currentCol = 0;
+                } else if (char === '.') {
+                    currentCol++;
+                } else if (PIECE_CHARS[char]) {
+                    if (currentRow >= 0 && currentRow < BOARD_SIZE && currentCol >= 0 && currentCol < BOARD_SIZE) {
+                        game.board[currentRow][currentCol] = PIECE_CHARS[char];
+                    }
+                    currentCol++;
+                }
+            }
+            
+            if (parts.length > 1) {
+                game.blueToMove = parts[1] === 'w';
+            }
+            
+            game.material = calculateMaterial();
+            game.zobristHash = calculateZobristHash();
+            game.positionHistory = new Map();
+            game.positionHistory.set(game.zobristHash, 1);
+        }
+        
+        // Analyze board and set piece rotations based on actual shape vs SVG natural shape
+        // Base shapes for each piece at rotation 0 (matching SVG natural orientation)
+        // Coordinates are [row, col] relative to top-left of bounding box
+        const BASE_SHAPES = {
+            [LEOPARD_P]: [[0,0], [0,1], [0,2], [1,0]],  // L-form med toppen horisontell
+            [TIGER_P]: [[0,1], [1,0], [1,1], [2,1]],    // T-form stående
+            [INSECT_P]: [[0,0], [0,1], [0,2], [0,3]],   // I-form horisontell
+            [JAGUAR_P]: [[0,0], [1,0], [1,1], [1,2]],   // J-form med toppen till vänster
+            [ZEBRA_P]: [[0,1], [1,0], [1,1], [2,0]],    // S/Z-form
+            [SEAHORSE_P]: [[0,1], [0,2], [1,0], [1,1]], // S-form horisontell
+            [VAMPIRE_P]: [[0,1], [1,0], [1,1]],         // L-triomino (3 rutor)
+            [ORANGUTAN_P]: [[0,0], [0,1], [1,0], [1,1]] // 2x2 kvadrat
+        };
+        
+        function rotateShape90(shape) {
+            const maxR = Math.max(...shape.map(([r, c]) => r));
+            const rotated = shape.map(([r, c]) => [c, maxR - r]);
+            const minR = Math.min(...rotated.map(([r, c]) => r));
+            const minC = Math.min(...rotated.map(([r, c]) => c));
+            return rotated.map(([r, c]) => [r - minR, c - minC]);
+        }
+        
+        function getShapeFingerprint(shape) {
+            const sorted = [...shape].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+            return sorted.map(([r, c]) => `${r},${c}`).join('|');
+        }
+        
+        // Precompute fingerprint -> rotation mapping for all piece types
+        const ALL_SHAPE_ROTATIONS = {};
+        for (const [pieceTypeStr, baseShape] of Object.entries(BASE_SHAPES)) {
+            const pieceType = Number(pieceTypeStr);
+            ALL_SHAPE_ROTATIONS[pieceType] = {};
+            let shape = baseShape;
+            for (let rot = 0; rot < 360; rot += 90) {
+                ALL_SHAPE_ROTATIONS[pieceType][getShapeFingerprint(shape)] = rot;
+                shape = rotateShape90(shape);
+            }
+        }
+        
+        function calculatePieceRotationsFromBoard() {
+            pieceRotations.clear();
+            const visited = new Set();
+            
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    const piece = game.board[row][col];
+                    if (piece === EMPTY) continue;
+                    
+                    const key = `${row},${col}`;
+                    if (visited.has(key)) continue;
+                    
+                    // Find all squares of this piece via flood fill
+                    const allCoords = [];
+                    const stack = [[row, col]];
+                    const pieceVisited = new Set();
+                    pieceVisited.add(key);
+                    
+                    while (stack.length > 0) {
+                        const [r, c] = stack.pop();
+                        allCoords.push([r, c]);
+                        visited.add(`${r},${c}`);
+                        
+                        for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+                            const nr = r + dr;
+                            const nc = c + dc;
+                            if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+                                const nkey = `${nr},${nc}`;
+                                if (!pieceVisited.has(nkey) && game.board[nr][nc] === piece) {
+                                    pieceVisited.add(nkey);
+                                    stack.push([nr, nc]);
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (allCoords.length === 0) continue;
+                    
+                    // Normalize coordinates relative to bounding box
+                    // Invert Y because board row 0 is at bottom but screen Y increases downward
+                    const maxRow = Math.max(...allCoords.map(c => c[0]));
+                    const minCol = Math.min(...allCoords.map(c => c[1]));
+                    const normalized = allCoords.map(([r, c]) => [maxRow - r, c - minCol]);
+                    const fingerprint = getShapeFingerprint(normalized);
+                    
+                    // Find matching rotation from precomputed table
+                    const pieceType = getPieceType(piece);
+                    let rotation = 0;
+                    
+                    // Orangutan is 2x2 square - looks the same at all rotations
+                    // so we can't determine rotation from shape - use default orientation
+                    if (pieceType !== ORANGUTAN_P) {
+                        const rotations = ALL_SHAPE_ROTATIONS[pieceType];
+                        rotation = rotations ? (rotations[fingerprint] || 0) : 0;
+                    }
+                    
+                    // Blue pieces face opposite direction (180° offset from red)
+                    if (isBlue(piece)) {
+                        rotation = (rotation + 180) % 360;
+                    }
+                    
+                    // Create piece identifier (bottom-left coord)
+                    allCoords.sort((a, b) => {
+                        if (a[0] !== b[0]) return b[0] - a[0];
+                        return a[1] - b[1];
+                    });
+                    const pieceId = `${allCoords[0][0]},${allCoords[0][1]}`;
+                    
+                    if (rotation !== 0) {
+                        pieceRotations.set(pieceId, rotation);
+                    }
+                }
+            }
+        }
+        
+        function hasValidMoves(row, col) {
+            for (let rotation = 1; rotation <= 3; rotation++) {
+                if (calculateRotationDestinations(row, col, rotation) !== null) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        function hasNonUniqueDestinations(row, col, uniqueDestinations) {
+            for (let rotation = 1; rotation <= 3; rotation++) {
+                const destinations = calculateRotationDestinations(row, col, rotation);
+                if (destinations !== null) {
+                    let isUnique = false;
+                    for (const [r, c] of destinations) {
+                        const key = `${r},${c}`;
+                        if (uniqueDestinations.has(key)) {
+                            isUnique = true;
+                            break;
+                        }
+                    }
+                    if (!isUnique) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        
+        function getValidRotations(row, col) {
+            const rotations = [];
+            for (let rotation = 1; rotation <= 3; rotation++) {
+                if (calculateRotationDestinations(row, col, rotation) !== null) {
+                    rotations.push(rotation);
+                }
+            }
+            return rotations;
+        }
+        
+        function findAllSquaresWithMoves() {
+            const squares = [];
+            const isBluesTurn = game.blueToMove;
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    const piece = game.board[r][c];
+                    if (piece !== EMPTY && isBlue(piece) === isBluesTurn && hasValidMoves(r, c)) {
+                        squares.push({ row: r, col: c });
+                    }
+                }
+            }
+            return squares;
+        }
+        
+        // Find all squares of a specific piece type for current player
+        function findAllSquaresOfPieceType(pieceType) {
+            const squares = [];
+            const pieceValue = game.blueToMove ? (BLUE | pieceType) : (RED | pieceType);
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (game.board[r][c] === pieceValue) {
+                        squares.push({ row: r, col: c, hasMoves: hasValidMoves(r, c) });
+                    }
+                }
+            }
+            // Sort so squares with valid moves come first
+            squares.sort((a, b) => (b.hasMoves ? 1 : 0) - (a.hasMoves ? 1 : 0));
+            return squares;
+        }
+        
+        // Algebraic notation functions
+        function toAlgebraic(col, row) {
+            return String.fromCharCode(97 + col) + row;
+        }
+        
+        function fromAlgebraic(notation) {
+            if (notation.length < 2) return null;
+            const col = notation.charCodeAt(0) - 97;
+            const row = parseInt(notation.slice(1));
+            if (col < 0 || col >= BOARD_SIZE || row < 0 || row >= BOARD_SIZE) return null;
+            return { row, col };
+        }
+        
+        function getPieceChar(piece) {
+            const type = getPieceType(piece);
+            const chars = {
+                [ZEBRA_P]: 'Z', [JAGUAR_P]: 'J', [VAMPIRE_P]: 'V', [ORANGUTAN_P]: 'O',
+                [LEOPARD_P]: 'L', [TIGER_P]: 'T', [INSECT_P]: 'I', [SEAHORSE_P]: 'S'
+            };
+            return chars[type] || '?';
+        }
+        
+        // e.g., "Ze22" means Zebra rotates 180° around e2
+        function createMoveNotation(row, col, rotation) {
+            const piece = game.board[row][col];
+            const pieceChar = getPieceChar(piece);
+            const square = toAlgebraic(col, row);
+            return `${pieceChar}${square}${rotation}`;
+        }
+        
+        function addMoveToHistory(row, col, rotation, captures) {
+            const wasBlueMove = !game.blueToMove; // After move, turn has changed
+            const notation = createMoveNotation(row, col, rotation, captures);
+            moveHistory.push({
+                notation,
+                isBlue: wasBlueMove,
+                moveNumber: Math.floor(moveHistory.length / 2) + 1
+            });
+            currentMoveIndex = moveHistory.length;
+            updateMoveHistoryDisplay();
+        }
+        
+        function updateMoveHistoryDisplay() {
+            const textarea = document.getElementById('move-list');
+            const redoBtn = document.getElementById('redo-btn');
+            if (!textarea) return;
+            
+            if (moveHistory.length === 0) {
+                textarea.value = '';
+                if (redoBtn) redoBtn.style.display = 'none';
+                return;
+            }
+            
+            let text = '';
+            for (let i = 0; i < moveHistory.length; i += 2) {
+                const moveNum = Math.floor(i / 2) + 1;
+                const blueMove = moveHistory[i];
+                const redMove = moveHistory[i + 1];
+                
+                // Marker before blue's move
+                if (i === currentMoveIndex) text += '| ';
+                
+                text += `${moveNum}. ${blueMove.notation}`;
+                
+                // Marker after blue's move (before red's move)
+                if (i + 1 === currentMoveIndex) text += ' |';
+                
+                if (redMove) {
+                    text += ` ${redMove.notation}`;
+                }
+                
+                text += ' ';
+            }
+            
+            textarea.value = text.trim();
+            
+            // Show/hide redo button
+            if (redoBtn) {
+                redoBtn.style.display = currentMoveIndex < moveHistory.length ? 'inline-block' : 'none';
+            }
+        }
+        
+        function getCurrentFen() {
+            let fen = '';
+            for (let row = BOARD_SIZE - 1; row >= 0; row--) {
+                let emptyCount = 0;
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    const piece = game.board[row][col];
+                    if (piece === EMPTY) {
+                        emptyCount++;
+                    } else {
+                        if (emptyCount > 0) {
+                            fen += emptyCount >= 10 ? 'A' : emptyCount;
+                            emptyCount = 0;
+                        }
+                        const type = getPieceType(piece);
+                        const isBlueP = isBlue(piece);
+                        const chars = {
+                            [ZEBRA_P]: 'Z', [JAGUAR_P]: 'J', [VAMPIRE_P]: 'V', [ORANGUTAN_P]: 'O',
+                            [LEOPARD_P]: 'L', [TIGER_P]: 'T', [INSECT_P]: 'I', [SEAHORSE_P]: 'S'
+                        };
+                        let c = chars[type] || '.';
+                        if (!isBlueP) c = c.toLowerCase();
+                        fen += c;
+                    }
+                }
+                if (emptyCount > 0) {
+                    fen += emptyCount >= 10 ? 'A' : emptyCount;
+                }
+                if (row > 0) fen += '/';
+            }
+            fen += ' ' + (game.blueToMove ? 'w' : 'b');
+            return fen;
+        }
+        
+        function updateFenDisplay() {
+            const input = document.getElementById('fen-input');
+            if (input) {
+                input.value = getCurrentFen();
+            }
+        }
+        
+        // Parse move notation string (e.g., "Zh22") into components
+        // Format: PieceChar + Column(a-j) + Row(0-9) + Rotation(1-3)
+        function parseMove(notation) {
+            if (!notation || notation.length < 4) return null;
+            
+            const pieceChar = notation[0].toUpperCase();
+            const col = notation[1].toLowerCase().charCodeAt(0) - 97;
+            const row = parseInt(notation[2]);
+            const rotation = parseInt(notation[3]);
+            
+            if (col < 0 || col >= BOARD_SIZE) return null;
+            if (isNaN(row) || row < 0 || row >= BOARD_SIZE) return null;
+            if (isNaN(rotation) || rotation < 1 || rotation > 3) return null;
+            
+            return { pieceChar, col, row, rotation };
+        }
+        
+        // Parse move history string into array of moves
+        function parseMoveHistory(text) {
+            // Remove move numbers like "1." "2." etc and extra whitespace
+            const cleaned = text.replace(/\d+\.\s*/g, ' ').trim();
+            // Split on whitespace
+            const tokens = cleaned.split(/\s+/).filter(t => t.length > 0);
+            
+            const moves = [];
+            for (const token of tokens) {
+                const parsed = parseMove(token);
+                if (parsed) {
+                    moves.push(parsed);
+                }
+            }
+            return moves;
+        }
+        
+        // Play a sequence of moves from starting position
+        function playMoveHistory(moves) {
+            // Reset to starting position
+            game = {
+                board: Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(EMPTY)),
+                blueToMove: true,
+                gameOver: null,
+                positionHistory: new Map(),
+                zobristHash: 0,
+                material: 0,
+                movesSinceCapture: 0
+            };
+            
+            pieceRotations.clear();
+            validDestinations.clear();
+            transpositionTable.clear();
+            gameHistory = [];
+            moveHistory = [];
+            lastMoveOldSquares = [];
+            lastMoveCapturedSquares = [];
+            
+            initFromFen("lllziiiioo/lvzzsstjoo/vvzssttjjj/......t...///...T....../JJJTTSSZVV/OOJTSSZZVL/OOIIIIZLLL w");
+            
+            // Play each move
+            for (const move of moves) {
+                if (game.gameOver !== null) break;
+                
+                const { pieceChar, col, row, rotation } = move;
+                
+                // Try to make the move
+                const success = attemptMove(row, col, rotation, true);
+                if (success) {
+                    // Add to our moveHistory
+                    const notation = `${pieceChar}${toAlgebraic(col, row)}${rotation}`;
+                    moveHistory.push({
+                        notation,
+                        isBlue: !game.blueToMove,
+                        moveNumber: Math.floor(moveHistory.length / 2) + 1
+                    });
+                    currentMoveIndex = moveHistory.length;
+                }
+            }
+            
+            cancelSelection();
+            initBoard();
+            updateMoveHistoryDisplay();
+            
+            if (game.gameOver !== null) {
+                // Game ended
+            } else {
+                showMessage(`Loaded ${moves.length} moves. Use Undo to step back.`);
+            }
+        }
+        
+        // Track last processed values to avoid re-triggering
+        let lastProcessedFen = '';
+        let lastProcessedMoves = '';
+        
+        // Handle FEN input change
+        function handleFenInput(event) {
+            const fen = event.target.value.trim();
+            if (!fen || fen === lastProcessedFen) return;
+            
+            // Don't process if it matches current position
+            const currentFen = getCurrentFen();
+            if (fen === currentFen) {
+                lastProcessedFen = fen;
+                return;
+            }
+            
+            // Check if it looks like a FEN (contains / for rows)
+            if (fen.includes('/')) {
+                try {
+                    lastProcessedFen = fen;
+                    validDestinations.clear();
+                    initFromFen(fen);
+                    calculatePieceRotationsFromBoard();
+                    moveHistory = [];
+                    gameHistory = [];
+                    lastProcessedMoves = '';
+                    updateMoveHistoryDisplay();
+                    initBoard();
+                    showMessage('Position loaded');
+                } catch (e) {
+                    showMessage('Invalid FEN');
+                }
+            }
+        }
+        
+        function handleMoveHistoryInput(event) {
+            const text = event.target.value.trim();
+            if (!text || text === lastProcessedMoves) return;
+            
+            // Check if it looks like move history (contains piece letters and numbers)
+            if (text.match(/[ZJVOLTIS][a-j][0-9]/i)) {
+                const moves = parseMoveHistory(text);
+                if (moves.length > 0) {
+                    lastProcessedMoves = text;
+                    lastProcessedFen = '';
+                    playMoveHistory(moves);
+                }
+            }
+        }
+        
+        function isBotsTurn() {
+            return (game.blueToMove && botSettings.blueBot) || 
+                   (!game.blueToMove && botSettings.redBot);
+        }
+        
+        function canBotMove() {
+            return game.gameOver === null && !botSettings.isThinking && isBotsTurn();
+        }
+
+        function getPieceIdentifier(row, col) {
+            const piece = game.board[row][col];
+            if (piece === EMPTY) return null;
+            
+            const allCoords = findAllSquaresOfPiece(row, col);
+            if (allCoords.length === 0) return null;
+            
+            allCoords.sort((a, b) => {
+                if (a[0] !== b[0]) return b[0] - a[0];
+                return a[1] - b[1];
+            });
+            
+            return `${allCoords[0][0]},${allCoords[0][1]}`;
+        }
+
+        function rotatePoint(row, col, centerR, centerC) {
+            return [
+                col - centerC + centerR,
+                centerR - row + centerC
+            ];
+        }
+
+        function diamondAroundSquare(rCenter, cCenter, includeSelf) {
+            const squares = [];
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 4; j++) {
+                    if (!(i === 0 && j === 0 && !includeSelf) && i + j < 4) {
+                        if (rCenter + i < BOARD_SIZE && cCenter + j < BOARD_SIZE) {
+                            squares.push([rCenter + i, cCenter + j]);
+                        }
+                        if (j !== 0 && rCenter + i < BOARD_SIZE && cCenter >= j) {
+                            squares.push([rCenter + i, cCenter - j]);
+                        }
+                        if (i !== 0 && rCenter >= i && cCenter + j < BOARD_SIZE) {
+                            squares.push([rCenter - i, cCenter + j]);
+                        }
+                        if (i !== 0 && j !== 0 && rCenter >= i && cCenter >= j) {
+                            squares.push([rCenter - i, cCenter - j]);
+                        }
+                    }
+                }
+            }
+            return squares;
+        }
+
+        function findAllSquaresOfPiece(pivotR, pivotC) {
+            const targetPiece = game.board[pivotR][pivotC];
+            if (targetPiece === EMPTY) return [];
+            
+            const candidates = diamondAroundSquare(pivotR, pivotC, true);
+            const coords = [];
+            
+            for (const [r, c] of candidates) {
+                if (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE) {
+                    if (game.board[r][c] === targetPiece) {
+                        coords.push([r, c]);
+                    }
+                }
+            }
+            return coords;
+        }
+
+        function calculateRotationDestinations(pivotR, pivotC, hgrad) {
+            if (pivotR < 0 || pivotR >= BOARD_SIZE || pivotC < 0 || pivotC >= BOARD_SIZE) return null;
+            if (hgrad < 1 || hgrad > 3) return null;
+            
+            const pieceToMove = game.board[pivotR][pivotC];
+            if (pieceToMove === EMPTY) return null;
+            
+            const allOriginalCoords = findAllSquaresOfPiece(pivotR, pivotC);
+            if (allOriginalCoords.length === 0) return null;
+            
+            const otherPartsCoords = allOriginalCoords.filter(([r, c]) => !(r === pivotR && c === pivotC));
+            
+            const newOtherPartsCoords = [];
+            for (const [rPart, cPart] of otherPartsCoords) {
+                let [currentR, currentC] = [rPart, cPart];
+                for (let i = 0; i < hgrad; i++) {
+                    [currentR, currentC] = rotatePoint(currentR, currentC, pivotR, pivotC);
+                }
+                newOtherPartsCoords.push([Math.round(currentR), Math.round(currentC)]);
+            }
+            
+            for (const [rNew, cNew] of newOtherPartsCoords) {
+                if (rNew < 0 || rNew >= BOARD_SIZE || cNew < 0 || cNew >= BOARD_SIZE) return null;
+                
+                const pieceAtTarget = game.board[rNew][cNew];
+                if (pieceAtTarget !== EMPTY && isBlue(pieceAtTarget) === game.blueToMove) {
+                    const inOriginal = allOriginalCoords.some(([r, c]) => r === rNew && c === cNew);
+                    if (!inOriginal) return null;
+                }
+            }
+            
+            return newOtherPartsCoords;
+        }
+
+        function findUniqueDestinations(pivotR, pivotC) {
+            const destinationMap = new Map();
+            
+            for (let rotation = 1; rotation <= 3; rotation++) {
+                const destinations = calculateRotationDestinations(pivotR, pivotC, rotation);
+                if (destinations) {
+                    for (const [r, c] of destinations) {
+                        const key = `${r},${c}`;
+                        if (!destinationMap.has(key)) {
+                            destinationMap.set(key, []);
+                        }
+                        destinationMap.get(key).push(rotation);
+                    }
+                }
+            }
+            
+            const uniqueDestinations = new Map();
+            for (const [key, rotations] of destinationMap.entries()) {
+                if (rotations.length === 1) {
+                    uniqueDestinations.set(key, rotations[0]);
+                }
+            }
+            
+            return uniqueDestinations;
+        }
+
+        // Make a move and return the new game state (non-destructive)
+        function makeMovePure(pivotR, pivotC, hgrad, gameState) {
+            if (pivotR < 0 || pivotR >= BOARD_SIZE || pivotC < 0 || pivotC >= BOARD_SIZE) return null;
+            if (hgrad < 1 || hgrad > 3) return null;
+            
+            const piece = gameState.board[pivotR][pivotC];
+            if (piece === EMPTY) return null;
+            if (gameState.blueToMove !== isBlue(piece)) return null;
+            
+            const squares = [];
+            for (const [row, col] of diamondAroundSquare(pivotR, pivotC, false)) {
+                if (gameState.board[row][col] === piece) {
+                    squares.push([row, col]);
+                }
+            }
+            
+            const newSquares = [];
+            for (const [row, col] of squares) {
+                let [newRow, newCol] = [row, col];
+                for (let i = 0; i < hgrad; i++) {
+                    [newRow, newCol] = rotatePoint(newRow, newCol, pivotR, pivotC);
+                }
+                
+                if (newRow < 0 || newRow >= BOARD_SIZE || newCol < 0 || newCol >= BOARD_SIZE) return null;
+                
+                const pieceInSquare = gameState.board[newRow][newCol];
+                if (pieceInSquare !== piece && pieceInSquare !== EMPTY && 
+                    gameState.blueToMove === isBlue(pieceInSquare)) {
+                    return null;
+                }
+                
+                newSquares.push([newRow, newCol]);
+            }
+            
+            const newBoard = gameState.board.map(row => [...row]);
+            let gameOver = null;
+            let newMaterial = gameState.material;
+            let capturedSomething = false;
+            const capturedSquares = [];
+            const alreadyCapturedPieces = new Set();
+            
+            // Step 1: Clear old positions
+            for (const [row, col] of squares) {
+                newBoard[row][col] = EMPTY;
+            }
+            
+            // Step 2: Find and remove all captured pieces
+            for (const [row, col] of newSquares) {
+                const pieceInSquare = gameState.board[row][col];
+                if (pieceInSquare !== EMPTY && gameState.blueToMove !== isBlue(pieceInSquare)) {
+                    // Avoid processing the same piece type twice (if we land on multiple squares of same enemy)
+                    const pieceKey = `${pieceInSquare}`;
+                    if (!alreadyCapturedPieces.has(pieceKey)) {
+                        alreadyCapturedPieces.add(pieceKey);
+                        capturedSomething = true;
+                        for (const [r, c] of diamondAroundSquare(row, col, true)) {
+                            if (gameState.board[r][c] === pieceInSquare) {
+                                capturedSquares.push([r, c]);
+                                newBoard[r][c] = EMPTY;
+                                newMaterial += gameState.blueToMove ? 1 : -1;
+                            }
+                        }
+                        if (pieceInSquare === BLUE_ORANGUTAN) {
+                            gameOver = -1;
+                        }
+                        if (pieceInSquare === RED_ORANGUTAN) {
+                            gameOver = 1;
+                        }
+                    }
+                }
+            }
+            
+            // Step 3: Place our piece at new positions
+            for (const [row, col] of newSquares) {
+                newBoard[row][col] = piece;
+            }
+            
+            // Check if orangutan reached center
+            if (CENTER_SQUARES.every(([r, c]) => newBoard[r][c] === BLUE_ORANGUTAN)) {
+                gameOver = 1;
+            }
+            if (CENTER_SQUARES.every(([r, c]) => newBoard[r][c] === RED_ORANGUTAN)) {
+                gameOver = -1;
+            }
+            
+            return {
+                board: newBoard,
+                blueToMove: !gameState.blueToMove,
+                gameOver: gameOver,
+                material: newMaterial,
+                move: {row: pivotR, col: pivotC, hgrad: hgrad},
+                oldSquares: [[pivotR, pivotC], ...squares],
+                newSquares: [[pivotR, pivotC], ...newSquares],
+                captured: capturedSomething,
+                capturedSquares: capturedSquares
+            };
+        }
+
+        function generateMoves(gameState) {
+            const moves = [];
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    const piece = gameState.board[row][col];
+                    if (piece !== EMPTY && gameState.blueToMove === isBlue(piece)) {
+                        for (let hgrad = 1; hgrad <= 3; hgrad++) {
+                            const newState = makeMovePure(row, col, hgrad, gameState);
+                            if (newState !== null) {
+                                moves.push(newState);
+                            }
+                        }
+                    }
+                }
+            }
+            return moves;
+        }
+
+        function attemptMove(pivotR, pivotC, hgrad, trackMove = true) {
+            const newState = makeMovePure(pivotR, pivotC, hgrad, game);
+            if (newState === null) return false;
+            
+            const pieceId = getPieceIdentifier(pivotR, pivotC);
+            const currentRotation = pieceRotations.get(pieceId) || 0;
+            
+            game.board = newState.board;
+            game.blueToMove = newState.blueToMove;
+            game.gameOver = newState.gameOver;
+            game.material = newState.material;
+            
+            // Update 50-move counter
+            if (newState.captured) {
+                game.movesSinceCapture = 0;
+            } else {
+                game.movesSinceCapture++;
+            }
+            
+            // Check 50-move rule (100 half-moves)
+            if (game.movesSinceCapture >= 100) {
+                game.gameOver = 0;
+            }
+            
+            const newPieceId = getPieceIdentifier(pivotR, pivotC);
+            if (newPieceId) {
+                const newRotation = (currentRotation - hgrad * 90) % 360;
+                pieceRotations.set(newPieceId, newRotation);
+            }
+            
+            if (trackMove) {
+                lastMoveOldSquares = newState.oldSquares;
+                lastMoveCapturedSquares = newState.capturedSquares;
+            }
+            
+            // Update Zobrist hash and check threefold repetition
+            game.zobristHash = calculateZobristHash();
+            const posCount = (game.positionHistory.get(game.zobristHash) || 0) + 1;
+            game.positionHistory.set(game.zobristHash, posCount);
+            
+            if (posCount >= 3) {
+                game.gameOver = 0;
+            }
+            
+            return true;
+        }
+
+        // Bot AI
+        function getOrangutanDistances(board) {
+            let blueSumRow = 0, blueSumCol = 0, blueCount = 0;
+            let redSumRow = 0, redSumCol = 0, redCount = 0;
+            
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    const piece = board[row][col];
+                    if (piece === BLUE_ORANGUTAN) {
+                        blueSumRow += row;
+                        blueSumCol += col;
+                        blueCount++;
+                    } else if (piece === RED_ORANGUTAN) {
+                        redSumRow += row;
+                        redSumCol += col;
+                        redCount++;
+                    }
+                }
+            }
+            
+            const centerRow = 4.5;
+            const centerCol = 4.5;
+            
+            let blueDist = 0, redDist = 0;
+            if (blueCount > 0) {
+                const dr = blueSumRow / blueCount - centerRow;
+                const dc = blueSumCol / blueCount - centerCol;
+                blueDist = dr * dr + dc * dc;
+            }
+            if (redCount > 0) {
+                const dr = redSumRow / redCount - centerRow;
+                const dc = redSumCol / redCount - centerCol;
+                redDist = dr * dr + dc * dc;
+            }
+            
+            return { blueDist, redDist };
+        }
+        
+        function evaluatePosition(gameState) {
+            // Check for immediate win/loss first
+            if (gameState.gameOver !== null) {
+                return gameState.gameOver * 10000;
+            }
+            
+            let score = gameState.material;
+            
+            // Orangutan distance to center
+            const distances = getOrangutanDistances(gameState.board);
+            score += (distances.redDist - distances.blueDist) * 0.5;
+            
+            return score;
+        }
+
+        function minimax(gameState, depth, maximize, alpha, beta) {
+            // Check for terminal state first
+            if (gameState.gameOver !== null) {
+                return gameState.gameOver * 10000; // Very high absolute value
+            }
+            
+            if (depth === 0) {
+                return evaluatePosition(gameState);
+            }
+            
+            // Transposition table lookup - use numeric key for speed
+            const posHash = gameState.zobristHash !== undefined 
+                ? gameState.zobristHash 
+                : hashPosition(gameState.board, gameState.blueToMove);
+            const ttKey = posHash * 16 + depth;
+            const ttEntry = transpositionTable.get(ttKey);
+            
+            if (ttEntry) {
+                if (ttEntry.flag === TT_EXACT) {
+                    return ttEntry.value;
+                } else if (ttEntry.flag === TT_LOWER) {
+                    alpha = Math.max(alpha, ttEntry.value);
+                } else if (ttEntry.flag === TT_UPPER) {
+                    beta = Math.min(beta, ttEntry.value);
+                }
+                if (alpha >= beta) {
+                    return ttEntry.value;
+                }
+            }
+            
+            let moves = generateMoves(gameState);
+            
+            if (moves.length === 0) {
+                return maximize ? -9999 : 9999;
+            }
+            
+            // Sort moves: winning moves first, then by material
+            moves.sort((a, b) => {
+                // Prioritize winning moves
+                if (a.gameOver !== null && b.gameOver === null) return -1;
+                if (a.gameOver === null && b.gameOver !== null) return 1;
+                // Then sort by material
+                return maximize ? b.material - a.material : a.material - b.material;
+            });
+            
+            const origAlpha = alpha;
+            let best;
+            
+            if (maximize) {
+                best = -Infinity;
+                for (const childState of moves) {
+                    const val = minimax(childState, depth - 1, false, alpha, beta);
+                    best = Math.max(best, val);
+                    alpha = Math.max(alpha, val);
+                    if (beta <= alpha) break;
+                }
+            } else {
+                best = Infinity;
+                for (const childState of moves) {
+                    const val = minimax(childState, depth - 1, true, alpha, beta);
+                    best = Math.min(best, val);
+                    beta = Math.min(beta, val);
+                    if (beta <= alpha) break;
+                }
+            }
+            
+            // Store in transposition table
+            let flag;
+            if (best <= origAlpha) {
+                flag = TT_UPPER;
+            } else if (best >= beta) {
+                flag = TT_LOWER;
+            } else {
+                flag = TT_EXACT;
+            }
+            
+            transpositionTable.set(ttKey, { value: best, flag: flag });
+            
+            // Limit table size - just clear when too large (fast O(1) operation)
+            if (transpositionTable.size > 100000) {
+                transpositionTable.clear();
+            }
+            
+            return best;
+        }
+
+        function findBestMove() {
+            const moves = generateMoves(game);
+            if (moves.length === 0) return { move: null, value: 0 };
+
+            // Check for immediate winning move
+            for (const moveState of moves) {
+                if (moveState.gameOver !== null) {
+                    // If this is a win for us, take it immediately
+                    if ((game.blueToMove && moveState.gameOver === 1) ||
+                        (!game.blueToMove && moveState.gameOver === -1)) {
+                        const winValue = game.blueToMove ? 100000 : -100000;
+                        return { move: moveState.move, value: winValue };
+                    }
+                }
+            }
+
+            // Sort moves: winning moves first, then by material
+            moves.sort((a, b) => {
+                const aWins = (game.blueToMove && a.gameOver === 1) || (!game.blueToMove && a.gameOver === -1);
+                const bWins = (game.blueToMove && b.gameOver === 1) || (!game.blueToMove && b.gameOver === -1);
+                if (aWins && !bWins) return -1;
+                if (!aWins && bWins) return 1;
+                return game.blueToMove ? b.material - a.material : a.material - b.material;
+            });
+
+            let bestMove = null;
+            let bestValue = game.blueToMove ? -Infinity : Infinity;
+
+            const depth = botSettings.depth;
+            
+            for (const moveState of moves) {
+                const moveValue = minimax(moveState, depth - 1, !game.blueToMove, -Infinity, Infinity);
+                
+                if (game.blueToMove) {
+                    if (moveValue > bestValue) {
+                        bestValue = moveValue;
+                        bestMove = moveState.move;
+                    }
+                } else {
+                    if (moveValue < bestValue) {
+                        bestValue = moveValue;
+                        bestMove = moveState.move;
+                    }
+                }
+            }
+
+            return { move: bestMove, value: bestValue };
+        }
+
+        function updateBotSettings() {
+            botSettings.blueBot = document.getElementById('blue-bot').checked;
+            botSettings.redBot = document.getElementById('red-bot').checked;
+            botSettings.analysisMode = document.getElementById('analysis-mode').checked;
+            botSettings.depth = parseInt(document.getElementById('bot-depth').value);
+            
+            if (botSettings.analysisMode) {
+                runAnalysis();
+            } else {
+                clearAnalysisHighlight();
+                const evalDisplay = document.getElementById('eval-display');
+                if (evalDisplay) evalDisplay.textContent = '';
+            }
+            checkBotMove();
+        }
+        
+        function clearAnalysisHighlight() {
+            document.querySelectorAll('.analysis-highlight').forEach(sq => {
+                sq.classList.remove('analysis-highlight');
+            });
+        }
+        
+        function runAnalysis() {
+            // Don't run if analysis mode is disabled
+            if (!botSettings.analysisMode) {
+                clearAnalysisHighlight();
+                return;
+            }
+            
+            clearAnalysisHighlight();
+            
+            // Handle game over states
+            if (game.gameOver !== null) {
+                const evalDisplay = document.getElementById('eval-display');
+                if (evalDisplay) {
+                    if (game.gameOver === 0) {
+                        evalDisplay.textContent = '0';
+                    } else if (game.gameOver === 1) {
+                        evalDisplay.textContent = 'Blue wins';
+                    } else {
+                        evalDisplay.textContent = 'Red wins';
+                    }
+                }
+                return;
+            }
+            
+            const result = findBestMove();
+            const bestMove = result.move;
+            // findBestMove returns value from current player's perspective
+            // Convert to always be from Blue's perspective
+            const value = game.blueToMove ? result.value : -result.value;
+            
+            // Format value for display
+            let evalText;
+            if (value >= 9000) {
+                evalText = 'Blue wins';
+            } else if (value <= -9000) {
+                evalText = 'Red wins';
+            } else {
+                // Positive = good for blue, negative = good for red
+                const rounded = value.toFixed(1);
+                const sign = value >= 0 ? '+' : '';
+                evalText = `${sign}${rounded}`;
+            }
+            
+            if (bestMove) {
+                // Highlight best move squares
+                const square = document.querySelector(`[data-row="${bestMove.row}"][data-col="${bestMove.col}"]`);
+                if (square) {
+                    square.classList.add('analysis-highlight');
+                }
+                
+                // Also highlight destination squares
+                const destinations = calculateRotationDestinations(bestMove.row, bestMove.col, bestMove.hgrad);
+                if (destinations) {
+                    for (const [r, c] of destinations) {
+                        const destSquare = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+                        if (destSquare) {
+                            destSquare.classList.add('analysis-highlight');
+                        }
+                    }
+                }
+            }
+            
+            // Update eval display
+            const evalDisplay = document.getElementById('eval-display');
+            if (evalDisplay) {
+                evalDisplay.textContent = evalText;
+            }
+        }
+
+        function checkBotMove() {
+            if (canBotMove()) {
+                setTimeout(makeBotMove, BOT_MOVE_DELAY);
+            }
+            if (botSettings.analysisMode && !botSettings.isThinking) {
+                setTimeout(runAnalysis, 100);
+            }
+        }
+
+        function makeBotMove() {
+            if (!canBotMove()) return;
+            
+            botSettings.isThinking = true;
+            showMessage('<span class="thinking">Bot is thinking...</span>');
+            
+            setTimeout(() => {
+                const result = findBestMove();
+                const bestMove = result.move;
+                
+                if (bestMove) {
+                    // Save info for notation before move
+                    const piece = game.board[bestMove.row][bestMove.col];
+                    const pieceChar = getPieceChar(piece);
+                    const square = toAlgebraic(bestMove.col, bestMove.row);
+                    
+                    attemptMove(bestMove.row, bestMove.col, bestMove.hgrad, true);
+                    
+                    // Add to move history
+                    const notation = `${pieceChar}${square}${bestMove.hgrad}`;
+                    moveHistory.push({
+                        notation,
+                        isBlue: !game.blueToMove, // Turn already changed
+                        moveNumber: Math.floor(moveHistory.length / 2) + 1
+                    });
+                    currentMoveIndex = moveHistory.length;
+                    updateMoveHistoryDisplay();
+                    
+                    // Play sound based on what happened
+                    if (game.gameOver !== null) {
+                        playGameEndSound();
+                    } else if (lastMoveCapturedSquares.length > 0) {
+                        playSound('capture');
+                    } else {
+                        playSound('move');
+                    }
+                    
+                    initBoard();
+                    
+                    if (game.gameOver === null) {
+                        showMessage('');
+                    }
+                } else {
+                    showMessage('Bot could not find a move!');
+                }
+                
+                botSettings.isThinking = false;
+                checkBotMove();
+            }, BOT_THINK_DELAY);
+        }
+
+        // UI Functions
+        function createPieceSVG(piece, row, col, allCoords, topLeftRow, topLeftCol) {
+            const color = isBlue(piece) ? 'blue' : 'red';
+            const pieceType = getPieceType(piece);
+            const animal = PIECE_TYPE_TO_ANIMAL[pieceType].toLowerCase();
+            
+            if (!animal) return null;
+            
+            const pieceId = getPieceIdentifier(row, col);
+            const rotation = pieceRotations.get(pieceId) || 0;
+            
+            let minRow = BOARD_SIZE, maxRow = -1, minCol = BOARD_SIZE, maxCol = -1;
+            
+            for (const [r, c] of allCoords) {
+                minRow = Math.min(minRow, r);
+                maxRow = Math.max(maxRow, r);
+                minCol = Math.min(minCol, c);
+                maxCol = Math.max(maxCol, c);
+            }
+            
+            // Container always matches board bounding box
+            const boardCols = maxCol - minCol + 1;
+            const boardRows = maxRow - minRow + 1;
+            const containerWidth = boardCols * CELL_SIZE - 10;
+            const containerHeight = boardRows * CELL_SIZE - 10;
+            
+            const img = document.createElement('img');
+            img.className = 'piece-img';
+            img.src = `images/grape_pieces/${color}_${animal}.png`;
+            img.alt = `${color} ${animal}`;
+            img.style.position = 'absolute';
+            
+            if (rotation % 180 === 0) {
+                // No rotation or 180° - SVG fills container normally
+                img.style.width = '100%';
+                img.style.height = '100%';
+                if (rotation !== 0) {
+                    img.style.transform = `rotate(${rotation}deg)`;
+                }
+            } else {
+                // 90° or 270° rotation - swap SVG dimensions before rotating
+                img.style.width = containerHeight + 'px';
+                img.style.height = containerWidth + 'px';
+                // Center the swapped SVG in container, then rotate
+                const offsetX = (containerWidth - containerHeight) / 2;
+                const offsetY = (containerHeight - containerWidth) / 2;
+                img.style.left = offsetX + 'px';
+                img.style.top = offsetY + 'px';
+                img.style.transform = `rotate(${rotation}deg)`;
+            }
+            
+            const container = document.createElement('div');
+            container.className = 'piece-container';
+            container.style.width = containerWidth + 'px';
+            container.style.height = containerHeight + 'px';
+            
+            // Position at top-left of bounding box relative to the square we're appended to
+            const offsetLeft = (minCol - topLeftCol) * CELL_SIZE + 5;
+            const offsetTop = (topLeftRow - maxRow) * CELL_SIZE + 5;
+            
+            container.style.left = offsetLeft + 'px';
+            container.style.top = offsetTop + 'px';
+            
+            const pieceChar = VALUE_TO_CHAR[piece];
+            let fallbackShown = false;
+            
+            const showFallback = () => {
+                if (fallbackShown) return;
+                fallbackShown = true;
+                for (const [r, c] of allCoords) {
+                    const square = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+                    if (square && !square.querySelector('.piece-fallback')) {
+                        const fallback = document.createElement('div');
+                        fallback.className = 'piece-fallback';
+                        fallback.textContent = pieceChar;
+                        fallback.classList.add(isBlue(piece) ? 'piece-blue' : 'piece-red');
+                        square.appendChild(fallback);
+                    }
+                }
+            };
+            
+            const removeFallback = () => {
+                for (const [r, c] of allCoords) {
+                    const square = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+                    if (square) {
+                        const fallback = square.querySelector('.piece-fallback');
+                        if (fallback) fallback.remove();
+                    }
+                }
+            };
+            
+            // Show fallback after 80ms if SVG hasn't loaded
+            const fallbackTimeout = setTimeout(showFallback, 80);
+            
+            img.onload = function() {
+                // SVG loaded successfully - cancel/remove fallback
+                clearTimeout(fallbackTimeout);
+                if (fallbackShown) {
+                    removeFallback();
+                }
+            };
+            
+            img.onerror = function() {
+                // SVG failed to load - hide container and ensure fallback shows
+                clearTimeout(fallbackTimeout);
+                container.style.display = 'none';
+                showFallback();
+            };
+            
+            container.appendChild(img);
+            return container;
+        }
+
+        function initBoard() {
+            const board = document.getElementById('game-board');
+            board.innerHTML = '';
+            board.setAttribute('role', 'grid');
+            board.setAttribute('aria-label', 'Game board');
+            
+            // Add grape overlay for center squares
+            const grapeOverlay = document.createElement('img');
+            grapeOverlay.src = 'images/grape_pieces/grape.png';
+            grapeOverlay.className = 'grape-overlay';
+            grapeOverlay.alt = 'Center goal area';
+            // Size: 2 squares with same padding as pieces
+            const gapSize = 1;
+            const piecesPadding = 10;  // Same as pieces use
+            const size = 2 * CELL_SIZE + gapSize - piecesPadding;  // 91px
+            grapeOverlay.style.width = size + 'px';
+            grapeOverlay.style.height = size + 'px';
+            board.appendChild(grapeOverlay);
+            
+            const renderedPieces = new Set();
+            
+            for (let r = BOARD_SIZE - 1; r >= 0; r--) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    const square = document.createElement('div');
+                    square.className = 'board-square';
+                    square.classList.add((r + c) % 2 === 0 ? 'light' : 'dark');
+                    square.setAttribute('role', 'gridcell');
+                    square.setAttribute('tabindex', '0');
+                    
+                    // Add row numbers on left edge (column 0)
+                    if (c === 0) {
+                        const rowLabel = document.createElement('span');
+                        rowLabel.className = 'board-coords-row';
+                        rowLabel.textContent = r;
+                        square.appendChild(rowLabel);
+                    }
+                    
+                    // Add column letters on bottom edge (row 0)
+                    if (r === 0) {
+                        const colLabel = document.createElement('span');
+                        colLabel.className = 'board-coords-col';
+                        colLabel.textContent = String.fromCharCode(97 + c);
+                        square.appendChild(colLabel);
+                    }
+                    
+                    const isCenter = CENTER_SQUARES.some(([cr, cc]) => cr === r && cc === c);
+                    
+                    // Highlight last move (where bot's piece moved from)
+                    if (lastMoveOldSquares.some(([mr, mc]) => mr === r && mc === c)) {
+                        square.classList.add('last-move-highlight');
+                    }
+                    
+                    // Highlight captured pieces (different opacity)
+                    if (lastMoveCapturedSquares.some(([mr, mc]) => mr === r && mc === c)) {
+                        square.classList.add('captured-piece-highlight');
+                    }
+                    
+                    square.dataset.row = r;
+                    square.dataset.col = c;
+                    square.onclick = () => handleSquareClick(r, c);
+                    
+                    const piece = game.board[r][c];
+                    const colLetter = String.fromCharCode(97 + c);
+                    let ariaLabel = `${colLetter}${r}`;
+                    
+                    if (piece !== EMPTY) {
+                        const pieceId = getPieceIdentifier(r, c);
+                        const pieceType = getPieceType(piece);
+                        const animal = PIECE_TYPE_TO_ANIMAL[pieceType];
+                        const color = isBlue(piece) ? 'blue' : 'red';
+                        ariaLabel += `, ${color} ${animal}`;
+                        
+                        if (pieceId && !renderedPieces.has(pieceId)) {
+                            const allCoords = findAllSquaresOfPiece(r, c);
+                            
+                            let topLeftRow = r, topLeftCol = c;
+                            for (const [pr, pc] of allCoords) {
+                                if (pr > topLeftRow || (pr === topLeftRow && pc < topLeftCol)) {
+                                    topLeftRow = pr;
+                                    topLeftCol = pc;
+                                }
+                            }
+                            
+                            if (r === topLeftRow && c === topLeftCol) {
+                                const imgElement = createPieceSVG(piece, r, c, allCoords, topLeftRow, topLeftCol);
+                                if (imgElement) {
+                                    square.appendChild(imgElement);
+                                    renderedPieces.add(pieceId);
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (isCenter) {
+                        ariaLabel += ', center square';
+                    }
+                    
+                    square.setAttribute('aria-label', ariaLabel);
+                    board.appendChild(square);
+                }
+            }
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const currentPlayer = document.getElementById('current-player');
+            currentPlayer.textContent = game.blueToMove ? 'Blue' : 'Red';
+            currentPlayer.className = game.blueToMove ? 'blue-turn' : 'red-turn';
+            
+            updateFenDisplay();
+            
+            if (game.gameOver !== null) {
+                if (game.gameOver === 1) {
+                    showMessage('Blue wins!');
+                } else if (game.gameOver === -1) {
+                    showMessage('Red wins!');
+                } else {
+                    // Draw - check reason
+                    if (game.movesSinceCapture >= 100) {
+                        showMessage('Draw by 50-move rule (no captures in 50 moves)');
+                    } else {
+                        showMessage('Draw by threefold repetition');
+                    }
+                }
+            }
+        }
+
+        function handleSquareClick(row, col) {
+            if (game.gameOver !== null) {
+                return;
+            }
+            
+            if (botSettings.isThinking) {
+                showMessage('Wait while bot is thinking...');
+                return;
+            }
+            
+            if (isBotsTurn()) {
+                showMessage('It\'s the bot\'s turn!');
+                return;
+            }
+            
+            const destKey = `${row},${col}`;
+            if (validDestinations.has(destKey)) {
+                const rotation = validDestinations.get(destKey);
+                makePlayerMove(rotation);
+                return;
+            }
+            
+            selectSquare(row, col);
+        }
+
+        function selectSquare(row, col) {
+            const piece = game.board[row][col];
+            if (piece === EMPTY) {
+                showMessage('No piece on that square');
+                return;
+            }
+            
+            if (game.blueToMove !== isBlue(piece)) {
+                showMessage('You can only select your own pieces!');
+                return;
+            }
+            
+            // If clicking same square again, show rotation controls
+            if (selectedSquare && selectedSquare.row === row && selectedSquare.col === col) {
+                if (hasValidMoves(row, col)) {
+                    showMessage('Choose rotation:');
+                    document.getElementById('rotation-controls').style.display = 'block';
+                } else {
+                    showMessage('No valid moves available for this square!');
+                }
+                return;
+            }
+            
+            // Clear last move highlighting when player selects a piece
+            lastMoveOldSquares = [];
+            lastMoveCapturedSquares = [];
+            
+            playSound('select');
+            
+            document.querySelectorAll('.board-square').forEach(sq => {
+                sq.classList.remove('selected', 'destination-highlight', 'last-move-highlight', 'captured-piece-highlight', 'analysis-highlight');
+            });
+            
+            selectedSquare = { row, col };
+            validDestinations = findUniqueDestinations(row, col);
+            
+            const pivotSquare = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            if (pivotSquare) {
+                pivotSquare.classList.add('selected');
+            }
+            
+            if (validDestinations.size === 0) {
+                // No unique destinations - check if ANY moves are possible
+                if (hasValidMoves(row, col)) {
+                    // Moves exist but no unique destinations - show rotation controls
+                    showMessage('No unique destinations. Choose rotation:');
+                    document.getElementById('rotation-controls').style.display = 'block';
+                } else {
+                    showMessage('No valid moves available for this square!');
+                    document.getElementById('rotation-controls').style.display = 'none';
+                }
+            } else {
+                // Has unique destinations - highlight them
+                for (const [destKey, rotation] of validDestinations.entries()) {
+                    const [r, c] = destKey.split(',').map(Number);
+                    const square = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+                    if (square) {
+                        square.classList.add('destination-highlight');
+                    }
+                }
+                
+                if (hasNonUniqueDestinations(row, col, validDestinations)) {
+                    showMessage('Click highlighted square or choose rotation for other moves:');
+                    document.getElementById('rotation-controls').style.display = 'block';
+                } else {
+                    showMessage('');
+                    document.getElementById('rotation-controls').style.display = 'none';
+                }
+            }
+        }
+
+        function cancelSelection() {
+            selectedSquare = null;
+            validDestinations.clear();
+            document.querySelectorAll('.board-square').forEach(sq => {
+                sq.classList.remove('selected', 'destination-highlight', 'analysis-highlight');
+            });
+            document.getElementById('rotation-controls').style.display = 'none';
+            showMessage('');
+        }
+
+        function makePlayerMove(rotation) {
+            if (!selectedSquare) {
+                showMessage('No piece selected!');
+                return;
+            }
+            
+            if (game.gameOver !== null) {
+                return;
+            }
+            
+            // Save info for notation before move
+            const moveRow = selectedSquare.row;
+            const moveCol = selectedSquare.col;
+            const piece = game.board[moveRow][moveCol];
+            const pieceChar = getPieceChar(piece);
+            const square = toAlgebraic(moveCol, moveRow);
+            
+            lastMoveOldSquares = [];
+            lastMoveCapturedSquares = [];
+            const success = attemptMove(selectedSquare.row, selectedSquare.col, rotation, false);
+            if (success) {
+                // Add to move history
+                const notation = `${pieceChar}${square}${rotation}`;
+                moveHistory.push({
+                    notation,
+                    isBlue: !game.blueToMove, // Turn already changed
+                    moveNumber: Math.floor(moveHistory.length / 2) + 1
+                });
+                currentMoveIndex = moveHistory.length;
+                updateMoveHistoryDisplay();
+                
+                // Play sound based on what happened
+                if (game.gameOver !== null) {
+                    playGameEndSound();
+                } else if (lastMoveCapturedSquares.length > 0) {
+                    playSound('capture');
+                } else {
+                    playSound('move');
+                }
+                
+                cancelSelection();
+                initBoard();
+                if (game.gameOver === null) {
+                    showMessage('');
+                    checkBotMove();
+                } else if (botSettings.analysisMode) {
+                    runAnalysis();
+                }
+            } else {
+                showMessage('Invalid move!');
+            }
+        }
+
+        function newGame() {
+            if (game.board.some(row => row.some(cell => cell !== EMPTY))) {
+                // Save current state before starting new game (for undo)
+                gameHistory.push(captureFullState());
+                if (gameHistory.length > 100) gameHistory.shift();
+            }
+            
+            game = {
+                board: Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(EMPTY)),
+                blueToMove: true,
+                gameOver: null,
+                positionHistory: new Map(),
+                zobristHash: 0,
+                material: 0,
+                movesSinceCapture: 0
+            };
+            
+            pieceRotations.clear();
+            validDestinations.clear();
+            transpositionTable.clear();
+            lastMoveOldSquares = [];
+            lastMoveCapturedSquares = [];
+            keyboardSelectedSquare = null;
+            botSettings.isThinking = false;
+            
+            // Reset move history and ZJVOLTIS state
+            moveHistory = [];
+            currentMoveIndex = 0;
+            redoHistory = [];
+            lastPieceKey = null;
+            lastPieceIndex = 0;
+            lastProcessedFen = '';
+            lastProcessedMoves = '';
+            updateMoveHistoryDisplay();
+            
+            initFromFen("lllziiiioo/lvzzsstjoo/vvzssttjjj/......t...///...T....../JJJTTSSZVV/OOJTSSZZVL/OOIIIIZLLL w");
+            
+            cancelSelection();
+            initBoard();
+            showMessage('');
+            
+            checkBotMove();
+        }
+
+        function showMessage(message) {
+            const messageDiv = document.getElementById('message');
+            if (message && message.trim() !== '') {
+                messageDiv.innerHTML = message;
+                messageDiv.style.display = 'block';
+            } else {
+                messageDiv.style.display = 'none';
+            }
+        }
+        
+        // Keyboard navigation
+        function updateKeyboardHighlight() {
+            document.querySelectorAll('.board-square').forEach(sq => {
+                sq.classList.remove('keyboard-focus');
+            });
+            if (keyboardSelectedSquare) {
+                const square = document.querySelector(
+                    `[data-row="${keyboardSelectedSquare.row}"][data-col="${keyboardSelectedSquare.col}"]`
+                );
+                if (square) {
+                    square.classList.add('keyboard-focus');
+                    square.focus();
+                }
+            }
+        }
+
+        document.addEventListener('keydown', function(event) {
+            // Escape to cancel selection
+            if (event.key === 'Escape') {
+                cancelSelection();
+                keyboardSelectedSquare = null;
+                updateKeyboardHighlight();
+                return;
+            }
+            
+            // Rotation shortcuts 1, 2, 3
+            if (['1', '2', '3'].includes(event.key)) {
+                const rotation = parseInt(event.key);
+                
+                // If a piece is already selected (via mouse or keyboard), rotate it
+                if (selectedSquare) {
+                    if (calculateRotationDestinations(selectedSquare.row, selectedSquare.col, rotation) !== null) {
+                        makePlayerMove(rotation);
+                    }
+                    return;
+                }
+                
+                // If navigating with keyboard, select and rotate in one step
+                if (keyboardSelectedSquare) {
+                    const { row, col } = keyboardSelectedSquare;
+                    const piece = game.board[row][col];
+                    if (piece !== EMPTY && game.blueToMove === isBlue(piece)) {
+                        if (calculateRotationDestinations(row, col, rotation) !== null) {
+                            // Temporarily select the square, make the move
+                            selectedSquare = { row, col };
+                            makePlayerMove(rotation);
+                            keyboardSelectedSquare = null;
+                            updateKeyboardHighlight();
+                        }
+                    }
+                }
+                return;
+            }
+            
+            // --- ZJVOLTIS Shortcuts (Jump to piece) ---
+            // Skip if Ctrl/Cmd is held (allow Ctrl+V, Ctrl+C etc)
+            if (event.ctrlKey || event.metaKey) return;
+            
+            const key = event.key.toLowerCase();
+            const pieceType = KEY_TO_PIECE_TYPE[key];
+            
+            if (pieceType) {
+                event.preventDefault();
+                
+                // Find all squares with this piece type
+                const squares = findAllSquaresOfPieceType(pieceType);
+                
+                if (squares.length === 0) {
+                    showMessage(`${PIECE_TYPE_TO_ANIMAL[pieceType]} not found for ${game.blueToMove ? 'Blue' : 'Red'}.`);
+                    lastPieceKey = null;
+                    return;
+                }
+                
+                // Determine which index to use (cycle if same key pressed again)
+                let targetIndex = 0;
+                if (lastPieceKey === key && squares.length > 1) {
+                    targetIndex = (lastPieceIndex + 1) % squares.length;
+                }
+                lastPieceKey = key;
+                lastPieceIndex = targetIndex;
+                
+                const foundSquare = squares[targetIndex];
+                
+                cancelSelection();
+                keyboardSelectedSquare = { row: foundSquare.row, col: foundSquare.col };
+                updateKeyboardHighlight();
+                
+                const pieceName = PIECE_TYPE_TO_ANIMAL[pieceType];
+                const validRots = getValidRotations(foundSquare.row, foundSquare.col);
+                
+                if (validRots.length > 0) {
+                    const rotStr = validRots.join('/');
+                    const cycleHint = squares.length > 1 ? ` [${targetIndex + 1}/${squares.length}]` : '';
+                    showMessage(`${pieceName}${cycleHint} - press ${rotStr} to rotate`);
+                } else {
+                    const cycleHint = squares.length > 1 ? ` [${targetIndex + 1}/${squares.length}]` : '';
+                    showMessage(`${pieceName}${cycleHint} - no valid moves`);
+                }
+                return;
+            }
+            // --- END ZJVOLTIS Shortcuts ---
+            
+            // Tab to cycle through pieces with valid moves
+            if (event.key === 'Tab') {
+                event.preventDefault();
+                
+                const movableSquares = findAllSquaresWithMoves();
+                if (movableSquares.length === 0) {
+                    showMessage('No pieces with valid moves!');
+                    return;
+                }
+                
+                // Find current position in the list
+                let currentIndex = -1;
+                if (keyboardSelectedSquare) {
+                    currentIndex = movableSquares.findIndex(
+                        sq => sq.row === keyboardSelectedSquare.row && sq.col === keyboardSelectedSquare.col
+                    );
+                }
+                
+                // Move to next (or first if not found / shift for previous)
+                let nextIndex;
+                if (event.shiftKey) {
+                    nextIndex = currentIndex <= 0 ? movableSquares.length - 1 : currentIndex - 1;
+                } else {
+                    nextIndex = (currentIndex + 1) % movableSquares.length;
+                }
+                
+                const nextSquare = movableSquares[nextIndex];
+                cancelSelection();
+                keyboardSelectedSquare = nextSquare;
+                updateKeyboardHighlight();
+                
+                // Reset ZJVOLTIS cycling state
+                lastPieceKey = null;
+                
+                const piece = game.board[nextSquare.row][nextSquare.col];
+                const pieceName = PIECE_TYPE_TO_ANIMAL[getPieceType(piece)];
+                const validRots = getValidRotations(nextSquare.row, nextSquare.col);
+                const rotStr = validRots.join('/');
+                showMessage(`${pieceName} [${nextIndex + 1}/${movableSquares.length}] - press ${rotStr} to rotate`);
+                return;
+            }
+            
+            // Arrow key navigation
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+                event.preventDefault();
+                
+                if (!keyboardSelectedSquare) {
+                    // Start from center of board
+                    keyboardSelectedSquare = { row: Math.floor(BOARD_SIZE / 2), col: Math.floor(BOARD_SIZE / 2) };
+                } else {
+                    let { row, col } = keyboardSelectedSquare;
+                    switch (event.key) {
+                        case 'ArrowUp': row = Math.min(BOARD_SIZE - 1, row + 1); break;
+                        case 'ArrowDown': row = Math.max(0, row - 1); break;
+                        case 'ArrowLeft': col = Math.max(0, col - 1); break;
+                        case 'ArrowRight': col = Math.min(BOARD_SIZE - 1, col + 1); break;
+                    }
+                    keyboardSelectedSquare = { row, col };
+                }
+                updateKeyboardHighlight();
+                return;
+            }
+            
+            // Enter to select/confirm
+            if (event.key === 'Enter' && keyboardSelectedSquare) {
+                handleSquareClick(keyboardSelectedSquare.row, keyboardSelectedSquare.col);
+                return;
+            }
+        });
+
+        // Responsive scaling
+		(function setupResponsiveBoard() {
+		  function fitBoardToScreen() {
+			const wrap = document.getElementById('board-wrap');
+			const board = document.getElementById('game-board');
+			if (!wrap || !board) return;
+
+			// Reset zoom to measure actual board size
+			board.style.zoom = 1;
+			wrap.style.width = '';
+			wrap.style.height = '';
+			
+			// Get actual board size (includes padding)
+			const boardWidth = board.offsetWidth;
+			
+			// Calculate zoom to fit screen width
+			const container = document.querySelector('.game-container');
+			const maxWidth = container ? container.offsetWidth : window.innerWidth;
+			const zoom = Math.min(1, maxWidth / boardWidth);
+			
+			// Apply zoom - inline-block wrapper will auto-size to zoomed board
+			board.style.zoom = zoom;
+		  }
+
+		  window.addEventListener('resize', fitBoardToScreen);
+		  window.addEventListener('orientationchange', () => {
+			  setTimeout(fitBoardToScreen, 150);
+		  });
+		  
+		  const oldInitBoard = initBoard;
+		  initBoard = function() {
+			oldInitBoard();
+			setTimeout(fitBoardToScreen, 50);
+		  };
+		  
+		  document.addEventListener('DOMContentLoaded', () => {
+			  setTimeout(fitBoardToScreen, 100);
+		  });
+		  window.addEventListener('load', fitBoardToScreen);
+		  setTimeout(fitBoardToScreen, 150);
+		})();
+		
+		// Undo functionality
+		let gameHistory = [];
+		let redoHistory = [];
+
+		function saveGameState() {
+			const saved = {
+				board: game.board.map(row => [...row]),
+				blueToMove: game.blueToMove,
+				gameOver: game.gameOver,
+				positionHistory: new Map(game.positionHistory),
+				zobristHash: game.zobristHash,
+				material: game.material,
+				movesSinceCapture: game.movesSinceCapture,
+				pieceRotations: new Map(pieceRotations),
+                lastMoveOldSquares: [...lastMoveOldSquares],
+                lastMoveCapturedSquares: [...lastMoveCapturedSquares]
+			};
+			gameHistory.push(saved);
+			if (gameHistory.length > 100) gameHistory.shift();
+			
+			// Clear redo history when a new move is made (branching)
+			redoHistory = [];
+		}
+
+		const oldAttemptMove = attemptMove;
+		attemptMove = function (r, c, hgrad, trackMove = true) {
+			saveGameState();
+			if (currentMoveIndex < moveHistory.length) {
+			    moveHistory = moveHistory.slice(0, currentMoveIndex);
+			}
+			return oldAttemptMove(r, c, hgrad, trackMove);
+		};
+
+		function captureFullState() {
+			return {
+				board: game.board.map(row => [...row]),
+				blueToMove: game.blueToMove,
+				gameOver: game.gameOver,
+				positionHistory: new Map(game.positionHistory),
+				zobristHash: game.zobristHash,
+				material: game.material,
+				movesSinceCapture: game.movesSinceCapture,
+				pieceRotations: new Map(pieceRotations),
+				lastMoveOldSquares: [...lastMoveOldSquares],
+				lastMoveCapturedSquares: [...lastMoveCapturedSquares],
+				savedMoveHistory: [...moveHistory],
+				savedCurrentMoveIndex: currentMoveIndex
+			};
+		}
+
+		function restoreState(state) {
+			game.board = state.board.map(row => [...row]);
+			game.blueToMove = state.blueToMove;
+			game.gameOver = state.gameOver;
+			game.positionHistory = new Map(state.positionHistory);
+			game.zobristHash = state.zobristHash;
+			game.material = state.material;
+			game.movesSinceCapture = state.movesSinceCapture;
+			lastMoveOldSquares = [...state.lastMoveOldSquares];
+			lastMoveCapturedSquares = [...state.lastMoveCapturedSquares];
+			pieceRotations.clear();
+			for (const [k, v] of state.pieceRotations.entries()) {
+				pieceRotations.set(k, v);
+			}
+			if (state.savedMoveHistory !== undefined) {
+				moveHistory = [...state.savedMoveHistory];
+				currentMoveIndex = state.savedCurrentMoveIndex;
+			}
+		}
+
+		function finishUndoRedo() {
+			updateMoveHistoryDisplay();
+			cancelSelection();
+			initBoard();
+			showMessage('');
+			if (botSettings.analysisMode) {
+				runAnalysis();
+			}
+		}
+
+		function undoMove() {
+			if (gameHistory.length === 0) {
+				showMessage("No move to undo!");
+				return;
+			}
+			redoHistory.push(captureFullState());
+			const prev = gameHistory.pop();
+			restoreState(prev);
+			if (prev.savedMoveHistory === undefined && currentMoveIndex > 0) {
+				currentMoveIndex--;
+			}
+			finishUndoRedo();
+		}
+		
+		function redoMove() {
+			if (redoHistory.length === 0) {
+				showMessage("No move to redo!");
+				return;
+			}
+			gameHistory.push(captureFullState());
+			const next = redoHistory.pop();
+			restoreState(next);
+			if (next.savedMoveHistory === undefined && currentMoveIndex < moveHistory.length) {
+				currentMoveIndex++;
+			}
+			finishUndoRedo();
+		}
+
+        // Setup input event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const fenInput = document.getElementById('fen-input');
+            const moveListInput = document.getElementById('move-list');
+            
+            if (fenInput) {
+                fenInput.addEventListener('paste', function(e) {
+                    setTimeout(() => handleFenInput(e), 50);
+                });
+                fenInput.addEventListener('blur', handleFenInput);
+            }
+            
+            if (moveListInput) {
+                moveListInput.addEventListener('paste', function(e) {
+                    setTimeout(() => handleMoveHistoryInput(e), 50);
+                });
+                moveListInput.addEventListener('input', handleMoveHistoryInput);
+                moveListInput.addEventListener('blur', handleMoveHistoryInput);
+            }
+        });
+
+        // Load position from URL parameters
+        function loadFromUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            const fen = params.get('fen');
+            const moves = params.get('moves');
+            
+            if (fen) {
+                try {
+                    validDestinations.clear();
+                    initFromFen(fen);
+                    calculatePieceRotationsFromBoard();
+                    moveHistory = [];
+                    gameHistory = [];
+                    updateMoveHistoryDisplay();
+                    
+                    // Update FEN input field
+                    const fenInput = document.getElementById('fen-input');
+                    if (fenInput) fenInput.value = fen;
+                    
+                    initBoard();
+                    showMessage('Position loaded from URL');
+                } catch (e) {
+                    showMessage('Invalid FEN in URL');
+                }
+            }
+            
+            if (moves) {
+                try {
+                    const parsedMoves = parseMoveHistory(moves);
+                    if (parsedMoves.length > 0) {
+                        // If no FEN was provided, start from initial position
+                        if (!fen) {
+                            playMoveHistory(parsedMoves);
+                        } else {
+                            // Play moves from the loaded FEN position
+                            for (const move of parsedMoves) {
+                                if (game.gameOver !== null) break;
+                                const { pieceChar, col, row, rotation } = move;
+                                const success = attemptMove(row, col, rotation, true);
+                                if (success) {
+                                    const notation = `${pieceChar}${toAlgebraic(col, row)}${rotation}`;
+                                    moveHistory.push({
+                                        notation,
+                                        isBlue: !game.blueToMove,
+                                        moveNumber: Math.floor(moveHistory.length / 2) + 1
+                                    });
+                                    currentMoveIndex = moveHistory.length;
+                                }
+                            }
+                            initBoard();
+                            updateMoveHistoryDisplay();
+                        }
+                        
+                        // Update moves input field
+                        const moveListInput = document.getElementById('move-list');
+                        if (moveListInput) moveListInput.value = moves;
+                        
+                        showMessage(`Loaded ${parsedMoves.length} moves from URL`);
+                    }
+                } catch (e) {
+                    showMessage('Invalid moves in URL');
+                }
+            }
+        }
+
+        newGame();
+        loadFromUrlParams();
+    </script>
+
+</body>

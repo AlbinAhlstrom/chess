@@ -4,6 +4,7 @@ from v_chess.rules import (
     CrazyhouseRules, HordeRules, KingOfTheHillRules, RacingKingsRules,
     ThreeCheckRules
 )
+from v_chess.relay_game import RelayGame
 
 # Global in-memory storage
 games: dict[str, Game] = {}
@@ -22,4 +23,5 @@ RULES_MAP = {
     "kingofthehill": KingOfTheHillRules,
     "racingkings": RacingKingsRules,
     "threecheck": ThreeCheckRules,
+    "grape": RelayGame,
 }

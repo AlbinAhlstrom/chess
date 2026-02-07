@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getAuthLinks, createGame } from '../../api';
 import './Lobby.css';
-import '../Pieces/Pieces.css'; 
+import '../Pieces/Pieces.css';
 
 // Subcomponents
 import GameConfig from '../Pieces/subcomponents/GameConfig';
@@ -19,6 +19,7 @@ const VARIANTS = [
     { id: 'atomic', title: 'Atomic', icon: '⚛️' },
     { id: 'chess960', title: 'Chess960', icon: '🎲' },
     { id: 'crazyhouse', title: 'Crazyhouse', icon: '🏰' },
+    { id: 'grape', title: 'Grape', icon: '🍇' },
     { id: 'horde', title: 'Horde', icon: '🧟' },
     { id: 'kingofthehill', title: 'King of the Hill', icon: '⛰️' },
     { id: 'racingkings', title: 'Racing Kings', icon: '🏎️' },
@@ -27,7 +28,7 @@ const VARIANTS = [
 ];
 
 const STARTING_TIME_VALUES = [
-    0.25, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 
+    0.25, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
     25, 30, 35, 40, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180
 ];
 
@@ -46,14 +47,14 @@ const GAME_MODES = [
 function Lobby() {
     const navigate = useNavigate();
     const { seekId } = useParams();
-    const { 
-        seeks, user, ratings, isQuickMatching, setIsQuickMatching, elapsedTime, sendSocketMessage 
+    const {
+        seeks, user, ratings, isQuickMatching, setIsQuickMatching, elapsedTime, sendSocketMessage
     } = useLobby(navigate, seekId);
 
     const [selectedVariant, setSelectedVariant] = useState("standard");
     const [selectedColor, setSelectedColor] = useState("random");
     const [gameMode, setGameMode] = useState("quick");
-    
+
     const [isTimeControlEnabled, setIsTimeControlEnabled] = useState(true);
     const [startingTime, setStartingTime] = useState(10);
     const [increment, setIncrement] = useState(0);
@@ -73,6 +74,12 @@ function Lobby() {
     };
 
     const handlePlay = async () => {
+        // Grape is a standalone game - redirect to its page
+        // if (selectedVariant === 'grape') {
+        //     window.location.href = '/grape.html';
+        //     return;
+        // }
+
         if (!user && (gameMode === 'quick' || gameMode === 'lobby')) {
             window.location.href = getAuthLinks().loginLink;
             return;
@@ -103,8 +110,8 @@ function Lobby() {
     return (
         <div className="lobby-container">
             {isQuickMatching && (
-                <MatchingOverlay 
-                    elapsedTime={elapsedTime} 
+                <MatchingOverlay
+                    elapsedTime={elapsedTime}
                     formatDuration={formatDuration}
                     selectedVariant={selectedVariant}
                     onCancel={() => { sendSocketMessage({ type: "leave_quick_match" }); setIsQuickMatching(false); }}
@@ -116,10 +123,10 @@ function Lobby() {
                     }}
                 />
             )}
-            
+
             <div className="create-seek-panel">
                 <h2>Variant</h2>
-                <GameConfig 
+                <GameConfig
                     VARIANTS={VARIANTS}
                     selectedVariant={selectedVariant}
                     setSelectedVariant={setSelectedVariant}
